@@ -1,0 +1,16 @@
+# Two data worlds: nothing real ever enters this repo. See docs/two-data-worlds.md.
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+data/
+uploads/
+live-data/
+.env*
+!.env.example
+
+node_modules/
+dist/
+coverage/
+storybook-static/
+.DS_Store

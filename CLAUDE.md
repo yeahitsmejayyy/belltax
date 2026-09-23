@@ -1,0 +1,30 @@
+# belltaxprep
+
+Client portal + preparer admin for a small tax practice. Everything around the return; never the
+return itself (ProSeries owns that). Read `belltaxprep-portal.md` for the brief.
+
+## Non-negotiable
+
+- **Two data worlds** — read `docs/two-data-worlds.md`. Nothing real ever enters this repo, a
+  commit, a log, or this session. Demo data is seeded only.
+- **Never run `git commit`** and never add a co-author line. PJ commits and pushes.
+
+## Finishing a command-center ticket
+
+Work comes off the command-center board, one ticket at a time. When a ticket is done:
+
+1. Verify: `bun test` and `bun run typecheck` pass.
+2. Run `cmc finish` to move it to review.
+3. **Hand over a one-line commit message** as text in a code block. Every ticket, no exceptions.
+4. Tell PJ exactly what to test, then stop. Don't start the next ticket until PJ approves.
+
+## Layout
+
+- `apps/server` — Bun + tRPC backend (skelly-backend). Config and run mode in `src/config.ts`.
+- `apps/web` — one React 19 + Vite SPA, role-gated `/portal` and `/admin` (arrives with the UI tickets).
+- `apps/site` — marketing site (skelly-site, last).
+- `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
+
+## Commands
+
+- `bun install` · `bun run dev` · `bun test` · `bun run typecheck`
