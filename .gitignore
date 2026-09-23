@@ -14,3 +14,6 @@ dist/
 coverage/
 storybook-static/
 .DS_Store
+
+# Misc
+.docs
