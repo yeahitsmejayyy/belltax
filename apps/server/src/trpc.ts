@@ -1,6 +1,6 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
-import { resolveUser } from "./identity";
+import { resolveUser, type Surface } from "./identity";
 
 /**
  * Context
@@ -12,11 +12,14 @@ import { resolveUser } from "./identity";
 export const createContext = ({
   req,
   ip,
-}: Pick<FetchCreateContextFnOptions, "req"> & { ip?: string }): {
+  surface,
+}: Pick<FetchCreateContextFnOptions, "req"> & { ip?: string; surface: Surface }): {
   user: { id: string; role: "client" | "preparer"; personId: string | null } | null;
   client: { ip: string; userAgent: string };
+  surface: "portal" | "admin";
 } => ({
-  user: resolveUser(req),
+  user: resolveUser(req, surface),
+  surface,
   client: { ip: clientIp(req, ip), userAgent: req.headers.get("user-agent")?.slice(0, 500) || "unknown" },
 });
 
@@ -44,7 +47,15 @@ export const authedProcedure = t.procedure.use(({ ctx, next }) => {
   return next({ ctx: { user: ctx.user } });
 });
 
-export const preparerProcedure = authedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "preparer") throw new TRPCError({ code: "FORBIDDEN", message: "Preparer only." });
-  return next();
-});
+// Preparer procedures exist only on the admin listener. On the portal they answer exactly like a path
+// that was never defined, before any identity check, so the portal doesn't even reveal they exist.
+export const preparerProcedure = t.procedure
+  .use(({ ctx, path, next }) => {
+    if (ctx.surface !== "admin") throw new TRPCError({ code: "NOT_FOUND", message: `No procedure found on path "${path}"` });
+    return next();
+  })
+  .use(({ ctx, next }) => {
+    if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: SIGN_IN_REQUIRED });
+    if (ctx.user.role !== "preparer") throw new TRPCError({ code: "FORBIDDEN", message: "Preparer only." });
+    return next({ ctx: { user: ctx.user } });
+  });

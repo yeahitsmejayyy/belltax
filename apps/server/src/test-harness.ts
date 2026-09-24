@@ -20,20 +20,23 @@ export async function demoWorld() {
   const db = new Database(":memory:", { strict: true });
   await applySchema(db);
   seedDemo(db, { storage, anchor: ANCHOR });
-  const handler = createFetchHandler({ webDist: join(tmp, "dist") });
+  // Two listeners, like the real server: the admin (this machine only) and the portal (what a tunnel forwards).
+  const handler = createFetchHandler({ surface: "admin", webDist: join(tmp, "dist") });
+  const portal = createFetchHandler({ surface: "portal", webDist: join(tmp, "dist") });
   const use = (mode: "demo" | "live" = "demo") => useRuntime({ db, storage, mode });
   use();
 
   const get = <T>(sql: string, ...p: (string | number)[]) => db.query(sql).get(...p) as T;
   const all = <T>(sql: string, ...p: (string | number)[]) => db.query(sql).all(...p) as T[];
 
-  async function call(as: string | null, path: string, input: unknown, kind: "query" | "mutation" = "query") {
+  async function call(as: string | null, path: string, input: unknown, kind: "query" | "mutation" = "query", surface: "admin" | "portal" = "admin") {
+    const h = surface === "admin" ? handler : portal;
     const headers: Record<string, string> = as ? { [DEMO_USER_HEADER]: as } : {};
     const url = `${ORIGIN}/trpc/${path}`;
     const res =
       kind === "query"
-        ? await handler(new Request(`${url}?input=${encodeURIComponent(JSON.stringify(input))}`, { headers }))
-        : await handler(
+        ? await h(new Request(input === undefined ? url : `${url}?input=${encodeURIComponent(JSON.stringify(input))}`, { headers }))
+        : await h(
             new Request(url, { method: "POST", headers: { ...headers, "content-type": "application/json", origin: ORIGIN }, body: JSON.stringify(input) }),
           );
     const body = (await res.json()) as { result?: { data: unknown }; error?: { message: string } };
@@ -44,5 +47,5 @@ export async function demoWorld() {
   const eventsOf = (type: string, subjectId: string) =>
     all<{ reason: string | null; data: string }>("SELECT reason, data FROM events WHERE type = ? AND subject_id = ?", type, subjectId);
 
-  return { db, storage, handler, use, get, all, call, preparerId, eventsOf, cleanup: () => rmSync(tmp, { recursive: true, force: true }) };
+  return { db, storage, handler, portal, use, get, all, call, preparerId, eventsOf, cleanup: () => rmSync(tmp, { recursive: true, force: true }) };
 }

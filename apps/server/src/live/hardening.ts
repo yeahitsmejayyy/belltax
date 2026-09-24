@@ -9,6 +9,7 @@ import { latestBackup } from "./backup";
 
 export const BIND_HOST = "127.0.0.1"; // never a public interface; the tunnel reaches the portal from outside
 export const serverOptions = (config: Config) => ({ hostname: BIND_HOST, port: config.port });
+export const adminServerOptions = (config: Config) => ({ hostname: BIND_HOST, port: config.adminPort });
 
 export type Check = { name: string; status: "ok" | "warn" | "fail"; detail: string };
 export type DiskProbe = () => "on" | "off" | "unknown";
@@ -52,12 +53,25 @@ export function tightenPermissions(dataDir: string): string[] {
 
 export function checkHost(
   config: Config,
-  opts: { probe?: DiskProbe; backupDir?: string; now?: Date; fixPermissions?: boolean } = {},
+  opts: { probe?: DiskProbe; backupDir?: string; now?: Date; fixPermissions?: boolean; tunnelTargetPort?: number } = {},
 ): Check[] {
   const checks: Check[] = [];
   const add = (name: string, status: Check["status"], detail: string) => checks.push({ name, status, detail });
 
-  add("bind address", serverOptions(config).hostname === BIND_HOST ? "ok" : "fail", `listens on ${serverOptions(config).hostname} only`);
+  const bound = [serverOptions(config), adminServerOptions(config)].every((o) => o.hostname === BIND_HOST);
+  add("bind address", bound ? "ok" : "fail", `portal :${config.port} and admin :${config.adminPort}, both on ${BIND_HOST} only`);
+
+  // The tunnel is configured outside this app; TUNNEL_TARGET_PORT records where it points so this can check.
+  const target = opts.tunnelTargetPort;
+  add(
+    "tunnel target",
+    target === undefined ? "warn" : target === config.port ? "ok" : "fail",
+    target === undefined
+      ? `set TUNNEL_TARGET_PORT to the port your tunnel forwards; it must be ${config.port}, never ${config.adminPort}`
+      : target === config.port
+        ? `forwards the portal (:${target}) only`
+        : `forwards :${target} — it must forward the portal (:${config.port}), never the admin (:${config.adminPort})`,
+  );
 
   const disk = (opts.probe ?? probeDiskEncryption)();
   add(

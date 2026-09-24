@@ -13,12 +13,14 @@ import { createFetchHandler } from "./http";
 import { DEMO_USER_HEADER } from "./identity";
 import { createStorage } from "./storage";
 
-// Client-side API over HTTP against the seeded demo world. Authorization first: a client must never
-// reach another household's data, and a denial must look exactly like "doesn't exist".
+// Client-side API over HTTP against the seeded demo world, through the portal listener where clients
+// actually are. Authorization first: a client must never reach another household's data, and a denial
+// must look exactly like "doesn't exist".
 
 const tmp = mkdtempSync(join(tmpdir(), "btp-client-"));
 const storage = createStorage(join(tmp, "files"));
-const handler = createFetchHandler({ webDist: join(tmp, "dist") });
+const handler = createFetchHandler({ surface: "portal", webDist: join(tmp, "dist") });
+const adminHandler = createFetchHandler({ surface: "admin", webDist: join(tmp, "dist") });
 const ORIGIN = "http://127.0.0.1";
 let db: Database;
 
@@ -110,8 +112,10 @@ describe("authorization: a client never reaches another household", () => {
     expect((await call(bob.userId, "request.answer", { requestId: qid, response: "no" }, "mutation")).status).toBe(404);
   });
 
-  test("a client can't use preparer procedures", async () => {
-    expect((await call(alice.userId, "engagement.list", undefined)).status).toBe(403);
+  test("preparer procedures don't exist on the portal", async () => {
+    const res = await call(alice.userId, "engagement.list", undefined);
+    expect(res.status).toBe(404);
+    expect(res.error!.message).toBe('No procedure found on path "engagement.list"');
   });
 
   test("a delegate reads a parent's return through a grant, and loses it when revoked", async () => {
@@ -129,7 +133,7 @@ describe("authorization: a client never reaches another household", () => {
   test("live mode: no identity exists yet, so everything is 401 and the demo header is ignored", async () => {
     useRuntime({ db, storage, mode: "live" });
     expect((await call(alice.userId, "intake.get", { engagementId: alice.engagementId })).status).toBe(401);
-    expect((await call(null, "engagement.list", undefined)).status).toBe(401);
+    expect((await call(null, "engagement.list", undefined)).status).toBe(404); // not even there on the portal
     expect((await upload(alice.userId, { engagementId: alice.engagementId, kind: "w2" }, pdf())).status).toBe(401);
   });
 });
@@ -164,8 +168,16 @@ describe("intake", () => {
     const again = await call(owner, "intake.save", { engagementId: eng.id, answers: { moved: false } }, "mutation");
     expect(again.status).toBe(412);
     expect(again.error!.message).toMatch(/already submitted/);
-    const byPreparer = await call(preparerId, "intake.save", { engagementId: eng.id, answers: { moved: false } }, "mutation");
-    expect(IntakeView.parse(byPreparer.data).answers.moved).toBe(false);
+    // The preparer corrects it from the admin, which is the only place a preparer identity counts.
+    const res = await adminHandler(
+      new Request(`${ORIGIN}/trpc/intake.save`, {
+        method: "POST",
+        headers: { [DEMO_USER_HEADER]: preparerId, "content-type": "application/json", origin: ORIGIN },
+        body: JSON.stringify({ engagementId: eng.id, answers: { moved: false } }),
+      }),
+    );
+    const byPreparer = (await res.json()) as { result: { data: unknown } };
+    expect(IntakeView.parse(byPreparer.result.data).answers.moved).toBe(false);
   });
 
   test("oversized or malformed answers are refused", async () => {

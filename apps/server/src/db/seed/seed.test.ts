@@ -206,7 +206,7 @@ describe("two data worlds", () => {
 });
 
 describe("boot", () => {
-  const config = (mode: "demo" | "live", dataDir: string): Config => ({ mode, port: 0, dataDir });
+  const config = (mode: "demo" | "live", dataDir: string): Config => ({ mode, port: 0, adminPort: 1, dataDir });
 
   test("demo mode wipes the directory and re-seeds", async () => {
     const dir = join(tmp, "boot", "demo");

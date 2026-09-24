@@ -5,7 +5,7 @@ import { z } from "zod";
 import { documentFor, engagementFor } from "../access";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
-import { resolveUser, type SessionUser } from "../identity";
+import { resolveUser, type SessionUser, type Surface } from "../identity";
 import { DOCUMENT_COLUMNS, toDocumentView, type DocumentRow } from "../routes/document";
 
 // The REST escape hatch: file bytes don't belong in tRPC. Same identity, same access checks, same events.
@@ -37,12 +37,12 @@ const cleanName = (name: string, fallback: string) => {
   return base || fallback;
 };
 
-function guard(req: Request, devOrigin?: string): Response | SessionUser {
+function guard(req: Request, surface: Surface, devOrigin?: string): Response | SessionUser {
   // CSRF: a cross-site form can't post here. Same origin, or the Vite dev server in demo mode.
   const origin = req.headers.get("origin");
   const allowed = [new URL(req.url).origin, ...(devOrigin && runtime().mode === "demo" ? [devOrigin] : [])];
   if (origin && !allowed.includes(origin)) return fail(403, "Cross-site request refused.");
-  const user = resolveUser(req);
+  const user = resolveUser(req, surface);
   return user ?? fail(401, "Sign-in required.");
 }
 
@@ -51,8 +51,8 @@ const fromTrpc = (e: unknown) => {
   throw e;
 };
 
-export async function uploadDocument(req: Request, devOrigin?: string): Promise<Response> {
-  const user = guard(req, devOrigin);
+export async function uploadDocument(req: Request, surface: Surface, devOrigin?: string): Promise<Response> {
+  const user = guard(req, surface, devOrigin);
   if (user instanceof Response) return user;
   const { db, storage } = runtime();
 
@@ -140,8 +140,8 @@ export async function uploadDocument(req: Request, devOrigin?: string): Promise<
   }
 }
 
-export function downloadDocument(req: Request, documentId: string): Response {
-  const user = guard(req);
+export function downloadDocument(req: Request, surface: Surface, documentId: string): Response {
+  const user = guard(req, surface);
   if (user instanceof Response) return user;
   try {
     const doc = documentFor(user, documentId);

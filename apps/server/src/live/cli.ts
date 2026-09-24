@@ -43,7 +43,8 @@ async function main() {
       break;
     }
     case "check": {
-      const checks = checkHost(config, { backupDir });
+      const tunnel = process.env.TUNNEL_TARGET_PORT ? Number(process.env.TUNNEL_TARGET_PORT) : undefined;
+      const checks = checkHost(config, { backupDir, tunnelTargetPort: tunnel });
       for (const c of checks) console.log(`${c.status === "ok" ? "✔" : c.status === "warn" ? "!" : "✖"} ${c.name.padEnd(22)} ${c.detail}`);
       if (checks.some((c) => c.status === "fail")) process.exitCode = 1;
       break;

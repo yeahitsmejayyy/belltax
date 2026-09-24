@@ -5,7 +5,7 @@ const repo = "/work/belltaxprep";
 
 describe("loadConfig", () => {
   test("defaults to demo with in-repo data dir", () => {
-    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, dataDir: "/work/belltaxprep/data/demo" });
+    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo" });
   });
 
   test("rejects an unknown mode", () => {
@@ -32,6 +32,12 @@ describe("loadConfig", () => {
 
   test("live accepts a sibling dir that only shares a name prefix", () => {
     const cfg = loadConfig({ RUN_MODE: "live", LIVE_DATA_DIR: "/work/belltaxprep-live" }, repo);
-    expect(cfg).toEqual({ mode: "live", port: 3000, dataDir: "/work/belltaxprep-live" });
+    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live" });
+  });
+
+  test("the admin gets its own port, never the portal's", () => {
+    expect(loadConfig({ PORT: "4000" }, repo).adminPort).toBe(4001);
+    expect(loadConfig({ PORT: "4000", ADMIN_PORT: "4100" }, repo).adminPort).toBe(4100);
+    expect(() => loadConfig({ PORT: "4000", ADMIN_PORT: "4000" }, repo)).toThrow("must differ");
   });
 });

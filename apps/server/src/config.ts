@@ -5,7 +5,8 @@ export const REPO_ROOT = resolve(import.meta.dir, "../../..");
 
 export type Config = {
   mode: RunMode;
-  port: number;
+  port: number; // the portal listener: the only one a tunnel may forward
+  adminPort: number; // the admin listener: this machine only, never forwarded
   dataDir: string;
 };
 
@@ -28,9 +29,14 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error(`PORT must be an integer 1–65535, got "${env.PORT}"`);
   }
+  const adminPort = Number(env.ADMIN_PORT ?? port + 1);
+  if (!Number.isInteger(adminPort) || adminPort < 1 || adminPort > 65535) {
+    throw new Error(`ADMIN_PORT must be an integer 1–65535, got "${env.ADMIN_PORT}"`);
+  }
+  if (adminPort === port) throw new Error("ADMIN_PORT must differ from PORT: the admin never shares the portal's listener");
 
   if (mode === "demo") {
-    return { mode, port, dataDir: resolve(repoRoot, "data/demo") };
+    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo") };
   }
 
   // Live mode never guesses where real data goes.
@@ -40,5 +46,5 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
   if (isInside(repoRoot, dir)) {
     throw new Error(`LIVE_DATA_DIR must be outside the repo (${repoRoot}), got "${dir}"`);
   }
-  return { mode, port, dataDir: resolve(dir) };
+  return { mode, port, adminPort, dataDir: resolve(dir) };
 }

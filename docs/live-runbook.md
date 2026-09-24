@@ -20,7 +20,9 @@ chose for it (see the WISP, §IV). Nothing in this file, and no command in it, e
    LIVE_DATA_DIR=/Users/you/BellTaxPrep/live
    BACKUP_DIR=/Volumes/Backup/BellTaxPrep
    BACKUP_KEEP=30
-   PORT=3000
+   PORT=3000               # the portal: the only port the tunnel forwards
+   ADMIN_PORT=3001         # the admin: this machine only, never forwarded
+   TUNNEL_TARGET_PORT=3000 # where your tunnel points; live:check fails if it's the admin port
    ```
 
    Load it into the shell before any live command: `set -a; source ~/BellTaxPrep/live.env; set +a`.
@@ -35,9 +37,14 @@ chose for it (see the WISP, §IV). Nothing in this file, and no command in it, e
 bun run start
 ```
 
-At startup it: checks the machine (disk encryption, permissions, bind address); tightens the data folder to
-owner-only; refuses to start if the database is behind the code; listens on `127.0.0.1` only. Clients reach the
-portal through the tunnel, never through an open port.
+At startup it: checks the machine (disk encryption, permissions, bind address, tunnel target); tightens the data
+folder to owner-only; refuses to start if the database is behind the code. It then opens **two listeners, both on
+`127.0.0.1`**:
+
+- **Portal** on `PORT` (3000): what clients use, and the only port the tunnel may forward.
+- **Admin** on `ADMIN_PORT` (3001): what you use, from this machine only. Preparer features don't exist on the
+  portal port at all (404), and a preparer sign-in there counts for nothing, so a stolen preparer credential used from
+  the internet gets nowhere.
 
 Stop with `Ctrl+C`. SQLite's write-ahead log makes a stop mid-request safe.
 

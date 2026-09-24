@@ -23,8 +23,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - `apps/server` — Bun + tRPC backend (skelly-backend). Config and run mode in `src/config.ts`.
   Routes read the DB via `runtime()` (`src/db/client.ts`), never the tRPC context — keeps Bun types out of
   the `AppRouter` contract (`bun run --filter @app/server types:emit` refuses a leaky one). Preparer procedures
-  are closed in live mode until auth (task 05). One host serves `/trpc`, `/api` (file upload/download),
-  `/health`, and the built frontends (today `apps/web/dist`; ticket 15 splits it into portal + admin).
+  are closed in live mode until auth (task 05). **Two listeners, both 127.0.0.1:** portal on `PORT` (3000, the only one a
+  tunnel may forward; serves `apps/portal/dist`) and admin on `ADMIN_PORT` (3001; serves `apps/admin/dist`). Preparer
+  procedures are 404 on the portal and a preparer identity is ignored there (`src/identity.ts`, `src/trpc.ts`).
 - **Access:** every client-facing procedure goes through `src/access.ts` (`engagementFor`, `documentFor`).
   Denials are NOT_FOUND. Identity comes from `src/identity.ts` — demo header/cookie today, sessions after task 05.
 - `apps/portal` — the client portal: its own React 19 + Vite app, mobile-first (arrives with ticket 12).

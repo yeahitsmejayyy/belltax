@@ -5,19 +5,21 @@ import { PRODUCT_NAME } from "@app/schema";
 import { appRouter } from "./appRouter";
 import { runtime } from "./db/client";
 import { downloadDocument, uploadDocument } from "./rest/documents";
+import type { Surface } from "./identity";
 import { createContext } from "./trpc";
 
 // One host for everything: /trpc for the API, /health for a quick look, and the built SPA for
 // every other path, so the demo deploys as a single process.
 
 type Options = {
-  webDist: string; // apps/web/dist
-  devOrigin?: string; // the Vite dev server, allowed cross-origin in demo mode only
+  surface: Surface; // which listener this handler serves
+  webDist: string; // the built app for this surface: apps/portal/dist or apps/admin/dist
+  devOrigin?: string; // that app's Vite dev server, allowed cross-origin in demo mode only
 };
 
 const count = (table: string) => (runtime().db.query(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
 
-export function createFetchHandler({ webDist, devOrigin }: Options) {
+export function createFetchHandler({ surface, webDist, devOrigin }: Options) {
   const cors = (res: Response, req: Request) => {
     const origin = req.headers.get("origin");
     if (!devOrigin || origin !== devOrigin || runtime().mode !== "demo") return res;
@@ -54,13 +56,13 @@ export function createFetchHandler({ webDist, devOrigin }: Options) {
     if (req.method === "OPTIONS") return cors(new Response(null, { status: 204 }), req);
 
     if (pathname.startsWith("/trpc")) {
-      const res = await fetchRequestHandler({ endpoint: "/trpc", req, router: appRouter, createContext: (o) => createContext({ req: o.req, ip: socketIp }) });
+      const res = await fetchRequestHandler({ endpoint: "/trpc", req, router: appRouter, createContext: (o) => createContext({ req: o.req, ip: socketIp, surface }) });
       return cors(res, req);
     }
 
-    if (pathname === "/api/documents" && req.method === "POST") return cors(await uploadDocument(req, devOrigin), req);
+    if (pathname === "/api/documents" && req.method === "POST") return cors(await uploadDocument(req, surface, devOrigin), req);
     const file = pathname.match(/^\/api\/documents\/([0-9a-f-]{36})\/file$/);
-    if (file && req.method === "GET") return cors(downloadDocument(req, file[1]!), req);
+    if (file && req.method === "GET") return cors(downloadDocument(req, surface, file[1]!), req);
     if (pathname.startsWith("/api/")) return new Response("Not found", { status: 404 });
 
     if (pathname === "/health") {

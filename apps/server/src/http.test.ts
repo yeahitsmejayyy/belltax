@@ -28,7 +28,7 @@ beforeAll(async () => {
 beforeEach(() => useRuntime({ db, storage, mode: "demo" }));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 
-const handler = createFetchHandler({ webDist, devOrigin: "http://localhost:5173" });
+const handler = createFetchHandler({ surface: "admin", webDist, devOrigin: "http://localhost:5173" });
 const get = (path: string, headers: Record<string, string> = {}) => handler(new Request(`http://127.0.0.1${path}`, { headers }));
 const list = async (input?: unknown) => {
   const qs = input === undefined ? "" : `?input=${encodeURIComponent(JSON.stringify(input))}`;
@@ -135,7 +135,7 @@ describe("single host: the SPA", () => {
   });
 
   test("says so plainly when the web app isn't built", async () => {
-    const res = await createFetchHandler({ webDist: join(tmp, "missing") })(new Request("http://127.0.0.1/"));
+    const res = await createFetchHandler({ surface: "admin", webDist: join(tmp, "missing") })(new Request("http://127.0.0.1/"));
     expect(res.status).toBe(503);
     expect(await res.text()).toMatch(/isn't built yet/);
   });
