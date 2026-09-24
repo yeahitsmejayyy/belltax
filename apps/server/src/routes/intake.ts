@@ -1,0 +1,71 @@
+import { TRPCError } from "@trpc/server";
+import { INTAKE_FORM_VERSION, IntakeAnswers, IntakeGetInput, IntakeSaveInput, IntakeView, now } from "@app/schema";
+import { engagementFor } from "../access";
+import { runtime } from "../db/client";
+import { appendEvent } from "../events";
+import { authedProcedure, router } from "../trpc";
+
+type Row = { engagement_id: string; form_version: number; answers: string; updated_at: string; submitted_at: string | null };
+
+const toView = (r: Row): IntakeView => ({
+  engagementId: r.engagement_id,
+  formVersion: r.form_version,
+  answers: IntakeAnswers.parse(JSON.parse(r.answers)),
+  updatedAt: r.updated_at,
+  submittedAt: r.submitted_at,
+});
+
+const read = (engagementId: string) =>
+  runtime().db.query<Row, [string]>("SELECT * FROM intake_responses WHERE engagement_id = ?").get(engagementId);
+
+export const intakeRouter = router({
+  get: authedProcedure
+    .input(IntakeGetInput)
+    .output(IntakeView.nullable())
+    .query(({ ctx, input }) => {
+      engagementFor(ctx.user, input.engagementId);
+      const row = read(input.engagementId);
+      return row ? toView(row) : null;
+    }),
+
+  // Each step saves only its own fields; they're merged over what's already there.
+  // Submitting locks it for the client; the preparer can still correct it.
+  save: authedProcedure
+    .input(IntakeSaveInput)
+    .output(IntakeView)
+    .mutation(({ ctx, input }) => {
+      const { db } = runtime();
+      const eng = engagementFor(ctx.user, input.engagementId);
+      const existing = read(eng.id);
+      if (ctx.user.role === "client") {
+        if (existing?.submitted_at) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Your answers are already submitted. Ask your preparer to reopen them." });
+        }
+        if (!["invited", "intake", "documents"].includes(eng.stage)) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This return is past the questionnaire stage." });
+        }
+      }
+      const merged = IntakeAnswers.parse({ ...(existing ? JSON.parse(existing.answers) : {}), ...input.answers });
+      const at = now();
+      const submittedAt = existing?.submitted_at ?? (input.submit ? at : null);
+
+      db.transaction(() => {
+        db.run(
+          `INSERT INTO intake_responses (engagement_id, form_version, answers, updated_at, submitted_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT (engagement_id) DO UPDATE SET answers = excluded.answers, updated_at = excluded.updated_at, submitted_at = excluded.submitted_at`,
+          [eng.id, existing?.form_version ?? INTAKE_FORM_VERSION, JSON.stringify(merged), at, submittedAt],
+        );
+        appendEvent(db, {
+          actor: ctx.user,
+          type: input.submit && !existing?.submitted_at ? "intake.submitted" : "intake.saved",
+          subjectType: "intake",
+          subjectId: eng.id,
+          householdId: eng.household_id,
+          engagementId: eng.id,
+          data: { fields: Object.keys(input.answers).length },
+        });
+      })();
+      return toView(read(eng.id)!);
+    }),
+});

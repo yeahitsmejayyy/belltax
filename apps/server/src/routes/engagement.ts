@@ -1,6 +1,7 @@
-import { EngagementList, EngagementListInput, Stage } from "@app/schema";
+import { EngagementList, EngagementListInput, MyEngagement, Stage } from "@app/schema";
+import { z } from "zod";
 import { runtime } from "../db/client";
-import { preparerProcedure, router } from "../trpc";
+import { authedProcedure, preparerProcedure, router } from "../trpc";
 
 const DAY = 86_400_000;
 
@@ -70,4 +71,29 @@ export const engagementRouter = router({
         }));
       return { taxYear, years, counts, rows };
     }),
+
+  // The signed-in client's own returns, newest season first. Filer access wins over a grant.
+  mine: authedProcedure.output(z.array(MyEngagement)).query(({ ctx }) => {
+    const rows = runtime()
+      .db.query<Record<string, string | number | null>, [string]>(
+        `SELECT p.engagement_id, p.household_name, p.tax_year, p.kind, p.filing_status, p.stage, p.open_requests, p.balance_cents,
+                MIN(ca.via) AS via
+           FROM client_access ca JOIN pipeline_rows p ON p.engagement_id = ca.engagement_id
+          WHERE ca.user_id = ?
+          GROUP BY p.engagement_id
+          ORDER BY p.tax_year DESC, p.kind, p.household_name`,
+      )
+      .all(ctx.user.id);
+    return rows.map((r) => ({
+      engagementId: r.engagement_id as string,
+      householdName: r.household_name as string,
+      taxYear: r.tax_year as number,
+      kind: r.kind as MyEngagement["kind"],
+      filingStatus: r.filing_status as MyEngagement["filingStatus"],
+      stage: r.stage as MyEngagement["stage"],
+      via: r.via as MyEngagement["via"],
+      openRequests: r.open_requests as number,
+      balanceCents: r.balance_cents as number,
+    }));
+  }),
 });

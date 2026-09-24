@@ -4,6 +4,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { PRODUCT_NAME } from "@app/schema";
 import { appRouter } from "./appRouter";
 import { runtime } from "./db/client";
+import { downloadDocument, uploadDocument } from "./rest/documents";
 import { createContext } from "./trpc";
 
 // One host for everything: /trpc for the API, /health for a quick look, and the built SPA for
@@ -23,7 +24,8 @@ export function createFetchHandler({ webDist, devOrigin }: Options) {
     const headers = new Headers(res.headers);
     headers.set("Access-Control-Allow-Origin", devOrigin);
     headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    headers.set("Access-Control-Allow-Headers", "Content-Type");
+    headers.set("Access-Control-Allow-Headers", "Content-Type, x-demo-user");
+    headers.set("Access-Control-Allow-Credentials", "true");
     headers.set("Vary", "Origin");
     return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
   };
@@ -55,6 +57,11 @@ export function createFetchHandler({ webDist, devOrigin }: Options) {
       const res = await fetchRequestHandler({ endpoint: "/trpc", req, router: appRouter, createContext });
       return cors(res, req);
     }
+
+    if (pathname === "/api/documents" && req.method === "POST") return cors(await uploadDocument(req, devOrigin), req);
+    const file = pathname.match(/^\/api\/documents\/([0-9a-f-]{36})\/file$/);
+    if (file && req.method === "GET") return cors(downloadDocument(req, file[1]!), req);
+    if (pathname.startsWith("/api/")) return new Response("Not found", { status: 404 });
 
     if (pathname === "/health") {
       return Response.json({

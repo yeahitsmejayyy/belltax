@@ -1,0 +1,94 @@
+import { TRPCError } from "@trpc/server";
+import { DocumentDeleteInput, DocumentListInput, DocumentView, now } from "@app/schema";
+import { z } from "zod";
+import { documentFor, engagementFor } from "../access";
+import { runtime } from "../db/client";
+import { appendEvent } from "../events";
+import type { SessionUser } from "../identity";
+import { authedProcedure, router } from "../trpc";
+
+export type DocumentRow = {
+  id: string;
+  engagement_id: string | null;
+  person_id: string | null;
+  request_id: string | null;
+  kind: string;
+  kind_label: string;
+  status: DocumentView["status"];
+  reject_reason: string | null;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+  created_at: string;
+  uploaded_by: string;
+};
+
+export const DOCUMENT_COLUMNS = `d.id, d.engagement_id, d.person_id, d.request_id, d.kind, k.label AS kind_label, d.status,
+  d.reject_reason, d.filename, d.mime_type, d.size_bytes, d.created_at, d.uploaded_by`;
+
+export const toDocumentView = (r: DocumentRow, user: SessionUser): DocumentView => ({
+  id: r.id,
+  engagementId: r.engagement_id,
+  personId: r.person_id,
+  requestId: r.request_id,
+  kind: r.kind,
+  kindLabel: r.kind_label,
+  status: r.status,
+  rejectReason: r.reject_reason,
+  filename: r.filename,
+  mimeType: r.mime_type,
+  sizeBytes: r.size_bytes,
+  uploadedAt: r.created_at,
+  mine: r.uploaded_by === user.id,
+});
+
+export const documentRouter = router({
+  // Everything on this return, plus person-level documents (photo IDs) of the people on it.
+  list: authedProcedure
+    .input(DocumentListInput)
+    .output(z.array(DocumentView))
+    .query(({ ctx, input }) => {
+      engagementFor(ctx.user, input.engagementId);
+      const rows = runtime()
+        .db.query<DocumentRow, [string, string]>(
+          `SELECT ${DOCUMENT_COLUMNS}
+             FROM documents d JOIN document_kinds k ON k.code = d.kind
+            WHERE d.purged_at IS NULL
+              AND (d.engagement_id = ?
+                   OR (d.engagement_id IS NULL AND d.person_id IN (SELECT person_id FROM return_people WHERE engagement_id = ?)))
+            ORDER BY d.created_at DESC, d.id DESC`,
+        )
+        .all(input.engagementId, input.engagementId);
+      return rows.map((r) => toDocumentView(r, ctx.user));
+    }),
+
+  // Take back a mistaken upload before it's reviewed. The file is purged; the row stays as a tombstone (R34).
+  delete: authedProcedure
+    .input(DocumentDeleteInput)
+    .output(z.object({ id: z.string() }))
+    .mutation(({ ctx, input }) => {
+      const { db, storage } = runtime();
+      const doc = documentFor(ctx.user, input.documentId);
+      if (doc.uploaded_by !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "You can only remove your own uploads." });
+      if (doc.status !== "uploaded") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This document has already been reviewed and can't be removed." });
+      }
+      const household = doc.engagement_id
+        ? db.query<{ h: string }, [string]>("SELECT household_id AS h FROM engagements WHERE id = ?").get(doc.engagement_id)!.h
+        : null;
+      db.transaction(() => {
+        db.run("UPDATE documents SET storage_key = NULL, purged_at = ? WHERE id = ?", [now(), doc.id]);
+        appendEvent(db, {
+          actor: ctx.user,
+          type: "document.deleted",
+          subjectType: "document",
+          subjectId: doc.id,
+          householdId: household,
+          engagementId: doc.engagement_id,
+        });
+      })();
+      // Bytes go after the commit: a failed delete leaves a stray file, never a row pointing at nothing.
+      if (doc.storage_key) storage.remove(doc.storage_key);
+      return { id: doc.id };
+    }),
+});

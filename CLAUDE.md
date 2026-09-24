@@ -23,7 +23,10 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - `apps/server` — Bun + tRPC backend (skelly-backend). Config and run mode in `src/config.ts`.
   Routes read the DB via `runtime()` (`src/db/client.ts`), never the tRPC context — keeps Bun types out of
   the `AppRouter` contract (`bun run --filter @app/server types:emit` refuses a leaky one). Preparer procedures
-  are closed in live mode until auth (task 05). One host serves `/trpc`, `/health` and `apps/web/dist`.
+  are closed in live mode until auth (task 05). One host serves `/trpc`, `/api` (file upload/download),
+  `/health` and `apps/web/dist`.
+- **Access:** every client-facing procedure goes through `src/access.ts` (`engagementFor`, `documentFor`).
+  Denials are NOT_FOUND. Identity comes from `src/identity.ts` — demo header/cookie today, sessions after task 05.
 - `apps/web` — one React 19 + Vite SPA, role-gated `/portal` and `/admin` (arrives with the UI tickets).
 - `apps/site` — marketing site (skelly-site, last).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
