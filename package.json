@@ -2,11 +2,15 @@
   "name": "belltaxprep",
   "private": true,
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "bun --filter @app/server dev",
     "test": "bun test",
-    "typecheck": "bun --filter '*' typecheck"
+    "typecheck": "bun --filter '*' typecheck",
+    "seed": "bun --filter @app/server seed"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

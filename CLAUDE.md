@@ -27,4 +27,5 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 
 ## Commands
 
-- `bun install` · `bun run dev` · `bun test` · `bun run typecheck`
+- `bun install` · `bun run dev` · `bun run seed` · `bun test` · `bun run typecheck`
+- Demo mode wipes and re-seeds `data/demo/` on every boot (25 invented households, see `apps/server/src/db/seed/`).
