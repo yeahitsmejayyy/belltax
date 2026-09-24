@@ -17,7 +17,11 @@
     "restore": "bun --filter @app/server restore",
     "live:check": "bun --filter @app/server live:check",
     "start": "bun --filter @app/server start",
-    "purge": "bun --filter @app/server purge"
+    "purge": "bun --filter @app/server purge",
+    "sync:types": "bun scripts/sync-types.ts",
+    "dev:portal": "bun --filter @app/portal dev",
+    "dev:admin": "bun --filter @app/admin dev",
+    "build": "bun --filter @app/portal build && bun --filter @app/admin build"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

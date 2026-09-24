@@ -1,0 +1,12 @@
+{
+  "name": "@app/ui",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./utils": "./src/utils.ts",
+    "./demo": "./src/demo.ts"
+  },
+  "scripts": { "typecheck": "tsc --noEmit -p ." },
+  "dependencies": { "clsx": "^2.1.1", "tailwind-merge": "^3.4.0" }
+}

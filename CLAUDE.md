@@ -28,17 +28,21 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   procedures are 404 on the portal and a preparer identity is ignored there (`src/identity.ts`, `src/trpc.ts`).
 - **Access:** every client-facing procedure goes through `src/access.ts` (`engagementFor`, `documentFor`).
   Denials are NOT_FOUND. Identity comes from `src/identity.ts` — demo header/cookie today, sessions after task 05.
-- `apps/portal` — the client portal: its own React 19 + Vite app, mobile-first (arrives with ticket 12).
-- `apps/admin` — the preparer admin: its own React 19 + Vite app from skelly-admin (ticket 13).
+- `apps/portal` — the client portal: React 19 + Vite, mobile-first, plain HTML until the design lands (ticket 12).
+  Dev on :5173, proxied to the portal listener (:3000).
+- `apps/admin` — the preparer admin: React 19 + Vite from skelly-admin (ticket 13). Dev on :5174, proxied to :3001.
   Both talk to the same backend; access is decided server-side, never by which app is calling.
-  Frontends import the `AppRouter` contract and `packages/ui`, never server source.
-- `packages/ui` — the shared design system: tokens + shadcn/Radix primitives (ticket 11).
+  Frontends type against a **committed copy** of the contract (`src/lib/app-router.d.ts`), never server source.
+  After changing any procedure run `bun run sync:types`; `contract.test.ts` fails while a copy is stale.
+  Demo identity is a per-app cookie (`btp_demo_portal` / `btp_demo_admin`): browsers share cookies across ports.
+- `packages/ui` — shared tokens (`tokens.css`, empty until ticket 10), `cn`, and the demo identity helpers.
 - `apps/site` — marketing site (skelly-site, last).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
 
 ## Commands
 
-- `bun install` · `bun run dev` · `bun run seed` · `bun run migrate [--status]` · `bun test` · `bun run typecheck`
+- `bun install` · `bun run dev` (server) · `bun run dev:portal` · `bun run dev:admin` · `bun run build` (both apps)
+- `bun run sync:types` · `bun run seed` · `bun run migrate [--status]` · `bun test` · `bun run typecheck`
 - Live only (see `docs/live-runbook.md`): `bun run start` · `bun run live:check` · `bun run backup` ·
   `bun run backup:verify <file>` · `bun run restore <file> <empty-dir>` · `bun run purge [--confirm]`
 - Demo mode wipes and re-seeds `data/demo/` on every boot (25 invented households, see `apps/server/src/db/seed/`).

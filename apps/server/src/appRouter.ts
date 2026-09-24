@@ -1,3 +1,4 @@
+import { demoRouter } from "./routes/demo";
 import { documentRouter } from "./routes/document";
 import { engagementRouter } from "./routes/engagement";
 import { healthRouter } from "./routes/health";
@@ -11,6 +12,7 @@ import { mergeRouters, router } from "./trpc";
 
 export const appRouter = router({
   health: healthRouter,
+  demo: demoRouter,
   engagement: mergeRouters(engagementRouter, returningRouter),
   intake: intakeRouter,
   request: mergeRouters(requestRouter, router({ createExpected: createExpectedProcedure })),

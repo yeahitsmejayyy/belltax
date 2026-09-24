@@ -8,8 +8,8 @@ import { downloadDocument, uploadDocument } from "./rest/documents";
 import type { Surface } from "./identity";
 import { createContext } from "./trpc";
 
-// One host for everything: /trpc for the API, /health for a quick look, and the built SPA for
-// every other path, so the demo deploys as a single process.
+// One handler per listener (portal or admin): /trpc for the API, /api for files, /health for a quick
+// look, and that surface's built app (apps/portal/dist or apps/admin/dist) for every other path.
 
 type Options = {
   surface: Surface; // which listener this handler serves

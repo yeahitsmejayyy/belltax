@@ -88,3 +88,33 @@ describe("configuration and the tunnel check", () => {
     expect(tunnel(undefined).status).toBe("warn");
   });
 });
+
+describe("the demo sign-in picker", () => {
+  const users = async (surface: "portal" | "admin") =>
+    (await w.call(null, "demo.users", undefined, "query", surface)).data as { role: string; email: string }[];
+
+  test("lists clients on the portal and the preparer on the admin", async () => {
+    const portal = await users("portal");
+    expect(portal.length).toBeGreaterThan(20);
+    expect(portal.every((u) => u.role === "client" && u.email.endsWith(".test"))).toBe(true);
+    expect((await users("admin")).map((u) => u.role)).toEqual(["preparer"]);
+  });
+
+  test("doesn't exist in live mode", async () => {
+    w.use("live");
+    expect((await w.call(null, "demo.users", undefined, "query", "portal")).status).toBe(404);
+  });
+});
+
+describe("demo identity cookies", () => {
+  test("each listener reads only its own cookie, so the portal's client can't leak into the admin", async () => {
+    const client = w.get<{ id: string }>("SELECT id FROM users WHERE role = 'client' LIMIT 1").id;
+    const onAdmin = await w.handler(new Request(`${ORIGIN}/trpc/engagement.list`, { headers: { cookie: `btp_demo_portal=${client}` } }));
+    expect(onAdmin.status).toBe(200); // the portal cookie is ignored; the admin's demo-preparer default applies
+    const onPortal = await w.portal(new Request(`${ORIGIN}/trpc/engagement.mine`, { headers: { cookie: `btp_demo_portal=${client}` } }));
+    expect(onPortal.status).toBe(200);
+    const adminCookieOnPortal = await w.portal(new Request(`${ORIGIN}/trpc/engagement.mine`, { headers: { cookie: `btp_demo_admin=${client}` } }));
+    expect(adminCookieOnPortal.status).toBe(401);
+  });
+});
+

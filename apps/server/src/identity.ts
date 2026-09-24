@@ -4,7 +4,7 @@ import { runtime } from "./db/client";
 // resolveUser() with a session-cookie lookup and nothing downstream changes.
 //
 // Until then, identity exists in demo mode only: a request names a seeded user with the
-// x-demo-user header or btp_demo_user cookie (user id or email), and with neither it acts as the demo preparer
+// x-demo-user header or the btp_demo_portal / btp_demo_admin cookie (user id or email), and with neither it acts as the demo preparer
 // (so the pipeline opens straight in a browser). In live mode there is no identity at all,
 // so every non-public procedure answers 401.
 //
@@ -16,7 +16,9 @@ export type SessionUser = { id: string; role: "client" | "preparer"; personId: s
 export type Surface = "portal" | "admin";
 
 export const DEMO_USER_HEADER = "x-demo-user";
-export const DEMO_USER_COOKIE = "btp_demo_user";
+// One cookie per listener. Browsers share cookies across ports on the same host, so a single name
+// would let the portal's client identity leak into the admin (and, once auth exists, a session too).
+export const demoCookieFor = (surface: Surface) => `btp_demo_${surface}`;
 
 const cookie = (req: Request, name: string) =>
   req.headers
@@ -33,7 +35,7 @@ export function resolveUser(req: Request, surface: Surface): SessionUser | null 
 function identify(req: Request, surface: Surface): SessionUser | null {
   const { db, mode } = runtime();
   if (mode !== "demo") return null;
-  const asked = req.headers.get(DEMO_USER_HEADER) ?? cookie(req, DEMO_USER_COOKIE);
+  const asked = req.headers.get(DEMO_USER_HEADER) ?? cookie(req, demoCookieFor(surface));
   if (!asked && surface === "portal") return null; // the demo-preparer default is an admin convenience only
   const row = asked
     ? db.query<{ id: string; role: "client" | "preparer"; person_id: string | null }, [string, string]>("SELECT id, role, person_id FROM users WHERE id = ? OR email = ?").get(decodeURIComponent(asked), decodeURIComponent(asked))

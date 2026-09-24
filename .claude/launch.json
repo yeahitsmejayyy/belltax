@@ -23,6 +23,24 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "portal",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "dev:portal"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "dev:admin"
+      ],
+      "port": 5174
     }
   ]
 }

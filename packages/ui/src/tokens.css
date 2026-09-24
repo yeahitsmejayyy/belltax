@@ -1,0 +1,8 @@
+/*
+ * Bell Tax Prep design tokens — shared by apps/portal and apps/admin.
+ * Empty on purpose until ticket 10 turns the Claude Design output into principles.md and real tokens
+ * (colour, type, spacing, radius, motion) for light and dark. Both apps already import this file, so
+ * filling it in restyles both at once.
+ */
+:root {
+}
