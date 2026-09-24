@@ -313,3 +313,99 @@ export const PaymentRecordInput = z.object({
   receivedOn: IsoDateString,
   note: z.string().trim().max(500).optional(),
 });
+
+// ---- Onboarding: households, people, returns, logins (preparer) ----
+
+const Name = z.string().trim().min(1).max(80);
+const PersonFields = {
+  firstName: Name,
+  lastName: Name,
+  middleName: Name.nullable().optional(),
+  suffix: z.string().trim().max(10).nullable().optional(),
+  dateOfBirth: IsoDateString.nullable().optional(),
+  // Last four digits only. The portal never stores a full SSN (WISP §V.1).
+  ssnLast4: z.string().regex(/^\d{4}$/, "Last four digits only").nullable().optional(),
+  email: z.email().nullable().optional(),
+  phone: z.string().trim().min(7).max(30).nullable().optional(),
+};
+
+export const HouseholdCreateInput = z.object({ displayName: Name });
+export const HouseholdUpdateInput = z.object({ householdId: Id, displayName: Name.optional(), archived: z.boolean().optional() });
+export const HouseholdListInput = z.object({ search: z.string().trim().max(100).optional(), includeArchived: z.boolean().optional() }).optional();
+export const HouseholdGetInput = z.object({ householdId: Id });
+
+export const PersonAddInput = z.object({
+  householdId: Id,
+  ...PersonFields,
+  confirmDuplicate: z.boolean().optional(), // send true after the preparer has seen the possible-duplicate warning
+});
+export const PersonUpdateInput = z.object({
+  personId: Id,
+  householdId: Id.nullable().optional(), // move to another household, or out of every household
+  firstName: Name.optional(),
+  lastName: Name.optional(),
+  middleName: PersonFields.middleName,
+  suffix: PersonFields.suffix,
+  dateOfBirth: PersonFields.dateOfBirth,
+  ssnLast4: PersonFields.ssnLast4,
+  email: PersonFields.email,
+  phone: PersonFields.phone,
+});
+
+export const PersonView = z.object({
+  personId: Id,
+  householdId: Id.nullable(),
+  firstName: z.string(),
+  middleName: z.string().nullable(),
+  lastName: z.string(),
+  suffix: z.string().nullable(),
+  dateOfBirth: z.string().nullable(),
+  ssnLast4: z.string().nullable(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  login: z.object({ userId: Id, email: z.string(), activated: z.boolean() }).nullable(),
+});
+export type PersonView = z.infer<typeof PersonView>;
+
+export const HouseholdSummary = z.object({
+  id: Id,
+  displayName: z.string(),
+  archivedAt: Timestamp.nullable(),
+  members: z.int(),
+  logins: z.int(),
+  latestTaxYear: TaxYear.nullable(),
+  lastActivityAt: Timestamp.nullable(),
+});
+export const HouseholdDetail = z.object({
+  id: Id,
+  displayName: z.string(),
+  archivedAt: Timestamp.nullable(),
+  members: z.array(PersonView),
+  access: z.array(z.object({ grantId: Id, userId: Id, email: z.string(), name: z.string().nullable(), grantedAt: Timestamp, revokedAt: Timestamp.nullable() })),
+  returns: z.array(z.object({ engagementId: Id, taxYear: TaxYear, kind: EngagementKind, stage: Stage, filingStatus: FilingStatus.nullable(), filers: z.array(z.string()) })),
+});
+export type HouseholdDetail = z.infer<typeof HouseholdDetail>;
+
+export const EngagementCreateInput = z.object({
+  householdId: Id,
+  taxYear: TaxYear,
+  kind: EngagementKind.default("original"),
+  amendsId: Id.optional(), // required for amended returns; its people are copied over
+});
+export const EngagementSetPeopleInput = z.object({
+  engagementId: Id,
+  primary: Id,
+  spouse: Id.optional(),
+  dependents: z
+    .array(z.object({ personId: Id, relationship: z.string().trim().min(1).max(40), monthsLivedWith: z.int().min(0).max(12) }))
+    .max(15)
+    .default([]),
+});
+
+export const LoginCreateInput = z.object({
+  personId: Id,
+  email: z.email(),
+  grantHousehold: z.boolean().default(true), // also open their current household to them
+});
+export const AccessGrantInput = z.object({ userId: Id, householdId: Id });
+export const AccessRevokeInput = z.object({ grantId: Id, reason: z.string().trim().min(3).max(500) });

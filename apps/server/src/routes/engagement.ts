@@ -2,9 +2,11 @@ import { TRPCError } from "@trpc/server";
 import {
   AdvanceStageInput,
   EngagementDetail,
+  EngagementCreateInput,
   EngagementDetailInput,
   EngagementList,
   EngagementListInput,
+  EngagementSetPeopleInput,
   MyEngagement,
   now,
   SetFilingStatusInput,
@@ -281,5 +283,144 @@ export const engagementRouter = router({
         });
       })();
       return { filingStatus: input.filingStatus };
+    }),
+
+  // A new return for a household and year. An amendment starts with the original's people on it.
+  create: preparerProcedure
+    .input(EngagementCreateInput)
+    .output(z.object({ engagementId: z.string() }))
+    .mutation(({ ctx, input }) => {
+      const { db } = runtime();
+      if (!db.query("SELECT 1 FROM households WHERE id = ?").get(input.householdId)) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Household not found." });
+      }
+      if (input.kind === "original" && input.amendsId) throw new TRPCError({ code: "BAD_REQUEST", message: "Only an amended return points at another return." });
+      if (input.kind === "amended") {
+        if (!input.amendsId) throw new TRPCError({ code: "BAD_REQUEST", message: "Say which original return this amends." });
+        const original = db
+          .query<{ household_id: string; tax_year: number; kind: string }, [string]>("SELECT household_id, tax_year, kind FROM engagements WHERE id = ?")
+          .get(input.amendsId);
+        if (!original) throw new TRPCError({ code: "NOT_FOUND", message: "Original return not found." });
+        if (original.kind !== "original") throw new TRPCError({ code: "BAD_REQUEST", message: "An amendment points at the original return, not at another amendment." });
+        if (original.household_id !== input.householdId || original.tax_year !== input.taxYear) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "An amendment belongs to the same household and tax year as the return it amends." });
+        }
+      }
+      const id = Bun.randomUUIDv7();
+      const at = now();
+      db.transaction(() => {
+        db.run(
+          `INSERT INTO engagements (id, household_id, tax_year, kind, amends_id, stage, stage_changed_at, created_at)
+           VALUES (?, ?, ?, ?, ?, 'invited', ?, ?)`,
+          [id, input.householdId, input.taxYear, input.kind, input.amendsId ?? null, at, at],
+        );
+        if (input.amendsId) {
+          db.run(
+            `INSERT INTO return_people (engagement_id, person_id, tax_year, engagement_kind, role, relationship, months_lived_with)
+             SELECT ?, person_id, tax_year, 'amended', role, relationship, months_lived_with FROM return_people WHERE engagement_id = ?`,
+            [id, input.amendsId],
+          );
+        }
+        appendEvent(db, {
+          actor: ctx.user,
+          type: "engagement.created",
+          subjectType: "engagement",
+          subjectId: id,
+          householdId: input.householdId,
+          engagementId: id,
+          data: { tax_year: input.taxYear, kind: input.kind },
+        });
+      })();
+      return { engagementId: id };
+    }),
+
+  // Who's on this return: one primary, at most one spouse, any dependents. Checked against every other
+  // return that year first, so the preparer reads a sentence, not a constraint name (the database still
+  // enforces R6–R10 underneath).
+  setPeople: preparerProcedure
+    .input(EngagementSetPeopleInput)
+    .output(z.object({ engagementId: z.string(), people: z.array(z.object({ personId: z.string(), role: z.string() })) }))
+    .mutation(({ ctx, input }) => {
+      const { db } = runtime();
+      const e = engagementFor(ctx.user, input.engagementId);
+      const eng = db
+        .query<{ kind: "original" | "amended"; letter_status: string | null }, [string]>(
+          "SELECT e.kind, l.status AS letter_status FROM engagements e LEFT JOIN engagement_letters l ON l.id = e.letter_id WHERE e.id = ?",
+        )
+        .get(e.id)!;
+      if (!["invited", "intake", "documents", "ready"].includes(e.stage)) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Who's on the return can't change once preparation has started. Move it back first." });
+      }
+
+      const wanted = [
+        { personId: input.primary, role: "primary" as const },
+        ...(input.spouse ? [{ personId: input.spouse, role: "spouse" as const }] : []),
+        ...input.dependents.map((d) => ({ ...d, role: "dependent" as const })),
+      ];
+      const nameOf = (id: string) =>
+        db.query<{ name: string }, [string]>("SELECT first_name || ' ' || last_name AS name FROM people WHERE id = ?").get(id)?.name;
+      const seen = new Set<string>();
+      for (const w of wanted) {
+        const name = nameOf(w.personId);
+        if (!name) throw new TRPCError({ code: "NOT_FOUND", message: "A person on this return wasn't found." });
+        if (seen.has(w.personId)) throw new TRPCError({ code: "BAD_REQUEST", message: `${name} is listed twice.` });
+        seen.add(w.personId);
+      }
+
+      // A signed or sent letter names its filers; changing them means a new letter.
+      const oldFilers = db
+        .query<{ person_id: string }, [string]>("SELECT person_id FROM return_people WHERE engagement_id = ? AND role IN ('primary', 'spouse') ORDER BY person_id")
+        .all(e.id)
+        .map((r) => r.person_id)
+        .join();
+      const newFilers = wanted.filter((w) => w.role !== "dependent").map((w) => w.personId).sort().join();
+      if (oldFilers && oldFilers !== newFilers && eng.letter_status && eng.letter_status !== "draft" && eng.letter_status !== "void") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "The engagement letter already names the filers. Void it before changing them." });
+      }
+
+      if (eng.kind === "original") {
+        for (const w of wanted) {
+          const filer = w.role !== "dependent";
+          const clash = db
+            .query<{ household: string }, [string, number, string]>(
+              `SELECT h.display_name AS household FROM return_people rp
+                 JOIN engagements x ON x.id = rp.engagement_id JOIN households h ON h.id = x.household_id
+                WHERE rp.person_id = ? AND rp.tax_year = ? AND rp.engagement_kind = 'original' AND rp.engagement_id <> ?
+                  AND ${filer ? "rp.role IN ('primary', 'spouse')" : "rp.role = 'dependent'"}
+                LIMIT 1`,
+            )
+            .get(w.personId, e.tax_year, e.id);
+          if (clash) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: filer
+                ? `${nameOf(w.personId)} already files an original ${e.tax_year} return (${clash.household} household).`
+                : `${nameOf(w.personId)} is already claimed as a dependent for ${e.tax_year} (${clash.household} household).`,
+            });
+          }
+        }
+      }
+
+      db.transaction(() => {
+        db.run("DELETE FROM return_people WHERE engagement_id = ?", [e.id]);
+        for (const w of wanted) {
+          const dep = w.role === "dependent" ? (w as { relationship: string; monthsLivedWith: number }) : null;
+          db.run(
+            `INSERT INTO return_people (engagement_id, person_id, tax_year, engagement_kind, role, relationship, months_lived_with)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [e.id, w.personId, e.tax_year, eng.kind, w.role, dep?.relationship ?? null, dep?.monthsLivedWith ?? null],
+          );
+        }
+        appendEvent(db, {
+          actor: ctx.user,
+          type: "engagement.people_set",
+          subjectType: "engagement",
+          subjectId: e.id,
+          householdId: e.household_id,
+          engagementId: e.id,
+          data: { filers: wanted.filter((w) => w.role !== "dependent").length, dependents: input.dependents.length },
+        });
+      })();
+      return { engagementId: e.id, people: wanted.map((w) => ({ personId: w.personId, role: w.role })) };
     }),
 });
