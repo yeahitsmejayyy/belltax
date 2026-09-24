@@ -60,8 +60,16 @@ export type LetterStatus = z.infer<typeof LetterStatus>;
 export const InvoiceStatus = z.enum(["draft", "issued", "void"]);
 export type InvoiceStatus = z.infer<typeof InvoiceStatus>;
 
-export const PaymentProvider = z.enum(["stripe"]);
+export const PaymentProvider = z.enum(["stripe", "manual"]);
 export type PaymentProvider = z.infer<typeof PaymentProvider>;
+
+// How a manually recorded payment arrived.
+export const PaymentMethod = z.enum(["cash", "check", "zelle", "other"]);
+export type PaymentMethod = z.infer<typeof PaymentMethod>;
+
+// Who sends us webhooks. Stripe only; manual payments never arrive by webhook.
+export const WebhookProvider = z.enum(["stripe"]);
+export type WebhookProvider = z.infer<typeof WebhookProvider>;
 
 export const PaymentStatus = z.enum(["pending", "succeeded", "failed", "refunded"]);
 export type PaymentStatus = z.infer<typeof PaymentStatus>;

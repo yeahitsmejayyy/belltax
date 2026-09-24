@@ -9,6 +9,7 @@ import {
   InvoiceStatus,
   LetterStatus,
   now,
+  PaymentMethod,
   PaymentProvider,
   PaymentStatus,
   RequestKind,
@@ -18,6 +19,7 @@ import {
   Stage,
   tables,
   UserRole,
+  WebhookProvider,
 } from "@app/schema";
 import {
   clientUser,
@@ -87,8 +89,9 @@ describe("zod ↔ SQL drift", () => {
       "documents.status": DocumentStatus.options,
       "invoices.status": InvoiceStatus.options,
       "payments.provider": PaymentProvider.options,
+      "payments.method": PaymentMethod.options,
       "payments.status": PaymentStatus.options,
-      "webhook_receipts.provider": PaymentProvider.options,
+      "webhook_receipts.provider": WebhookProvider.options,
       "events.actor_kind": ActorKind.options,
     };
     const found: Record<string, string[]> = {};

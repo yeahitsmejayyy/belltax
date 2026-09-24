@@ -7,6 +7,7 @@ import {
   FilingStatus,
   InvoiceStatus,
   LetterStatus,
+  PaymentMethod,
   PaymentProvider,
   PaymentStatus,
   RequestKind,
@@ -15,6 +16,7 @@ import {
   SourceKind,
   Stage,
   UserRole,
+  WebhookProvider,
 } from "./enums";
 import { Cents, Id, IsoDate, Json, Sha256, SsnLast4, TaxYear, Timestamp } from "./primitives";
 
@@ -223,8 +225,12 @@ export const PaymentRow = z.object({
   id: Id,
   invoice_id: Id,
   provider: PaymentProvider,
-  checkout_session_id: text,
+  checkout_session_id: text.nullable(),
   payment_intent_id: text.nullable(),
+  method: PaymentMethod.nullable(),
+  received_on: IsoDate.nullable(),
+  note: text.nullable(),
+  recorded_by: Id.nullable(),
   amount_cents: Cents,
   status: PaymentStatus,
   failure_message: text.nullable(),
@@ -233,7 +239,7 @@ export const PaymentRow = z.object({
 });
 
 export const WebhookReceiptRow = z.object({
-  provider: PaymentProvider,
+  provider: WebhookProvider,
   event_id: text,
   received_at: Timestamp,
 });

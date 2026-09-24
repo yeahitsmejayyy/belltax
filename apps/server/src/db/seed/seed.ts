@@ -3,6 +3,7 @@ import { SOURCE_DOCUMENT_KINDS, Stage } from "@app/schema";
 import { HOUSEHOLDS, namePools, planHousehold, type HouseholdPlan, type HouseholdSpec, type ReturnPlan } from "./households";
 import { demoPdf } from "./pdf";
 import { createRng } from "./random";
+import { suggestedLines } from "../../money/pricing";
 import { CONSENT_TEXT, FILING_STATUS_LABEL, renderLetter } from "../../letters/template";
 import type { Storage } from "../../storage";
 
@@ -27,7 +28,6 @@ const DAY = 86_400_000;
 const STAGES = Stage.options;
 const reached = (stage: Stage, target: Stage) => STAGES.indexOf(stage) >= STAGES.indexOf(target);
 
-const PRICES = { federal: 25000, state: 10000, scheduleC: 15000, scheduleE: 12500, scheduleD: 7500, amended: 20000 };
 const INTAKE_ANSWERS = JSON.stringify({ moved: false, life_changes: [], health_coverage: "employer", refund_preference: "direct_deposit_via_preparer" });
 
 export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
@@ -279,16 +279,12 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
       const invId = rng.id();
       const number = `${year + 1}-${String(summary.returns).padStart(4, "0")}${kind === "amended" ? "1" : ""}`;
       const kinds = rp.sources.map((k) => ctx.plan.sources.find((x) => x.key === k)!.kind);
-      const lines: [string, number, number][] =
-        kind === "amended"
-          ? [["Amended return (Form 1040-X)", 1, PRICES.amended]]
-          : [
-              ["Federal return (Form 1040)", 1, PRICES.federal],
-              ["California return (Form 540)", 1, PRICES.state],
-              ...(kinds.includes("business") ? [["Schedule C · self-employment", 1, PRICES.scheduleC] as [string, number, number]] : []),
-              ...(kinds.includes("rental_property") ? [["Schedule E · rental property", kinds.filter((k) => k === "rental_property").length, PRICES.scheduleE] as [string, number, number]] : []),
-              ...(kinds.includes("brokerage") ? [["Schedule D · investments", 1, PRICES.scheduleD] as [string, number, number]] : []),
-            ];
+      const lines = suggestedLines({
+        isAmended: kind === "amended",
+        businesses: kinds.filter((k) => k === "business").length,
+        rentals: kinds.filter((k) => k === "rental_property").length,
+        investments: kinds.includes("brokerage") ? 1 : 0,
+      }).map((l) => [l.description, l.quantity, l.unitAmountCents] as [string, number, number]);
       const createdInv = between(0.9, 0.95);
       insert("invoices", { id: invId, engagement_id: engId, number, status: "draft", due_on: `${year + 1}-04-15`, created_at: createdInv });
       lines.forEach(([description, quantity, unit], i) =>
@@ -301,14 +297,23 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
       const pay = (amount: number, status: "succeeded" | "failed", when: string) => {
         const payId = rng.id();
         insert("payments", {
-          id: payId, invoice_id: invId, checkout_session_id: `cs_test_demo_${payId.slice(-12)}`, payment_intent_id: `pi_test_demo_${payId.slice(-12)}`,
+          id: payId, invoice_id: invId, provider: "stripe", checkout_session_id: `cs_test_demo_${payId.slice(-12)}`, payment_intent_id: `pi_test_demo_${payId.slice(-12)}`,
           amount_cents: amount, status, failure_message: status === "failed" ? "Your card was declined." : null, created_at: when, updated_at: when,
         });
         event(`payment.${status}`, { kind: "stripe" }, { household: hh, engagement: engId, subjectType: "payment", subjectId: payId, when });
       };
+      // Half paid by Zelle and recorded by hand: the manual path, alongside Stripe.
+      const recordManual = (amount: number, when: string) => {
+        const payId = rng.id();
+        insert("payments", {
+          id: payId, invoice_id: invId, provider: "manual", method: "zelle", received_on: when.slice(0, 10), note: "Deposit via Zelle",
+          recorded_by: preparerId, amount_cents: amount, status: "succeeded", created_at: when, updated_at: when,
+        });
+        event("payment.recorded", { kind: "preparer", userId: preparerId }, { household: hh, engagement: engId, subjectType: "payment", subjectId: payId, when });
+      };
       if (reached(stage, "filed")) {
         if (stage === "filed" && opts2.extra === "failed_payment") pay(total, "failed", between(0.95, 0.99));
-        else if (stage === "filed" && opts2.extra === "partial_payment") pay(Math.round(total / 2), "succeeded", between(0.95, 0.99));
+        else if (stage === "filed" && opts2.extra === "partial_payment") recordManual(Math.round(total / 2), between(0.95, 0.99));
         else pay(total, "succeeded", between(0.95, 0.99));
       }
     }

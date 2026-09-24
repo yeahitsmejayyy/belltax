@@ -16,6 +16,7 @@ import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import { blockersFor, nextStage } from "../gates";
 import { listDocuments } from "./document";
+import { listInvoices } from "./invoice";
 import { readIntake } from "./intake";
 import { listRequests } from "./request";
 import { authedProcedure, preparerProcedure, router } from "../trpc";
@@ -177,35 +178,7 @@ export const engagementRouter = router({
         letter = { id: l.id, status: l.status, sentAt: l.sent_at, signers };
       }
 
-      const invoices = db
-        .query<Record<string, string | number | null>, [string]>(
-          `SELECT b.invoice_id, i.number, b.status, b.settlement, b.total_cents, b.paid_cents, b.balance_cents, i.due_on
-             FROM invoice_balances b JOIN invoices i ON i.id = b.invoice_id
-            WHERE b.engagement_id = ? ORDER BY i.created_at`,
-        )
-        .all(e.id)
-        .map((r) => ({
-          id: r.invoice_id as string,
-          number: r.number as string,
-          status: r.status as "draft" | "issued" | "void",
-          settlement: r.settlement as EngagementDetail["invoices"][number]["settlement"],
-          totalCents: r.total_cents as number,
-          paidCents: r.paid_cents as number,
-          balanceCents: r.balance_cents as number,
-          dueOn: r.due_on as string | null,
-          lines: db
-            .query<{ description: string; quantity: number; unit_amount_cents: number }, [string]>(
-              "SELECT description, quantity, unit_amount_cents FROM invoice_lines WHERE invoice_id = ? ORDER BY position",
-            )
-            .all(r.invoice_id as string)
-            .map((l) => ({ description: l.description, quantity: l.quantity, unitAmountCents: l.unit_amount_cents })),
-          payments: db
-            .query<{ id: string; amount_cents: number; status: "pending" | "succeeded" | "failed" | "refunded"; failure_message: string | null; created_at: string }, [string]>(
-              "SELECT id, amount_cents, status, failure_message, created_at FROM payments WHERE invoice_id = ? ORDER BY created_at DESC",
-            )
-            .all(r.invoice_id as string)
-            .map((p) => ({ id: p.id, amountCents: p.amount_cents, status: p.status, failureMessage: p.failure_message, createdAt: p.created_at })),
-        }));
+      const invoices = listInvoices(e.id, ctx.user);
 
       // This return's events, plus household-level ones (grants, letters) that don't name a return.
       const timeline = db

@@ -386,17 +386,28 @@ BEGIN
   SELECT RAISE(ABORT, 'invoice lines are frozen once the invoice is issued');
 END;
 
+-- Two ways money arrives: Stripe Checkout (ticket 09) or recorded by hand (cash, check, Zelle).
+-- Each path carries only its own fields, and the CHECKs keep them from mixing.
 CREATE TABLE IF NOT EXISTS payments (
   id                   TEXT PRIMARY KEY,
   invoice_id           TEXT NOT NULL REFERENCES invoices (id),
-  provider             TEXT NOT NULL DEFAULT 'stripe' CHECK (provider IN ('stripe')),
-  checkout_session_id  TEXT NOT NULL UNIQUE,
-  payment_intent_id    TEXT,
+  provider             TEXT NOT NULL CHECK (provider IN ('stripe', 'manual')),
+  checkout_session_id  TEXT UNIQUE,                                          -- stripe only
+  payment_intent_id    TEXT,                                                 -- stripe only
+  method               TEXT CHECK (method IN ('cash', 'check', 'zelle', 'other')),  -- manual only
+  received_on          TEXT CHECK (received_on LIKE '____-__-__' AND length(received_on) = 10),  -- manual only
+  note                 TEXT,
+  recorded_by          TEXT REFERENCES users (id),                           -- manual only: who entered it
   amount_cents         INTEGER NOT NULL CHECK (amount_cents > 0),            -- R26
   status               TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'succeeded', 'failed', 'refunded')),
   failure_message      TEXT,
   created_at           TEXT NOT NULL CHECK (created_at LIKE '____-__-__T__:__:__%Z'),
-  updated_at           TEXT NOT NULL CHECK (updated_at LIKE '____-__-__T__:__:__%Z')
+  updated_at           TEXT NOT NULL CHECK (updated_at LIKE '____-__-__T__:__:__%Z'),
+  CHECK ((provider = 'stripe') = (checkout_session_id IS NOT NULL)),
+  CHECK (provider = 'stripe' OR payment_intent_id IS NULL),
+  CHECK ((provider = 'manual') = (method IS NOT NULL AND received_on IS NOT NULL AND recorded_by IS NOT NULL)),
+  CHECK (provider = 'manual' OR (method IS NULL AND received_on IS NULL AND recorded_by IS NULL)),
+  CHECK (provider = 'stripe' OR status = 'succeeded')                        -- money in hand is simply received
 ) STRICT;
 
 CREATE TRIGGER IF NOT EXISTS payments_only_on_issued_invoices

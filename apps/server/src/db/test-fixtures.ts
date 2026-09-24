@@ -140,6 +140,7 @@ export const payment = (db: Database, invoice_id: string, amount_cents: number, 
   insert(db, "payments", {
     id: id(),
     invoice_id,
+    provider: "stripe",
     checkout_session_id: `cs_test_${id()}`,
     amount_cents,
     status,

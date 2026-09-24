@@ -24,10 +24,14 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   Routes read the DB via `runtime()` (`src/db/client.ts`), never the tRPC context — keeps Bun types out of
   the `AppRouter` contract (`bun run --filter @app/server types:emit` refuses a leaky one). Preparer procedures
   are closed in live mode until auth (task 05). One host serves `/trpc`, `/api` (file upload/download),
-  `/health` and `apps/web/dist`.
+  `/health`, and the built frontends (today `apps/web/dist`; ticket 15 splits it into portal + admin).
 - **Access:** every client-facing procedure goes through `src/access.ts` (`engagementFor`, `documentFor`).
   Denials are NOT_FOUND. Identity comes from `src/identity.ts` — demo header/cookie today, sessions after task 05.
-- `apps/web` — one React 19 + Vite SPA, role-gated `/portal` and `/admin` (arrives with the UI tickets).
+- `apps/portal` — the client portal: its own React 19 + Vite app, mobile-first (arrives with ticket 12).
+- `apps/admin` — the preparer admin: its own React 19 + Vite app from skelly-admin (ticket 13).
+  Both talk to the same backend; access is decided server-side, never by which app is calling.
+  Frontends import the `AppRouter` contract and `packages/ui`, never server source.
+- `packages/ui` — the shared design system: tokens + shadcn/Radix primitives (ticket 11).
 - `apps/site` — marketing site (skelly-site, last).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
 

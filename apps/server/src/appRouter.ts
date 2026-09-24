@@ -2,6 +2,7 @@ import { documentRouter } from "./routes/document";
 import { engagementRouter } from "./routes/engagement";
 import { healthRouter } from "./routes/health";
 import { intakeRouter } from "./routes/intake";
+import { invoiceRouter, paymentRouter } from "./routes/invoice";
 import { letterRouter } from "./routes/letter";
 import { requestRouter } from "./routes/request";
 import { router } from "./trpc";
@@ -13,6 +14,8 @@ export const appRouter = router({
   request: requestRouter,
   document: documentRouter,
   letter: letterRouter,
+  invoice: invoiceRouter,
+  payment: paymentRouter,
 });
 
 export type AppRouter = typeof appRouter;

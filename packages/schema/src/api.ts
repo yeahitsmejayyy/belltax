@@ -6,6 +6,8 @@ import {
   FilingStatus,
   InvoiceStatus,
   LetterStatus,
+  PaymentMethod,
+  PaymentProvider,
   PaymentStatus,
   RequestKind,
   RequestStatus,
@@ -13,7 +15,7 @@ import {
   SourceKind,
   Stage,
 } from "./enums";
-import { Id, TaxYear, Timestamp } from "./primitives";
+import { Id, IsoDate as IsoDateString, TaxYear, Timestamp } from "./primitives";
 
 // Shapes that cross the wire. The server validates outputs against these, so the web app can trust them.
 
@@ -164,8 +166,21 @@ export const InvoiceSummary = z.object({
   balanceCents: z.int(),
   dueOn: z.string().nullable(),
   lines: z.array(z.object({ description: z.string(), quantity: z.int(), unitAmountCents: z.int() })),
-  payments: z.array(z.object({ id: Id, amountCents: z.int(), status: PaymentStatus, failureMessage: z.string().nullable(), createdAt: Timestamp })),
+  payments: z.array(
+    z.object({
+      id: Id,
+      amountCents: z.int(),
+      status: PaymentStatus,
+      provider: PaymentProvider,
+      method: PaymentMethod.nullable(), // manual payments: cash, check, zelle, other
+      receivedOn: z.string().nullable(),
+      note: z.string().nullable(),
+      failureMessage: z.string().nullable(),
+      createdAt: Timestamp,
+    }),
+  ),
 });
+export type InvoiceSummary = z.infer<typeof InvoiceSummary>;
 
 export const TimelineEvent = z.object({
   id: Id,
@@ -274,3 +289,27 @@ export const LetterView = z.object({
     .nullable(),
 });
 export type LetterView = z.infer<typeof LetterView>;
+
+// ---- Invoices and manual payments (Stripe arrives with ticket 09) ----
+
+export const InvoiceLineInput = z.object({
+  description: z.string().trim().min(1).max(200),
+  quantity: z.int().min(1).max(99),
+  unitAmountCents: z.int().min(1).max(10_000_000),
+});
+export const InvoiceListInput = EngagementRef;
+export const InvoiceSuggestInput = EngagementRef;
+export const InvoiceCreateInput = EngagementRef.extend({
+  lines: z.array(InvoiceLineInput).min(1).max(20).optional(), // omitted: the suggested lines
+  dueOn: IsoDateString.optional(),
+});
+export const InvoiceUpdateLinesInput = z.object({ invoiceId: Id, lines: z.array(InvoiceLineInput).min(1).max(20) });
+export const InvoiceRefInput = z.object({ invoiceId: Id });
+export const InvoiceVoidInput = z.object({ invoiceId: Id, reason: z.string().trim().min(3).max(500) });
+export const PaymentRecordInput = z.object({
+  invoiceId: Id,
+  amountCents: z.int().min(1).max(10_000_000),
+  method: PaymentMethod,
+  receivedOn: IsoDateString,
+  note: z.string().trim().max(500).optional(),
+});
