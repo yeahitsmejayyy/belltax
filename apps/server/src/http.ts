@@ -48,13 +48,13 @@ export function createFetchHandler({ webDist, devOrigin }: Options) {
     });
   };
 
-  return async function fetch(req: Request): Promise<Response> {
+  return async function fetch(req: Request, socketIp?: string): Promise<Response> {
     const { pathname } = new URL(req.url);
 
     if (req.method === "OPTIONS") return cors(new Response(null, { status: 204 }), req);
 
     if (pathname.startsWith("/trpc")) {
-      const res = await fetchRequestHandler({ endpoint: "/trpc", req, router: appRouter, createContext });
+      const res = await fetchRequestHandler({ endpoint: "/trpc", req, router: appRouter, createContext: (o) => createContext({ req: o.req, ip: socketIp }) });
       return cors(res, req);
     }
 

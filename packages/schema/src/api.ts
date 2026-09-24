@@ -229,3 +229,48 @@ export const DocumentReviewInput = z.discriminatedUnion("decision", [
   z.object({ documentId: Id, decision: z.literal("accept") }),
   z.object({ documentId: Id, decision: z.literal("reject"), reason: z.string().trim().min(3).max(500) }),
 ]);
+
+// ---- Engagement letter ----
+
+export const LetterCreateInput = z.object({
+  // Returns this letter covers: one, or a married couple's two separate returns. Same household and year.
+  engagementIds: z.array(Id).min(1).max(4),
+});
+export const LetterRefInput = z.object({ letterId: Id });
+export const LetterVoidInput = z.object({ letterId: Id, reason: z.string().trim().min(3).max(500) });
+export const LetterGetInput = EngagementRef;
+export const LetterSignInput = z.object({
+  letterId: Id,
+  typedName: z.string().trim().min(2).max(120),
+  consent: z.literal(true), // the checkbox; anything else is a 400
+  bodySha256: z.string().regex(/^[0-9a-f]{64}$/), // the text the signer actually read
+});
+
+export const LetterView = z.object({
+  id: Id,
+  status: LetterStatus,
+  householdName: z.string(),
+  taxYear: TaxYear,
+  templateVersion: z.int().positive(),
+  body: z.string(),
+  bodySha256: z.string(),
+  sentAt: Timestamp.nullable(),
+  engagementIds: z.array(Id),
+  consentText: z.string(),
+  signers: z.array(z.object({ personId: Id, name: z.string(), signedAt: Timestamp.nullable(), isMe: z.boolean() })),
+  canSign: z.boolean(), // the viewer files one of these returns, the letter is out for signature, and they haven't signed
+  // Preparer only: the signature record. Null for clients.
+  audit: z
+    .array(
+      z.object({
+        personId: Id,
+        typedName: z.string(),
+        signedAt: Timestamp,
+        ip: z.string(),
+        userAgent: z.string(),
+        hashMatches: z.boolean(), // the signature's hash equals the letter text's hash, recomputed now
+      }),
+    )
+    .nullable(),
+});
+export type LetterView = z.infer<typeof LetterView>;

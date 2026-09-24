@@ -170,7 +170,7 @@ export const engagementRouter = router({
                FROM return_people rp JOIN people p ON p.id = rp.person_id
                LEFT JOIN signatures s ON s.letter_id = ? AND s.person_id = p.id
               WHERE rp.engagement_id = ? AND rp.role IN ('primary', 'spouse')
-              ORDER BY rp.role DESC`,
+              ORDER BY rp.role`,
           )
           .all(l.id, e.id)
           .map((r) => ({ personId: r.person_id, name: r.name, signedAt: r.signed_at }));

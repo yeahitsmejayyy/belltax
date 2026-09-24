@@ -3,6 +3,7 @@ import { SOURCE_DOCUMENT_KINDS, Stage } from "@app/schema";
 import { HOUSEHOLDS, namePools, planHousehold, type HouseholdPlan, type HouseholdSpec, type ReturnPlan } from "./households";
 import { demoPdf } from "./pdf";
 import { createRng } from "./random";
+import { CONSENT_TEXT, FILING_STATUS_LABEL, renderLetter } from "../../letters/template";
 import type { Storage } from "../../storage";
 
 // Demo world only. Builds 25 invented households spread across every pipeline stage, following the
@@ -27,7 +28,6 @@ const STAGES = Stage.options;
 const reached = (stage: Stage, target: Stage) => STAGES.indexOf(stage) >= STAGES.indexOf(target);
 
 const PRICES = { federal: 25000, state: 10000, scheduleC: 15000, scheduleE: 12500, scheduleD: 7500, amended: 20000 };
-const CONSENT = "I have read this engagement letter and agree to its terms.";
 const INTAKE_ANSWERS = JSON.stringify({ moved: false, life_changes: [], health_coverage: "employer", refund_preference: "direct_deposit_via_preparer" });
 
 export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
@@ -237,12 +237,17 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
       const letterKey = `${hh}:${year}:${kind}:${rp.status === "mfs" ? "mfs" : rp.primary}`;
       let letter = letters.get(letterKey);
       if (!letter) {
-        const body = [
-          `Engagement letter · ${ctx.plan.displayName} household · tax year ${year}${kind === "amended" ? " (amended return)" : ""}`,
-          "Bell Tax Prep (demo practice) will prepare the federal and California income tax returns listed in the portal,",
-          "using the documents and answers you provide. You remain responsible for the accuracy of that information.",
-          "Fees are listed on your invoice. This letter is sample text generated for the demo.",
-        ].join("\n");
+        const letterReturns = ctx.plan.returns.filter((r) => (rp.status === "mfs" ? r.status === "mfs" : r === rp));
+        const nameOf = (k: string) => `${ctx.people.get(k)!.first} ${ctx.people.get(k)!.last}`;
+        const filersOfPlan = (r: ReturnPlan) => [r.primary, ...(r.spouse ? [r.spouse] : [])].map(nameOf);
+        const { body } = renderLetter({
+          householdName: ctx.plan.displayName,
+          taxYear: year,
+          amended: kind === "amended",
+          date: between(0.3, 0.35).slice(0, 10),
+          returns: letterReturns.map((r) => `${FILING_STATUS_LABEL[r.status]} — ${filersOfPlan(r).join(" & ")}`),
+          filers: letterReturns.flatMap(filersOfPlan),
+        });
         letter = { id: rng.id(), sha: new Bun.CryptoHasher("sha256").update(body).digest("hex"), signers: new Set(), signed: new Set(), sentAt: null };
         const sent = allDone ? between(0.7, 0.8) : null;
         letter.sentAt = sent;
@@ -262,7 +267,7 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
         const signedAt = between(0.8, 0.95);
         insert("signatures", {
           id: rng.id(), letter_id: letter.id, person_id: who.id, user_id: ctx.users.get(k)!, body_sha256: letter.sha,
-          typed_name: `${who.first} ${who.last}`, consent_text: CONSENT, ip: "192.0.2.10", user_agent: "Demo browser", signed_at: signedAt,
+          typed_name: `${who.first} ${who.last}`, consent_text: CONSENT_TEXT, ip: "192.0.2.10", user_agent: "Demo browser", signed_at: signedAt,
         });
         letter.signed.add(k);
         event("letter.signed", { kind: "client", userId: ctx.users.get(k)! }, { household: hh, engagement: engId, subjectType: "engagement_letter", subjectId: letter.id, when: signedAt });

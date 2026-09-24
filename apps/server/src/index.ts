@@ -11,10 +11,12 @@ const storage = createStorage(config.dataDir);
 const { db, seeded } = await bootDatabase(config, { storage });
 useRuntime({ db, storage, mode: config.mode });
 
+const handle = createFetchHandler({ webDist: join(REPO_ROOT, "apps/web/dist"), devOrigin: "http://localhost:5173" });
+
 const server = Bun.serve({
   port: config.port,
   hostname: "127.0.0.1", // never a public port; the live instance stays on this machine
-  fetch: createFetchHandler({ webDist: join(REPO_ROOT, "apps/web/dist"), devOrigin: "http://localhost:5173" }),
+  fetch: (req, srv) => handle(req, srv.requestIP(req)?.address),
 });
 
 console.log(`${PRODUCT_NAME} [${config.mode.toUpperCase()}] on ${server.url}`);
