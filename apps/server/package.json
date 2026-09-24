@@ -7,7 +7,8 @@
     "start": "bun src/index.ts",
     "seed": "bun src/db/seed/cli.ts",
     "typecheck": "tsc --noEmit -p .",
-    "types:emit": "bun scripts/emit-types.ts"
+    "types:emit": "bun scripts/emit-types.ts",
+    "migrate": "bun src/db/migrate-cli.ts"
   },
   "dependencies": {
     "@app/schema": "workspace:*",

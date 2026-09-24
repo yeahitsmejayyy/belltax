@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Every enum here is mirrored as a SQL CHECK in apps/server/src/db/schema.sql.
+// Every enum here is mirrored as a SQL CHECK in the migrations (apps/server/src/db/migrations/).
 // schema.test.ts fails if the two lists ever disagree.
 
 export const UserRole = z.enum(["client", "preparer"]);

@@ -6,7 +6,10 @@
 --
 -- Conventions: TEXT UUIDv7 ids · TEXT ISO-8601 UTC timestamps · INTEGER cents · STRICT tables ·
 -- enums mirrored from packages/schema/src/enums.ts · JSON stored as validated TEXT.
--- Applied at boot with CREATE … IF NOT EXISTS. Changing an existing table needs a migration (ticket 17).
+--
+-- Migration 001, the baseline. Never edit this file once a live database has applied it: the runner
+-- checks every applied migration's checksum. Change the schema with a new numbered file instead
+-- (docs/migrations.md explains how, including rebuilding a table to change a CHECK).
 
 -- ───────────────────────── People & access ─────────────────────────
 

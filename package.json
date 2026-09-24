@@ -10,7 +10,8 @@
     "dev": "bun --filter @app/server dev",
     "test": "bun test",
     "typecheck": "bun --filter '*' typecheck",
-    "seed": "bun --filter @app/server seed"
+    "seed": "bun --filter @app/server seed",
+    "migrate": "bun --filter @app/server migrate"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

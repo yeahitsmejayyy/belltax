@@ -56,7 +56,7 @@ const FK = /FOREIGN KEY constraint failed/;
 describe("zod ↔ SQL drift", () => {
   test("every table has a zod row schema and vice versa", () => {
     const sqlTables = db
-      .query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
+      .query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE type = 'table' AND name <> 'schema_migrations' ORDER BY name")
       .all()
       .map((r) => r.name);
     expect(sqlTables).toEqual(Object.keys(tables).sort());

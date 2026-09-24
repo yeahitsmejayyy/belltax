@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Stage, tables } from "@app/schema";
 import type { Config } from "../../config";
-import { bootDatabase, DB_FILE } from "../open";
+import { migrate } from "../migrate";
+import { bootDatabase, connect, DB_FILE } from "../open";
 import { applySchema } from "../schema";
 import { seedDemo, type SeedSummary } from "./seed";
 import { createStorage } from "../../storage";
@@ -224,6 +225,10 @@ describe("boot", () => {
 
   test("live mode never seeds and never wipes", async () => {
     const dir = join(tmp, "live");
+    mkdirSync(dir, { recursive: true });
+    const setup = connect(join(dir, DB_FILE));
+    migrate(setup); // live never migrates on boot; `bun run migrate` does this
+    setup.close();
     const first = await bootDatabase(config("live", dir));
     first.db.run("INSERT INTO households (id, display_name, created_at) VALUES ('0190a000-0000-7000-8000-000000000001', 'Kept', '2026-09-23T00:00:00.000Z')");
     first.db.close();
