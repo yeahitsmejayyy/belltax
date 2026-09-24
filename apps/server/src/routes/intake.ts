@@ -15,6 +15,11 @@ const toView = (r: Row): IntakeView => ({
   submittedAt: r.submitted_at,
 });
 
+export const readIntake = (engagementId: string): IntakeView | null => {
+  const row = read(engagementId);
+  return row ? toView(row) : null;
+};
+
 const read = (engagementId: string) =>
   runtime().db.query<Row, [string]>("SELECT * FROM intake_responses WHERE engagement_id = ?").get(engagementId);
 

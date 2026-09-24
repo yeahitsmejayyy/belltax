@@ -1,11 +1,11 @@
 import { TRPCError } from "@trpc/server";
-import { DocumentDeleteInput, DocumentListInput, DocumentView, now } from "@app/schema";
+import { DocumentDeleteInput, DocumentListInput, DocumentReviewInput, DocumentView, now } from "@app/schema";
 import { z } from "zod";
 import { documentFor, engagementFor } from "../access";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import type { SessionUser } from "../identity";
-import { authedProcedure, router } from "../trpc";
+import { authedProcedure, preparerProcedure, router } from "../trpc";
 
 export type DocumentRow = {
   id: string;
@@ -42,6 +42,20 @@ export const toDocumentView = (r: DocumentRow, user: SessionUser): DocumentView 
   mine: r.uploaded_by === user.id,
 });
 
+export function listDocuments(engagementId: string, user: SessionUser): DocumentView[] {
+  const rows = runtime()
+    .db.query<DocumentRow, [string, string]>(
+      `SELECT ${DOCUMENT_COLUMNS}
+         FROM documents d JOIN document_kinds k ON k.code = d.kind
+        WHERE d.purged_at IS NULL
+          AND (d.engagement_id = ?
+               OR (d.engagement_id IS NULL AND d.person_id IN (SELECT person_id FROM return_people WHERE engagement_id = ?)))
+        ORDER BY d.created_at DESC, d.id DESC`,
+    )
+    .all(engagementId, engagementId);
+  return rows.map((r) => toDocumentView(r, user));
+}
+
 export const documentRouter = router({
   // Everything on this return, plus person-level documents (photo IDs) of the people on it.
   list: authedProcedure
@@ -49,17 +63,7 @@ export const documentRouter = router({
     .output(z.array(DocumentView))
     .query(({ ctx, input }) => {
       engagementFor(ctx.user, input.engagementId);
-      const rows = runtime()
-        .db.query<DocumentRow, [string, string]>(
-          `SELECT ${DOCUMENT_COLUMNS}
-             FROM documents d JOIN document_kinds k ON k.code = d.kind
-            WHERE d.purged_at IS NULL
-              AND (d.engagement_id = ?
-                   OR (d.engagement_id IS NULL AND d.person_id IN (SELECT person_id FROM return_people WHERE engagement_id = ?)))
-            ORDER BY d.created_at DESC, d.id DESC`,
-        )
-        .all(input.engagementId, input.engagementId);
-      return rows.map((r) => toDocumentView(r, ctx.user));
+      return listDocuments(input.engagementId, ctx.user);
     }),
 
   // Take back a mistaken upload before it's reviewed. The file is purged; the row stays as a tombstone (R34).
@@ -90,5 +94,40 @@ export const documentRouter = router({
       // Bytes go after the commit: a failed delete leaves a stray file, never a row pointing at nothing.
       if (doc.storage_key) storage.remove(doc.storage_key);
       return { id: doc.id };
+    }),
+
+  // Accept a document (its request is fulfilled) or reject it with a reason the client will read.
+  review: preparerProcedure
+    .input(DocumentReviewInput)
+    .output(DocumentView)
+    .mutation(({ ctx, input }) => {
+      const { db } = runtime();
+      const doc = documentFor(ctx.user, input.documentId);
+      if (doc.status !== "uploaded") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This document has already been reviewed." });
+      const at = now();
+      const eng = doc.engagement_id
+        ? db.query<{ household_id: string }, [string]>("SELECT household_id FROM engagements WHERE id = ?").get(doc.engagement_id)
+        : null;
+      const requestId = db.query<{ request_id: string | null }, [string]>("SELECT request_id FROM documents WHERE id = ?").get(doc.id)!.request_id;
+      db.transaction(() => {
+        if (input.decision === "accept") {
+          db.run("UPDATE documents SET status = 'accepted', reviewed_at = ? WHERE id = ?", [at, doc.id]);
+          if (requestId) db.run("UPDATE requests SET status = 'fulfilled', closed_at = ? WHERE id = ? AND status = 'open'", [at, requestId]);
+        } else {
+          db.run("UPDATE documents SET status = 'rejected', reject_reason = ?, reviewed_at = ? WHERE id = ?", [input.reason, at, doc.id]);
+        }
+        appendEvent(db, {
+          actor: ctx.user,
+          type: input.decision === "accept" ? "document.accepted" : "document.rejected",
+          subjectType: "document",
+          subjectId: doc.id,
+          householdId: eng?.household_id ?? null,
+          engagementId: doc.engagement_id,
+          reason: input.decision === "reject" ? input.reason : null,
+          data: { request_id: requestId },
+        });
+      })();
+      const row = db.query<DocumentRow, [string]>(`SELECT ${DOCUMENT_COLUMNS} FROM documents d JOIN document_kinds k ON k.code = d.kind WHERE d.id = ?`).get(doc.id)!;
+      return toDocumentView(row, ctx.user);
     }),
 });
