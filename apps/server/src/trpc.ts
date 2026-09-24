@@ -33,6 +33,7 @@ export type Context = Awaited<ReturnType<typeof createContext>>;
 const t = initTRPC.context<Context>().create();
 
 export const router = t.router;
+export const mergeRouters = t.mergeRouters;
 export const publicProcedure = t.procedure;
 
 const SIGN_IN_REQUIRED = "Sign-in required.";

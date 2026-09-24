@@ -6,13 +6,15 @@ import { intakeRouter } from "./routes/intake";
 import { invoiceRouter, paymentRouter } from "./routes/invoice";
 import { letterRouter } from "./routes/letter";
 import { requestRouter } from "./routes/request";
-import { router } from "./trpc";
+import { createExpectedProcedure, returningRouter, sourceRouter } from "./routes/source";
+import { mergeRouters, router } from "./trpc";
 
 export const appRouter = router({
   health: healthRouter,
-  engagement: engagementRouter,
+  engagement: mergeRouters(engagementRouter, returningRouter),
   intake: intakeRouter,
-  request: requestRouter,
+  request: mergeRouters(requestRouter, router({ createExpected: createExpectedProcedure })),
+  source: sourceRouter,
   document: documentRouter,
   letter: letterRouter,
   invoice: invoiceRouter,

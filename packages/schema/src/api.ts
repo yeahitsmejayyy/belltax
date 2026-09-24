@@ -409,3 +409,45 @@ export const LoginCreateInput = z.object({
 });
 export const AccessGrantInput = z.object({ userId: Id, householdId: Id });
 export const AccessRevokeInput = z.object({ grantId: Id, reason: z.string().trim().min(3).max(500) });
+
+// ---- Sources and the returning-client checklist ----
+
+export const SourceAddInput = z.object({
+  householdId: Id,
+  kind: SourceKind,
+  label: z.string().trim().min(1).max(120),
+  owners: z.array(Id).min(1).max(4), // rule R36: every source has an owner
+  firstYear: TaxYear.optional(),
+});
+export const SourceUpdateInput = z.object({
+  sourceId: Id,
+  kind: SourceKind.optional(),
+  label: z.string().trim().min(1).max(120).optional(),
+  lastYear: TaxYear.nullable().optional(), // null reopens a closed source
+});
+export const SourceCloseInput = z.object({ sourceId: Id, lastYear: TaxYear, reason: z.string().trim().max(500).optional() });
+export const SourceSetOwnersInput = z.object({ sourceId: Id, owners: z.array(Id).min(1).max(4) });
+export const AttachSourcesInput = z.object({ engagementId: Id, sourceIds: z.array(Id).min(1).max(30) });
+export const DetachSourceInput = z.object({ engagementId: Id, sourceId: Id });
+export const StartFromLastYearInput = z.object({ engagementId: Id }); // last year's original return
+export const CreateExpectedInput = z.object({ engagementId: Id });
+export const SourceListInput = z.object({ engagementId: Id });
+// Client: "I don't have this any more." Did it still produce a document for this tax year?
+export const SourceLeaveInput = z.object({
+  engagementId: Id,
+  sourceId: Id,
+  stillExpectDocument: z.boolean(),
+  note: z.string().trim().max(500).optional(),
+});
+
+export const SourceView = z.object({
+  id: Id,
+  kind: SourceKind,
+  label: z.string(),
+  owners: z.array(z.object({ personId: Id, name: z.string() })),
+  firstYear: TaxYear.nullable(),
+  lastYear: TaxYear.nullable(),
+  onReturn: z.boolean(), // attached to this return, or only expected from last year
+  expectedDocuments: z.array(z.string()), // document kinds this source usually produces
+});
+export type SourceView = z.infer<typeof SourceView>;
