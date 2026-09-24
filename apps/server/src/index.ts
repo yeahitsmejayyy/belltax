@@ -4,9 +4,15 @@ import { loadConfig, REPO_ROOT } from "./config";
 import { useRuntime } from "./db/client";
 import { bootDatabase } from "./db/open";
 import { createFetchHandler } from "./http";
+import { assertLiveReady, serverOptions } from "./live/hardening";
 import { createStorage } from "./storage";
 
 const config = loadConfig();
+if (config.mode === "live") {
+  for (const c of assertLiveReady(config, { backupDir: process.env.BACKUP_DIR })) {
+    if (c.status !== "ok") console.warn(`! ${c.name}: ${c.detail}`);
+  }
+}
 const storage = createStorage(config.dataDir);
 const { db, seeded } = await bootDatabase(config, { storage });
 useRuntime({ db, storage, mode: config.mode });
@@ -14,8 +20,7 @@ useRuntime({ db, storage, mode: config.mode });
 const handle = createFetchHandler({ webDist: join(REPO_ROOT, "apps/web/dist"), devOrigin: "http://localhost:5173" });
 
 const server = Bun.serve({
-  port: config.port,
-  hostname: "127.0.0.1", // never a public port; the live instance stays on this machine
+  ...serverOptions(config), // 127.0.0.1 only: never a public port; the live instance stays on this machine
   fetch: (req, srv) => handle(req, srv.requestIP(req)?.address),
 });
 

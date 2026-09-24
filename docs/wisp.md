@@ -29,7 +29,7 @@ PTIN renewal asks the preparer to attest to it on
 |---|---|---|
 | Intuit ProSeries | Full returns, SSNs, bank details, e-file records (the system of record) | Intuit, via the preparer's account |
 | Client portal and preparer admin (this repository's software, **live instance**) | Contact details, household members, **last 4 digits of SSN only**, intake answers, uploaded documents (W-2s, 1099s, IDs), engagement letters and signatures, invoices, payment records, audit log | One local instance on hardware the owner controls ✍️ `[laptop / home lab]` |
-| Portal backups | Copies of the live database and uploads | 🔧 ticket 18, encrypted, at `[location]` |
+| Portal backups | Copies of the live database and uploads | ✅ `bun run backup` (AES-256-GCM, versioned) · ✍️ at `[location]` |
 | Email and phone | Whatever clients send outside the portal | `[provider]` |
 | Paper | Documents clients hand over in person | `[office / home]` |
 
@@ -72,7 +72,7 @@ relationships, signatures, IP addresses and payment records in the portal; full 
 | Forged or disputed engagement letter signature | Low | Signature bound to a SHA-256 of the exact text signed; signed letters can't change; IP and browser recorded ✅ |
 | Tampering with history | Low | Append-only audit log the database refuses to edit or delete ✅ |
 | Malicious file upload | Medium | File type checked from the bytes (PDF/JPEG/PNG/WebP/HEIC only), 15 MB limit, stored outside the web root, downloaded with `nosniff` ✅ |
-| Ransomware / disk failure | Medium | Encrypted, versioned backups with a tested restore 🔧 ticket 18 |
+| Ransomware / disk failure | Medium | Encrypted, versioned backups ✅; daily schedule and a restore drill ✍️ (docs/live-runbook.md) |
 | Vendor breach (Intuit, Stripe, email, tunnel) | Low–medium | Vendor oversight (§V.7); least data shared |
 | Portal exposed to the internet | High once live | Admin never public; portal only through an outbound tunnel with HTTPS 🔧; sign-in, sessions and lockout 🔧 ticket 05 |
 
@@ -122,7 +122,7 @@ outside penetration test ✍️ `[decide at first annual review]`.
   (project rule).
 
 ### 3. Encryption ([314.4(c)(3)](https://www.law.cornell.edu/cfr/text/16/314.4))
-- **At rest:** full-disk encryption on every device in §IV ✍️; backups encrypted 🔧 ticket 18.
+- **At rest:** full-disk encryption on every device in §IV ✍️. The live server refuses to start if FileVault/LUKS is off ✅. Backups are encrypted with AES-256-GCM under a passphrase kept in the password manager ✅.
 - **In transit:** the portal is reachable only over HTTPS through the tunnel 🔧; the live server listens on
   `127.0.0.1` only ✅.
 
@@ -166,7 +166,7 @@ Choose providers able to protect client information, require it contractually, a
 - The portal enforces its business rules in the database (checks, keys, triggers) and has automated tests for each,
   including authorization tests written before the features ✅.
 - Every change is tracked on the board, reviewed, and committed by the owner ✅. Schema changes to live data go
-  through a migration runner 🔧 ticket 17.
+  through the migration runner, which refuses to start live if the schema is behind or an applied migration was edited ✅.
 - Dependencies are updated deliberately and reviewed ✍️ quarterly.
 
 ### 9. Monitoring, logging and training ([314.4(c)(8), (e)](https://www.law.cornell.edu/cfr/text/16/314.4))
@@ -191,8 +191,8 @@ portal log. Handle it with the Incident Response Plan (Attachment C).
   status, risk decisions, vendor review, test results, incidents, recommended changes. For a sole practitioner,
   a dated note appended to this file.
 
-**Before the first live client (January 2027):** ✍️ complete every `[bracket]`; 🔧 ship tickets 05 (auth), 17
-(migration runner), 18 (backups and hardening) and the tunnel; ✍️ enable MFA everywhere; run a restore drill.
+**Before the first live client (January 2027):** ✍️ complete every `[bracket]`; 🔧 ship ticket 05 (auth) and the
+tunnel; ✍️ enable MFA everywhere; ✍️ schedule daily backups and run the restore drill in `docs/live-runbook.md`.
 
 Signed: ✍️ `[Owner name]`, Qualified Individual · Date: `[date]`
 

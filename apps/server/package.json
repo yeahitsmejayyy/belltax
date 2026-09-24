@@ -8,7 +8,11 @@
     "seed": "bun src/db/seed/cli.ts",
     "typecheck": "tsc --noEmit -p .",
     "types:emit": "bun scripts/emit-types.ts",
-    "migrate": "bun src/db/migrate-cli.ts"
+    "migrate": "bun src/db/migrate-cli.ts",
+    "backup": "bun src/live/cli.ts backup",
+    "backup:verify": "bun src/live/cli.ts verify",
+    "restore": "bun src/live/cli.ts restore",
+    "live:check": "bun src/live/cli.ts check"
   },
   "dependencies": {
     "@app/schema": "workspace:*",

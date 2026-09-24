@@ -11,7 +11,12 @@
     "test": "bun test",
     "typecheck": "bun --filter '*' typecheck",
     "seed": "bun --filter @app/server seed",
-    "migrate": "bun --filter @app/server migrate"
+    "migrate": "bun --filter @app/server migrate",
+    "backup": "bun --filter @app/server backup",
+    "backup:verify": "bun --filter @app/server backup:verify",
+    "restore": "bun --filter @app/server restore",
+    "live:check": "bun --filter @app/server live:check",
+    "start": "bun --filter @app/server start"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

@@ -11,7 +11,7 @@ export type Config = {
 
 type Env = Record<string, string | undefined>;
 
-function isInside(parent: string, child: string) {
+export function isInside(parent: string, child: string) {
   const rel = relative(parent, child);
   return rel === "" || (!rel.startsWith("..") && !isAbsolute(rel));
 }
