@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 // Where uploaded file bytes live. The database only ever holds the key.
@@ -23,5 +23,13 @@ export function createStorage(root: string) {
     },
     get: (key: string) => new Uint8Array(readFileSync(pathFor(key))),
     remove: (key: string) => rmSync(pathFor(key), { force: true }),
+    // Every stored file this module could have written (anything else in the folder is left alone).
+    list: (): string[] => {
+      const dir = join(root, "uploads");
+      if (!existsSync(dir)) return [];
+      return readdirSync(dir)
+        .map((f) => `uploads/${f}`)
+        .filter((k) => KEY.test(k));
+    },
   };
 }

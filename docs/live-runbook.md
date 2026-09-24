@@ -104,8 +104,18 @@ a scratch folder you delete afterward. Write the date of both drills in the WISP
   second place (a drive kept elsewhere).
 - **Backup passphrase:** yearly, or at once if you think it leaked. Old backups keep needing the old passphrase,
   so keep it in the password manager until those backups have rotated out.
-- **Uploads past retention:** portal documents are purged two years after last use (WISP, Attachment A). The
-  purge job ships with the admin tooling; until then it's a manual review each January.
+- **Uploads past retention:** portal documents are purged two years after last use (WISP, Attachment A).
+  Every January, after a backup:
+
+  ```bash
+  bun run purge            # lists what would go: nothing is deleted
+  bun run purge --confirm  # deletes those files; each row stays as a dated tombstone with a system event
+  ```
+
+  "Last use" means the return has been complete for 730 days (`RETENTION_DAYS` to change it), or the document's
+  own `purge_after` date has passed. Documents on any return that isn't complete are never aged out. A photo ID
+  stays until every return its person is on is complete and two years old. The purge also removes any stray file
+  a previous run left behind.
 
 ## If something's wrong
 

@@ -16,7 +16,8 @@
     "backup:verify": "bun --filter @app/server backup:verify",
     "restore": "bun --filter @app/server restore",
     "live:check": "bun --filter @app/server live:check",
-    "start": "bun --filter @app/server start"
+    "start": "bun --filter @app/server start",
+    "purge": "bun --filter @app/server purge"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

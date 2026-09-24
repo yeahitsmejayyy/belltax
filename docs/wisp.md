@@ -109,8 +109,9 @@ outside penetration test ✍️ `[decide at first annual review]`.
 - **Retention.** The preparer keeps a copy or list of returns prepared for at least 3 years
   ([26 U.S.C. 6107(b)](https://www.law.cornell.edu/uscode/text/26/6107)); that record lives in ProSeries. Portal
   uploads are disposed of **no later than two years after last used**, unless still needed for the business or
-  required by law ([314.4(c)(6)](https://www.law.cornell.edu/cfr/text/16/314.4)). Set `purge_after` accordingly ✍️
-  `[default: 2 years after the return is complete]`.
+  required by law ([314.4(c)(6)](https://www.law.cornell.edu/cfr/text/16/314.4)). Default: 730 days after the return
+  is complete ✅ (`bun run purge`, run each January after a backup ✍️). An individual document can be given an earlier
+  `purge_after` date.
 - **Disposal.** Portal files are deleted and the record kept as a tombstone, so the audit trail stays intact ✅. Paper
   is cross-cut shredded. Retired drives are wiped or destroyed (Attachment A).
 
@@ -200,7 +201,8 @@ Signed: ✍️ `[Owner name]`, Qualified Individual · Date: `[date]`
 
 ## Attachment A — Record retention and disposal
 - Returns (copy or list): at least 3 years, in ProSeries ([26 U.S.C. 6107(b)](https://www.law.cornell.edu/uscode/text/26/6107)).
-- Portal uploads: no longer than 2 years after last use unless needed or legally required; purge sets a tombstone.
+- Portal uploads: no longer than 2 years after last use unless needed or legally required. `bun run purge --confirm`
+  deletes the file and keeps a dated tombstone and a system event, so the audit trail stays whole.
 - Paper: cross-cut shred. Drives: wipe (encrypted-disk erase) or physically destroy at end of life.
 
 ## Attachment B — Rules of behavior ([Pub 5708](https://www.irs.gov/pub/irs-pdf/p5708.pdf); NISTIR 7621 §4)

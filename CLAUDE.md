@@ -39,7 +39,7 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 
 - `bun install` · `bun run dev` · `bun run seed` · `bun run migrate [--status]` · `bun test` · `bun run typecheck`
 - Live only (see `docs/live-runbook.md`): `bun run start` · `bun run live:check` · `bun run backup` ·
-  `bun run backup:verify <file>` · `bun run restore <file> <empty-dir>`
+  `bun run backup:verify <file>` · `bun run restore <file> <empty-dir>` · `bun run purge [--confirm]`
 - Demo mode wipes and re-seeds `data/demo/` on every boot (25 invented households, see `apps/server/src/db/seed/`).
 - **Schema changes are new numbered migrations** in `apps/server/src/db/migrations/` — never edit an applied one.
   Live refuses to boot behind the code; back up, then `bun run migrate`. See `docs/migrations.md`.
