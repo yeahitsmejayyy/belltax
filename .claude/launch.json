@@ -4,8 +4,25 @@
     {
       "name": "docs-preview",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4599", "--bind", "127.0.0.1", "--directory", ".docs"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4599",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        ".docs"
+      ],
       "port": 4599
+    },
+    {
+      "name": "server",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 3000
     }
   ]
 }

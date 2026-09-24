@@ -6,9 +6,12 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "seed": "bun src/db/seed/cli.ts",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "types:emit": "bun scripts/emit-types.ts"
   },
   "dependencies": {
-    "@app/schema": "workspace:*"
+    "@app/schema": "workspace:*",
+    "@trpc/server": "^11.19.0",
+    "zod": "^4.6.5"
   }
 }

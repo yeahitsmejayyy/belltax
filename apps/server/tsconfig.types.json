@@ -1,0 +1,14 @@
+{
+  // Declaration emit for the public contract only: src/appRouter.ts and what it imports.
+  // Used by `bun run types:emit` (scripts/emit-types.ts). Output is gitignored under dist/.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "dist/types"
+  },
+  "files": ["src/appRouter.ts"],
+  "include": []
+}

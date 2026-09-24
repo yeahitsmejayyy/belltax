@@ -8,6 +8,7 @@ import type { Config } from "../../config";
 import { bootDatabase, DB_FILE } from "../open";
 import { applySchema } from "../schema";
 import { seedDemo, type SeedSummary } from "./seed";
+import { createStorage } from "../../storage";
 
 const ANCHOR = new Date("2026-09-23T17:00:00.000Z");
 const tmp = mkdtempSync(join(tmpdir(), "btp-seed-"));
@@ -15,7 +16,7 @@ const tmp = mkdtempSync(join(tmpdir(), "btp-seed-"));
 async function seeded(dir: string, seed = 2026) {
   const db = new Database(":memory:", { strict: true });
   await applySchema(db);
-  const summary = seedDemo(db, { filesDir: dir, anchor: ANCHOR, seed });
+  const summary = seedDemo(db, { storage: createStorage(dir), anchor: ANCHOR, seed });
   return { db, summary };
 }
 
@@ -46,7 +47,7 @@ describe("determinism", () => {
   test("ids don't depend on the anchor, so demo links survive reboots", async () => {
     const later = new Database(":memory:", { strict: true });
     await applySchema(later);
-    seedDemo(later, { filesDir: join(tmp, "c"), anchor: new Date("2026-12-01T00:00:00.000Z") });
+    seedDemo(later, { storage: createStorage(join(tmp, "c")), anchor: new Date("2026-12-01T00:00:00.000Z") });
     const ids = (d: Database) => d.query("SELECT id FROM households ORDER BY id").all();
     expect(ids(later)).toEqual(ids(db));
   });

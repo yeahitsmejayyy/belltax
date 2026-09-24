@@ -4,3 +4,4 @@ export * from "./enums";
 export * from "./primitives";
 export * from "./rows";
 export * from "./source-documents";
+export * from "./api";

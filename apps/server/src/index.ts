@@ -1,30 +1,22 @@
+import { join } from "node:path";
 import { PRODUCT_NAME } from "@app/schema";
-import { loadConfig } from "./config";
+import { loadConfig, REPO_ROOT } from "./config";
+import { useRuntime } from "./db/client";
 import { bootDatabase } from "./db/open";
+import { createFetchHandler } from "./http";
+import { createStorage } from "./storage";
 
-// Placeholder entry; task 04 replaces this with the skelly-backend server.
 const config = loadConfig();
-const { db, seeded } = await bootDatabase(config);
-
-const count = (table: string) => (db.query(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
+const storage = createStorage(config.dataDir);
+const { db, seeded } = await bootDatabase(config, { storage });
+useRuntime({ db, storage, mode: config.mode });
 
 const server = Bun.serve({
   port: config.port,
-  hostname: "127.0.0.1",
-  fetch(req) {
-    const { pathname } = new URL(req.url);
-    if (pathname === "/health") {
-      return Response.json({
-        product: PRODUCT_NAME,
-        mode: config.mode,
-        households: count("households"),
-        returns: count("engagements"),
-        documents: count("documents"),
-      });
-    }
-    return new Response("Not found", { status: 404 });
-  },
+  hostname: "127.0.0.1", // never a public port; the live instance stays on this machine
+  fetch: createFetchHandler({ webDist: join(REPO_ROOT, "apps/web/dist"), devOrigin: "http://localhost:5173" }),
 });
 
 console.log(`${PRODUCT_NAME} [${config.mode.toUpperCase()}] on ${server.url}`);
-if (seeded) console.log(`Demo world re-seeded: ${seeded.households} households, ${seeded.returns} returns, tax year ${seeded.taxYear}`);
+console.log(`  tRPC: ${server.url}trpc · health: ${server.url}health`);
+if (seeded) console.log(`  demo world re-seeded: ${seeded.households} households, ${seeded.returns} returns, tax year ${seeded.taxYear}`);

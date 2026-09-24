@@ -4,6 +4,7 @@ import { basename, join } from "node:path";
 import type { Config } from "../config";
 import { applySchema } from "./schema";
 import { seedDemo, type SeedSummary } from "./seed/seed";
+import { createStorage, type Storage } from "../storage";
 
 export const DB_FILE = "belltaxprep.db";
 
@@ -16,7 +17,7 @@ export async function openDatabase(file: string) {
 
 // Demo: wipe and re-seed on every boot, so the demo is always the same known world.
 // Live: open what's there and never seed. Real data is never generated, only entered.
-export async function bootDatabase(config: Config, opts: { anchor?: Date } = {}) {
+export async function bootDatabase(config: Config, opts: { anchor?: Date; storage?: Storage } = {}) {
   let seeded: SeedSummary | null = null;
   if (config.mode === "demo") {
     // Belt and braces on top of config.ts: only ever delete a directory named "demo".
@@ -25,6 +26,6 @@ export async function bootDatabase(config: Config, opts: { anchor?: Date } = {})
   }
   mkdirSync(config.dataDir, { recursive: true, mode: 0o700 });
   const db = await openDatabase(join(config.dataDir, DB_FILE));
-  if (config.mode === "demo") seeded = seedDemo(db, { filesDir: config.dataDir, anchor: opts.anchor });
+  if (config.mode === "demo") seeded = seedDemo(db, { storage: opts.storage ?? createStorage(config.dataDir), anchor: opts.anchor });
   return { db, seeded };
 }
