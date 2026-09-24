@@ -23,5 +23,5 @@ so the line is drawn once and never crossed.
 - Every screenshot, demo, test fixture and interview uses seeded data only.
 - Nothing about a real client goes into an AI chat, a note, an issue, a commit message, or a log line.
 - Live uploads are encrypted at rest (disk encryption on the host at minimum).
-- The practice keeps a written information security plan (WISP) under the FTC Safeguards Rule,
-  covering what IRS Publication 4557 describes. Not legal advice; confirm current requirements.
+- The practice keeps a written information security plan under the FTC Safeguards Rule: see
+  [`wisp.md`](wisp.md). Not legal advice; confirm current requirements.
