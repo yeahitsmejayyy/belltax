@@ -27,6 +27,7 @@ export type DocumentRef = {
   id: string;
   engagement_id: string | null;
   person_id: string | null;
+  household_id: string | null; // the return's household, or the person's for a person-level document
   status: string;
   uploaded_by: string;
   storage_key: string | null;
@@ -38,7 +39,10 @@ export function documentFor(user: SessionUser, documentId: string): DocumentRef 
   const { db } = runtime();
   const doc = db
     .query<DocumentRef, [string]>(
-      "SELECT id, engagement_id, person_id, status, uploaded_by, storage_key, filename, mime_type FROM documents WHERE id = ? AND purged_at IS NULL",
+      `SELECT d.id, d.engagement_id, d.person_id, d.status, d.uploaded_by, d.storage_key, d.filename, d.mime_type,
+              COALESCE((SELECT e.household_id FROM engagements e WHERE e.id = d.engagement_id),
+                       (SELECT p.household_id FROM people p WHERE p.id = d.person_id)) AS household_id
+         FROM documents d WHERE d.id = ? AND d.purged_at IS NULL`,
     )
     .get(documentId);
   if (!doc) throw notFound("Document");

@@ -48,6 +48,10 @@ folder to owner-only; refuses to start if the database is behind the code. It th
 
 Stop with `Ctrl+C`. SQLite's write-ahead log makes a stop mid-request safe.
 
+Every request prints one line (time, portal or admin, method, route pattern, status, duration, user id) and is also
+appended to `<LIVE_DATA_DIR>/logs/requests.log`, owner-only, rotated at 5 MB with five old files kept. It never holds
+a path, query string, header or body. Who opened which return or file lives in the activity feed, not here.
+
 ## Back up (daily in season, weekly otherwise)
 
 ```bash

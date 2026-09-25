@@ -16,7 +16,7 @@ import {
 } from "@app/schema";
 import { z } from "zod";
 import { runtime } from "../db/client";
-import { appendEvent } from "../events";
+import { appendEvent, VIEW_TYPE_SQL } from "../events";
 import { preparerProcedure, router } from "../trpc";
 
 // Onboarding: the preparer's side of "Invite client". Households, the people in them, logins and grants.
@@ -116,7 +116,7 @@ export const householdRouter = router({
                   (SELECT COUNT(*) FROM people p WHERE p.household_id = h.id) AS members,
                   (SELECT COUNT(*) FROM people p JOIN users u ON u.person_id = p.id WHERE p.household_id = h.id) AS logins,
                   (SELECT MAX(tax_year) FROM engagements e WHERE e.household_id = h.id) AS latest_tax_year,
-                  (SELECT MAX(occurred_at) FROM events ev WHERE ev.household_id = h.id) AS last_activity_at
+                  (SELECT MAX(occurred_at) FROM events ev WHERE ev.household_id = h.id AND NOT ${VIEW_TYPE_SQL}) AS last_activity_at
              FROM households h
             WHERE (? OR h.archived_at IS NULL)
               AND (? = '' OR instr(lower(h.display_name), ?) > 0

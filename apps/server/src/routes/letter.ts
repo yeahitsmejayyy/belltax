@@ -3,7 +3,7 @@ import { LetterCreateInput, LetterGetInput, LetterRefInput, LetterSignInput, Let
 import { z } from "zod";
 import { engagementFor } from "../access";
 import { runtime } from "../db/client";
-import { appendEvent } from "../events";
+import { appendEvent, recordView } from "../events";
 import type { SessionUser } from "../identity";
 import { CONSENT_TEXT, currentTemplate, FILING_STATUS_LABEL, renderLetter, sha256 } from "../letters/template";
 import { authedProcedure, preparerProcedure, router } from "../trpc";
@@ -117,6 +117,10 @@ export const letterRouter = router({
       if (!id) return null;
       const letter = loadLetter(id)!;
       if (ctx.user.role === "client" && letter.status === "draft") return null;
+      // A client reading their letter is a read of client data; the preparer's reads are covered by engagement.viewed.
+      if (ctx.user.role === "client") {
+        recordView(runtime().db, { actor: ctx.user, type: "letter.viewed", subjectType: "letter", subjectId: letter.id, householdId: letter.household_id, engagementId: input.engagementId, hourly: true });
+      }
       return toView(letter, ctx.user);
     }),
 

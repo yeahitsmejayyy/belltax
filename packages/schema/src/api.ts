@@ -488,6 +488,7 @@ export const ActivityListInput = z
     engagementId: Id.optional(),
     actorKind: ActorKind.optional(),
     typePrefix: z.string().regex(/^[a-z_]+(\.[a-z_]*)?$/).optional(), // "document." or "letter.signed"
+    views: z.enum(["show", "hide", "only"]).default("show"), // reads of client data ("*.viewed"): the audit wants them, a skim doesn't
     from: Timestamp.optional(),
     to: Timestamp.optional(),
     cursor: z.object({ occurredAt: Timestamp, id: Id }).optional(), // from the previous page's `next`

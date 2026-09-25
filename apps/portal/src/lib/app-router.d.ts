@@ -1531,6 +1531,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 engagementId?: string | undefined;
                 actorKind?: "client" | "preparer" | "stripe" | "system" | undefined;
                 typePrefix?: string | undefined;
+                views?: "hide" | "only" | "show" | undefined;
                 from?: string | undefined;
                 to?: string | undefined;
                 cursor?: {

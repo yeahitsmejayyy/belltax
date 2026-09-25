@@ -15,7 +15,7 @@ import {
 import { z } from "zod";
 import { engagementFor } from "../access";
 import { runtime } from "../db/client";
-import { appendEvent } from "../events";
+import { appendEvent, recordView, VIEW_TYPE_SQL } from "../events";
 import { blockersFor, nextStage } from "../gates";
 import { listDocuments } from "./document";
 import { listInvoices } from "./invoice";
@@ -133,6 +133,7 @@ export const engagementRouter = router({
           `SELECT e.*, h.display_name FROM engagements e JOIN households h ON h.id = e.household_id WHERE e.id = ?`,
         )
         .get(input.engagementId)!;
+      recordView(db, { actor: ctx.user, type: "engagement.viewed", subjectType: "engagement", subjectId: e.id, householdId: e.household_id, engagementId: e.id, hourly: true });
       const next = nextStage(e.stage);
 
       const people = db
@@ -193,7 +194,7 @@ export const engagementRouter = router({
                     ELSE COALESCE((SELECT p.first_name || ' ' || p.last_name FROM users u JOIN people p ON p.id = u.person_id WHERE u.id = ev.actor_user_id), 'Client')
                   END AS actor_name
              FROM events ev
-            WHERE ev.engagement_id = ? OR (ev.engagement_id IS NULL AND ev.household_id = ?)
+            WHERE (ev.engagement_id = ? OR (ev.engagement_id IS NULL AND ev.household_id = ?)) AND NOT ${VIEW_TYPE_SQL}
             ORDER BY ev.occurred_at DESC, ev.id DESC
             LIMIT 200`,
         )

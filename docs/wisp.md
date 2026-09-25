@@ -172,6 +172,10 @@ Choose providers able to protect client information, require it contractually, a
 
 ### 9. Monitoring, logging and training ([314.4(c)(8), (e)](https://www.law.cornell.edu/cfr/text/16/314.4))
 - Every change to client data is recorded in an append-only audit log: who, what, when, why ✅.
+- Reads are recorded too: a document downloaded, a return opened by the preparer (once an hour), a letter read by
+  a client. The admin activity feed can show them, hide them, or show only them ✅.
+- Every request leaves one log line (time, portal or admin, method, route pattern, status, duration, user id),
+  never a path, query string, header or body. Live keeps it in `<data>/logs/requests.log`, owner-only, rotated ✅.
 - Weekly during filing season: check the EFIN activity report in e-Services for returns you didn't file ✍️.
 - Annual security training for the owner, and for anyone added later, with a signed acknowledgment
   (Attachment D) ✍️. IRS resources: [Pub 4557](https://www.irs.gov/pub/irs-pdf/p4557.pdf), Security Summit alerts.

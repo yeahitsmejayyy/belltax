@@ -4,7 +4,7 @@ import { now, UPLOAD_MAX_BYTES } from "@app/schema";
 import { z } from "zod";
 import { documentFor, engagementFor } from "../access";
 import { runtime } from "../db/client";
-import { appendEvent } from "../events";
+import { appendEvent, recordView } from "../events";
 import { resolveUser, type SessionUser, type Surface } from "../identity";
 import { DOCUMENT_COLUMNS, toDocumentView, type DocumentRow } from "../routes/document";
 
@@ -146,6 +146,7 @@ export function downloadDocument(req: Request, surface: Surface, documentId: str
   try {
     const doc = documentFor(user, documentId);
     const bytes = runtime().storage.get(doc.storage_key!);
+    recordView(runtime().db, { actor: user, type: "document.viewed", subjectType: "document", subjectId: doc.id, householdId: doc.household_id, engagementId: doc.engagement_id });
     return new Response(bytes, {
       headers: {
         "Content-Type": doc.mime_type,

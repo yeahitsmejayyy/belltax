@@ -46,3 +46,24 @@ export const ACTOR_NAME_SQL = `CASE ev.actor_kind
     ELSE COALESCE((SELECT p.first_name || ' ' || p.last_name FROM users u JOIN people p ON p.id = u.person_id WHERE u.id = ev.actor_user_id), 'Client')
   END`;
 
+
+// Reads of client data (16 CFR 314.4(c)(8), WISP §V.9). A view is an event like any other, typed
+// "<thing>.viewed", carrying ids only. `hourly` keeps one per viewer per subject per hour, so a page that
+// refetches doesn't bury the log.
+export const VIEW_TYPE_SQL = "ev.type GLOB '*.viewed'";
+
+export function recordView(
+  db: Database,
+  v: { actor: SessionUser; type: `${string}.viewed`; subjectType: string; subjectId: string; householdId: string | null; engagementId?: string | null; hourly?: boolean },
+) {
+  if (v.hourly) {
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const seen = db
+      .query<{ n: number }, [string, string, string, string]>(
+        "SELECT 1 AS n FROM events WHERE subject_id = ? AND type = ? AND occurred_at > ? AND actor_user_id = ? LIMIT 1",
+      )
+      .get(v.subjectId, v.type, since, v.actor.id);
+    if (seen) return;
+  }
+  appendEvent(db, { actor: v.actor, type: v.type, subjectType: v.subjectType, subjectId: v.subjectId, householdId: v.householdId, engagementId: v.engagementId ?? null });
+}

@@ -5,7 +5,8 @@ import { PRODUCT_NAME } from "@app/schema";
 import { appRouter } from "./appRouter";
 import { runtime } from "./db/client";
 import { downloadDocument, uploadDocument } from "./rest/documents";
-import type { Surface } from "./identity";
+import { resolveUser, type Surface } from "./identity";
+import { routeOf, type RequestLog } from "./request-log";
 import { createContext } from "./trpc";
 
 // One handler per listener (portal or admin): /trpc for the API, /api for files, /health for a quick
@@ -15,6 +16,7 @@ type Options = {
   surface: Surface; // which listener this handler serves
   webDist: string; // the built app for this surface: apps/portal/dist or apps/admin/dist
   devOrigin?: string; // that app's Vite dev server, allowed cross-origin in demo mode only
+  log?: RequestLog; // one line per request; see request-log.ts for what it may carry
 };
 
 // Every response on both listeners carries these. The built apps are self-contained: no inline or
@@ -50,7 +52,7 @@ export function withSecurityHeaders(res: Response, pathname: string): Response {
 
 const count = (table: string) => (runtime().db.query(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
 
-export function createFetchHandler({ surface, webDist, devOrigin }: Options) {
+export function createFetchHandler({ surface, webDist, devOrigin, log }: Options) {
   const cors = (res: Response, req: Request) => {
     const origin = req.headers.get("origin");
     if (!devOrigin || origin !== devOrigin || runtime().mode !== "demo") return res;
@@ -82,8 +84,17 @@ export function createFetchHandler({ surface, webDist, devOrigin }: Options) {
   };
 
   return async function fetch(req: Request, socketIp?: string): Promise<Response> {
+    const started = performance.now();
     const { pathname } = new URL(req.url);
-    return withSecurityHeaders(await route(req, pathname, socketIp), pathname);
+    const res = withSecurityHeaders(await route(req, pathname, socketIp), pathname);
+    if (log) {
+      try {
+        log({ surface, method: req.method, route: routeOf(pathname), status: res.status, ms: Math.round(performance.now() - started), user: resolveUser(req, surface)?.id ?? null });
+      } catch {
+        // A log line is never worth failing a request over.
+      }
+    }
+    return res;
   };
 
   async function route(req: Request, pathname: string, socketIp?: string): Promise<Response> {

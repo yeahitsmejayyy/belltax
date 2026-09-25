@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { ActivityListInput, ActivityPage, Inbox, InboxListInput, now, RequestAcknowledgeInput, type InboxItem, type InboxKind } from "@app/schema";
 import { z } from "zod";
 import { runtime } from "../db/client";
-import { ACTOR_NAME_SQL, appendEvent } from "../events";
+import { ACTOR_NAME_SQL, appendEvent, VIEW_TYPE_SQL } from "../events";
 import { preparerProcedure, router } from "../trpc";
 
 // The admin's Inbox and Activity screens. Every inbox item is derived from current state, so it clears
@@ -159,6 +159,8 @@ export const activityRouter = router({
       if (input?.engagementId) add("ev.engagement_id = ?", input.engagementId);
       if (input?.actorKind) add("ev.actor_kind = ?", input.actorKind);
       if (input?.typePrefix) add("substr(ev.type, 1, length(?)) = ?", input.typePrefix, input.typePrefix);
+      if (input?.views === "hide") add(`NOT ${VIEW_TYPE_SQL}`);
+      if (input?.views === "only") add(VIEW_TYPE_SQL);
       if (input?.from) add("ev.occurred_at >= ?", input.from);
       if (input?.to) add("ev.occurred_at < ?", input.to);
       if (input?.cursor) add("(ev.occurred_at, ev.id) < (?, ?)", input.cursor.occurredAt, input.cursor.id);
