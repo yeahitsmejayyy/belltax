@@ -41,7 +41,8 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   self-hosted, radius, motion). `theme.css` maps them to Tailwind v4 utilities. There are also brand marks, `cn`, and the demo
   identity helpers. The rules behind the values: `principles.md` (root); `tokens.test.ts` enforces its contrast rule.
   Design references: `.assets/` (gitignored), starting with its README and manifest. Shared components live in
-  `packages/ui/src/components` (shadcn primitives + StagePill, StatusChip, ModeBadge, SplitButton, Field); apps import
+  `packages/ui/src/components` (shadcn primitives plus the product pieces: StagePill, StatusChip, DataTable, Chart, Logo,
+  Banner, EmptyState, FileDropzone, Stepper, StatCard, Board, Timeline, DocumentViewer, BottomTabs; money/dates in `format.ts`); apps import
   `@app/ui/components/<name>`, never copy them. Every component gets stories in `packages/ui/src/stories`.
 - `apps/site` — marketing site (skelly-site, last).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
