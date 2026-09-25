@@ -96,7 +96,7 @@ describe("authorization: a client never reaches another household", () => {
   });
 
   test("writes to someone else's return are NOT_FOUND", async () => {
-    expect((await call(bob.userId, "intake.save", { engagementId: alice.engagementId, answers: { x: 1 } }, "mutation")).status).toBe(404);
+    expect((await call(bob.userId, "intake.save", { engagementId: alice.engagementId, answers: { moved: true } }, "mutation")).status).toBe(404);
     expect((await upload(bob.userId, { engagementId: alice.engagementId, kind: "w2" }, pdf())).status).toBe(404);
     const aliceDoc = q<{ id: string }>("SELECT id FROM documents WHERE engagement_id = ? AND purged_at IS NULL LIMIT 1", alice.engagementId);
     expect((await call(bob.userId, "document.delete", { documentId: aliceDoc.id }, "mutation")).status).toBe(404);
@@ -156,13 +156,24 @@ describe("intake", () => {
       eng.id,
     ).id;
     const before = eventCount("intake.saved");
-    await call(owner, "intake.save", { engagementId: eng.id, answers: { moved: true } }, "mutation");
-    const saved = await call(owner, "intake.save", { engagementId: eng.id, answers: { new_baby: false } }, "mutation");
+    await call(owner, "intake.save", { engagementId: eng.id, answers: { moved: true, moved_where: "within_ca" } }, "mutation");
+    const saved = await call(owner, "intake.save", { engagementId: eng.id, answers: { digital_assets: false } }, "mutation");
     const view = IntakeView.parse(saved.data);
-    expect(view.answers).toMatchObject({ moved: true, new_baby: false });
+    expect(view.answers).toMatchObject({ moved: true, moved_where: "within_ca", digital_assets: false });
+    expect(view.missing.length).toBeGreaterThan(0);
     expect(eventCount("intake.saved")).toBe(before + 2);
 
-    const submitted = IntakeView.parse((await call(owner, "intake.save", { engagementId: eng.id, answers: {}, submit: true }, "mutation")).data);
+    // Submitting too early names what's still missing; answering it all then submits.
+    const early = await call(owner, "intake.save", { engagementId: eng.id, answers: {}, submit: true }, "mutation");
+    expect(early.status).toBe(412);
+    expect(early.error!.message).toMatch(/^Still to answer: .*Where did your income come from\?/);
+    const rest = {
+      marital_changed: false, has_dependents: false, income_types: ["wages"], job_changed: false, sold_home: false,
+      tuition: false, student_loan_interest: false, bought_home: false, mortgage_interest: false, coverage_source: "employer",
+      covered_all_year: true, prior_preparer: "self", tax_letters: false, estimated_payments: false, has_ip_pin: false, refund_preference: "check",
+    };
+    const submitted = IntakeView.parse((await call(owner, "intake.save", { engagementId: eng.id, answers: rest, submit: true }, "mutation")).data);
+    expect(submitted.missing).toEqual([]);
     expect(submitted.submittedAt).not.toBeNull();
     expect(eventCount("intake.submitted")).toBeGreaterThan(0);
     const again = await call(owner, "intake.save", { engagementId: eng.id, answers: { moved: false } }, "mutation");
@@ -180,9 +191,11 @@ describe("intake", () => {
     expect(IntakeView.parse(byPreparer.result.data).answers.moved).toBe(false);
   });
 
-  test("oversized or malformed answers are refused", async () => {
-    const big = { notes: "x".repeat(70_000) };
-    expect((await call(alice.userId, "intake.save", { engagementId: alice.engagementId, answers: big }, "mutation")).status).toBe(400);
+  test("oversized, malformed or unknown answers are refused", async () => {
+    const save = (answers: unknown) => call(alice.userId, "intake.save", { engagementId: alice.engagementId, answers }, "mutation");
+    expect((await save({ questions_for_preparer: "x".repeat(70_000) })).status).toBe(400);
+    expect((await save({ new_baby: true })).status).toBe(400);
+    expect((await save({ moved: "yes" })).status).toBe(400);
   });
 });
 

@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { INTAKE_FORM_VERSION, IntakeAnswers, IntakeGetInput, IntakeSaveInput, IntakeView, now } from "@app/schema";
+import { INTAKE_FORM_VERSION, IntakeAnswers, IntakeGetInput, IntakeSaveInput, IntakeView, missingRequired, now } from "@app/schema";
 import { engagementFor } from "../access";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
@@ -7,13 +7,17 @@ import { authedProcedure, router } from "../trpc";
 
 type Row = { engagement_id: string; form_version: number; answers: string; updated_at: string; submitted_at: string | null };
 
-const toView = (r: Row): IntakeView => ({
-  engagementId: r.engagement_id,
-  formVersion: r.form_version,
-  answers: IntakeAnswers.parse(JSON.parse(r.answers)),
-  updatedAt: r.updated_at,
-  submittedAt: r.submitted_at,
-});
+const toView = (r: Row): IntakeView => {
+  const answers = IntakeAnswers.parse(JSON.parse(r.answers));
+  return {
+    engagementId: r.engagement_id,
+    formVersion: r.form_version,
+    answers,
+    updatedAt: r.updated_at,
+    submittedAt: r.submitted_at,
+    missing: missingRequired(answers).map((q) => q.id),
+  };
+};
 
 export const readIntake = (engagementId: string): IntakeView | null => {
   const row = read(engagementId);
@@ -51,6 +55,14 @@ export const intakeRouter = router({
         }
       }
       const merged = IntakeAnswers.parse({ ...(existing ? JSON.parse(existing.answers) : {}), ...input.answers });
+      // Submitting needs every required question the client can see. Answers to questions a later
+      // choice hid are kept but ignored.
+      if (input.submit && !existing?.submitted_at) {
+        const missing = missingRequired(merged);
+        if (missing.length) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Still to answer: ${missing.map((q) => q.label).join(" · ")}` });
+        }
+      }
       const at = now();
       const submittedAt = existing?.submitted_at ?? (input.submit ? at : null);
 

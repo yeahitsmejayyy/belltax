@@ -16,6 +16,7 @@ import {
   Stage,
 } from "./enums";
 import { Id, IsoDate as IsoDateString, TaxYear, Timestamp } from "./primitives";
+import { INTAKE_VERSION, IntakeAnswersV1 } from "./intake/v1";
 
 // Shapes that cross the wire. The server validates outputs against these, so the web app can trust them.
 
@@ -57,13 +58,12 @@ export type EngagementList = z.infer<typeof EngagementList>;
 
 const EngagementRef = z.object({ engagementId: Id });
 
-// The questionnaire itself is designed with the portal UI; until then answers are a bounded JSON object.
-export const IntakeAnswers = z
-  .record(z.string().min(1).max(64), z.json())
-  .refine((a) => JSON.stringify(a).length <= 64_000, "Answers are too large.");
+// Answers are validated against the questionnaire itself (intake/v1.ts): known questions only,
+// each value the right shape, partial saves allowed.
+export const IntakeAnswers = IntakeAnswersV1;
 export type IntakeAnswers = z.infer<typeof IntakeAnswers>;
 
-export const INTAKE_FORM_VERSION = 1;
+export const INTAKE_FORM_VERSION = INTAKE_VERSION;
 
 export const IntakeGetInput = EngagementRef;
 export const IntakeSaveInput = EngagementRef.extend({
@@ -76,6 +76,7 @@ export const IntakeView = z.object({
   answers: IntakeAnswers,
   updatedAt: Timestamp,
   submittedAt: Timestamp.nullable(),
+  missing: z.array(z.string()), // ids of required questions the client can see and hasn't answered
 });
 export type IntakeView = z.infer<typeof IntakeView>;
 

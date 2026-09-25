@@ -22,7 +22,8 @@
     "dev:portal": "bun --filter @app/portal dev",
     "dev:admin": "bun --filter @app/admin dev",
     "build": "bun --filter @app/portal build && bun --filter @app/admin build",
-    "check:data": "bun scripts/check-no-real-data.ts"
+    "check:data": "bun scripts/check-no-real-data.ts",
+    "intake:doc": "bun scripts/intake-doc.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

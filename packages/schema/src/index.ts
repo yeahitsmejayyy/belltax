@@ -5,3 +5,4 @@ export * from "./primitives";
 export * from "./rows";
 export * from "./source-documents";
 export * from "./api";
+export * from "./intake/v1";

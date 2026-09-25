@@ -28,7 +28,46 @@ const DAY = 86_400_000;
 const STAGES = Stage.options;
 const reached = (stage: Stage, target: Stage) => STAGES.indexOf(stage) >= STAGES.indexOf(target);
 
-const INTAKE_ANSWERS = JSON.stringify({ moved: false, life_changes: [], health_coverage: "employer", refund_preference: "direct_deposit_via_preparer" });
+// Intake answers shaped by what's actually on the return, against questionnaire v1. A submitted intake
+// answers every required question; one still in progress stops after the first two sections.
+function intakeAnswers(rp: ReturnPlan, sourceKinds: string[], complete: boolean) {
+  const income = new Set<string>();
+  for (const k of sourceKinds) {
+    if (k === "employer") income.add("wages");
+    if (k === "ihss_provider") income.add("ihss");
+    if (k === "business") income.add("self_employment");
+    if (k === "brokerage" || k === "bank") income.add("investments");
+    if (k === "retirement") (income.add("retirement"), income.add("social_security"));
+    if (k === "rental_property") income.add("rental");
+  }
+  const kids = rp.dependents.length > 0;
+  const start = {
+    marital_changed: false,
+    moved: false,
+    has_dependents: kids,
+    ...(kids ? { dependents_changed: false, childcare: rp.extraDocs.includes("childcare_receipt") } : {}),
+  };
+  if (!complete) return start;
+  return {
+    ...start,
+    income_types: income.size ? [...income] : ["wages"],
+    job_changed: false,
+    ...(income.has("self_employment") ? { business_expenses: true } : {}),
+    sold_home: false,
+    digital_assets: false,
+    tuition: rp.extraDocs.includes("1098_t"),
+    student_loan_interest: false,
+    bought_home: false,
+    mortgage_interest: sourceKinds.includes("rental_property"),
+    coverage_source: "employer",
+    covered_all_year: true,
+    prior_preparer: "someone_else",
+    tax_letters: false,
+    estimated_payments: false,
+    has_ip_pin: false,
+    refund_preference: "direct_deposit",
+  };
+}
 
 export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
   const rng = createRng(opts.seed ?? 2026);
@@ -169,7 +208,9 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
     // Intake
     if (reached(stage, "intake")) {
       const submitted = reached(stage, "documents") ? between(0.2, 0.3) : null;
-      insert("intake_responses", { engagement_id: engId, form_version: 1, answers: INTAKE_ANSWERS, updated_at: submitted ?? between(0.3, 0.9), submitted_at: submitted });
+      const kinds = rp.sources.map((k) => ctx.plan.sources.find((x) => x.key === k)!.kind);
+      const answers = JSON.stringify(intakeAnswers(rp, kinds, !!submitted));
+      insert("intake_responses", { engagement_id: engId, form_version: 1, answers, updated_at: submitted ?? between(0.3, 0.9), submitted_at: submitted });
       if (submitted) event("intake.submitted", { kind: "client", userId: primaryUser }, { household: hh, engagement: engId, subjectType: "intake", subjectId: engId, when: submitted });
     }
     if (opts2.extra === "question" && reached(stage, "intake")) {

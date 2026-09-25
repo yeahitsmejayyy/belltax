@@ -203,9 +203,12 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 intake: {
                     engagementId: string;
                     formVersion: number;
-                    answers: Record<string, import("zod").JSONType>;
+                    answers: {
+                        [x: string]: unknown;
+                    };
                     updatedAt: string;
                     submittedAt: string | null;
+                    missing: string[];
                 } | null;
                 requests: {
                     id: string;
@@ -376,24 +379,32 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             output: {
                 engagementId: string;
                 formVersion: number;
-                answers: Record<string, import("zod").JSONType>;
+                answers: {
+                    [x: string]: unknown;
+                };
                 updatedAt: string;
                 submittedAt: string | null;
+                missing: string[];
             } | null;
             meta: object;
         }>;
         save: import("@trpc/server").TRPCMutationProcedure<{
             input: {
                 engagementId: string;
-                answers: Record<string, import("zod").JSONType>;
+                answers: {
+                    [x: string]: unknown;
+                };
                 submit?: boolean | undefined;
             };
             output: {
                 engagementId: string;
                 formVersion: number;
-                answers: Record<string, import("zod").JSONType>;
+                answers: {
+                    [x: string]: unknown;
+                };
                 updatedAt: string;
                 submittedAt: string | null;
+                missing: string[];
             };
             meta: object;
         }>;
