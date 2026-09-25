@@ -128,6 +128,15 @@ a scratch folder you delete afterward. Write the date of both drills in the WISP
   stays until every return its person is on is complete and two years old. The purge also removes any stray file
   a previous run left behind.
 
+## Open the new season (before January)
+
+`season.preview({ fromYear })` lists every return from last year and whether it will roll: each completed original
+return becomes next year's return with the same people, the sources still open, and its day-one checklist of
+document requests. Skipped, with the reason: archived households, returns not yet complete, amended returns, filers
+now in another household, and anyone already on a next-year return. Dependents who've left are dropped and named.
+`season.rollover({ fromYear, householdIds? })` does it, one household per transaction, and reports created, skipped
+and failed. Running it again creates nothing new. Back up first.
+
 ## Export client records (the offline copy)
 
 A complete copy of each household that needs no app to read: `record.json` (people with SSN last-4 only, logins

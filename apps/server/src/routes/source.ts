@@ -203,6 +203,91 @@ export const sourceRouter = router({
     }),
 });
 
+// Next year's original return from last year's: the given people in their roles, and last year's
+// still-open sources carried onto it. Callers have already checked nobody clashes. Used by
+// startFromLastYear (one return) and the season rollover (every returning client).
+export function startNextYear(
+  db: Database,
+  user: SessionUser,
+  last: EngagementRef,
+  people: { person_id: string; role: string; relationship: string | null; months_lived_with: number | null }[],
+  data: Record<string, string | number | boolean | null> = {},
+): { id: string; carried: number } {
+  const year = last.tax_year + 1;
+  const id = Bun.randomUUIDv7();
+  const at = now();
+  let carried = 0;
+  db.transaction(() => {
+    db.run(
+      "INSERT INTO engagements (id, household_id, tax_year, kind, stage, stage_changed_at, created_at) VALUES (?, ?, ?, 'original', 'invited', ?, ?)",
+      [id, last.household_id, year, at, at],
+    );
+    for (const p of people) {
+      db.run(
+        `INSERT INTO return_people (engagement_id, person_id, tax_year, engagement_kind, role, relationship, months_lived_with)
+         VALUES (?, ?, ?, 'original', ?, ?, ?)`,
+        [id, p.person_id, year, p.role, p.relationship, p.months_lived_with],
+      );
+    }
+    appendEvent(db, {
+      actor: user,
+      type: "engagement.created",
+      subjectType: "engagement",
+      subjectId: id,
+      householdId: last.household_id,
+      engagementId: id,
+      data: { tax_year: year, kind: "original", from_engagement: last.id, ...data },
+    });
+    const next: EngagementRef = { id, household_id: last.household_id, tax_year: year, stage: "invited" };
+    for (const s of lastYearSources(db, last.id)) if (isOpenFor(s, year) && attach(db, user, next, s)) carried++;
+  })();
+  return { id, carried };
+}
+
+export const lastYearSources = (db: Database, engagementId: string) =>
+  db
+    .query<SourceRow, [string]>(
+      "SELECT s.id, s.household_id, s.kind, s.label, s.first_year, s.last_year FROM return_sources rs JOIN sources s ON s.id = rs.source_id WHERE rs.engagement_id = ?",
+    )
+    .all(engagementId);
+
+export { isOpenFor };
+
+// The day-one checklist for one return: every document each open source usually produces, requested once.
+export function createExpected(db: Database, user: SessionUser, e: EngagementRef): { createdIds: string[]; skipped: number } {
+  const onReturn = new Set(
+    db.query<{ person_id: string }, [string]>("SELECT person_id FROM return_people WHERE engagement_id = ?").all(e.id).map((r) => r.person_id),
+  );
+  const createdIds: string[] = [];
+  let skipped = 0;
+  db.transaction(() => {
+    for (const { source } of sourcesFor(db, e)) {
+      if (!isOpenFor(source, e.tax_year)) continue;
+      attach(db, user, e, source);
+      const owner = ownersOf(db, source.id).find((o) => onReturn.has(o.personId));
+      for (const kind of SOURCE_DOCUMENT_KINDS[source.kind]) {
+        const already = db
+          .query("SELECT 1 FROM requests WHERE engagement_id = ? AND source_id = ? AND document_kind = ? AND status <> 'cancelled'")
+          .get(e.id, source.id, kind);
+        if (already) {
+          skipped++;
+          continue;
+        }
+        const form = db.query<{ form_name: string }, [string]>("SELECT form_name FROM document_kinds WHERE code = ?").get(kind)!.form_name;
+        const id = Bun.randomUUIDv7();
+        db.run(
+          `INSERT INTO requests (id, engagement_id, person_id, source_id, kind, document_kind, title, status, created_by, created_at)
+           VALUES (?, ?, ?, ?, 'document', ?, ?, 'open', ?, ?)`,
+          [id, e.id, owner?.personId ?? null, source.id, kind, `Upload your ${form} from ${source.label}`, user.id, now()],
+        );
+        appendEvent(db, { actor: user, type: "request.created", subjectType: "request", subjectId: id, householdId: e.household_id, engagementId: e.id, data: { kind: "document", document_kind: kind, expected: true } });
+        createdIds.push(id);
+      }
+    }
+  })();
+  return { createdIds, skipped };
+}
+
 // Returning clients: next year's return from last year's, and the day-one checklist.
 export const returningRouter = router({
   attachSources: preparerProcedure
@@ -269,38 +354,7 @@ export const returningRouter = router({
           throw new TRPCError({ code: "CONFLICT", message: `${p.name} is already on a ${year} return. Open that one instead.` });
         }
       }
-      const id = Bun.randomUUIDv7();
-      const at = now();
-      let carried = 0;
-      db.transaction(() => {
-        db.run(
-          "INSERT INTO engagements (id, household_id, tax_year, kind, stage, stage_changed_at, created_at) VALUES (?, ?, ?, 'original', 'invited', ?, ?)",
-          [id, last.household_id, year, at, at],
-        );
-        for (const p of people) {
-          db.run(
-            `INSERT INTO return_people (engagement_id, person_id, tax_year, engagement_kind, role, relationship, months_lived_with)
-             VALUES (?, ?, ?, 'original', ?, ?, ?)`,
-            [id, p.person_id, year, p.role, p.relationship, p.months_lived_with],
-          );
-        }
-        appendEvent(db, {
-          actor: ctx.user,
-          type: "engagement.created",
-          subjectType: "engagement",
-          subjectId: id,
-          householdId: last.household_id,
-          engagementId: id,
-          data: { tax_year: year, kind: "original", from_engagement: last.id },
-        });
-        const next: EngagementRef = { id, household_id: last.household_id, tax_year: year, stage: "invited" };
-        const lastSources = db
-          .query<SourceRow, [string]>(
-            "SELECT s.id, s.household_id, s.kind, s.label, s.first_year, s.last_year FROM return_sources rs JOIN sources s ON s.id = rs.source_id WHERE rs.engagement_id = ?",
-          )
-          .all(last.id);
-        for (const s of lastSources) if (isOpenFor(s, year) && attach(db, ctx.user, next, s)) carried++;
-      })();
+      const { id, carried } = startNextYear(db, ctx.user, last, people);
       return { engagementId: id, taxYear: year, sourcesCarried: carried };
     }),
 });
@@ -313,36 +367,7 @@ export const createExpectedProcedure = preparerProcedure
   .mutation(({ ctx, input }) => {
     const { db } = runtime();
     const e = engagementFor(ctx.user, input.engagementId);
-    const onReturn = new Set(
-      db.query<{ person_id: string }, [string]>("SELECT person_id FROM return_people WHERE engagement_id = ?").all(e.id).map((r) => r.person_id),
-    );
-    const createdIds: string[] = [];
-    let skipped = 0;
-    db.transaction(() => {
-      for (const { source } of sourcesFor(db, e)) {
-        if (!isOpenFor(source, e.tax_year)) continue;
-        attach(db, ctx.user, e, source);
-        const owner = ownersOf(db, source.id).find((o) => onReturn.has(o.personId));
-        for (const kind of SOURCE_DOCUMENT_KINDS[source.kind]) {
-          const already = db
-            .query("SELECT 1 FROM requests WHERE engagement_id = ? AND source_id = ? AND document_kind = ? AND status <> 'cancelled'")
-            .get(e.id, source.id, kind);
-          if (already) {
-            skipped++;
-            continue;
-          }
-          const form = db.query<{ form_name: string }, [string]>("SELECT form_name FROM document_kinds WHERE code = ?").get(kind)!.form_name;
-          const id = Bun.randomUUIDv7();
-          db.run(
-            `INSERT INTO requests (id, engagement_id, person_id, source_id, kind, document_kind, title, status, created_by, created_at)
-             VALUES (?, ?, ?, ?, 'document', ?, ?, 'open', ?, ?)`,
-            [id, e.id, owner?.personId ?? null, source.id, kind, `Upload your ${form} from ${source.label}`, ctx.user.id, now()],
-          );
-          appendEvent(db, { actor: ctx.user, type: "request.created", subjectType: "request", subjectId: id, householdId: e.household_id, engagementId: e.id, data: { kind: "document", document_kind: kind, expected: true } });
-          createdIds.push(id);
-        }
-      }
-    })();
+    const { createdIds, skipped } = createExpected(db, ctx.user, e);
     const all = listRequests(e.id, ctx.user);
     return { created: all.filter((r) => createdIds.includes(r.id)), skipped };
   });

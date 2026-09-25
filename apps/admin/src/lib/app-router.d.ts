@@ -1694,5 +1694,80 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             }>;
         }>>;
     }>>;
+    season: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        preview: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                fromYear: number;
+            };
+            output: {
+                fromYear: number;
+                toYear: number;
+                items: {
+                    householdId: string;
+                    householdName: string;
+                    fromEngagementId: string;
+                    filers: string[];
+                    action: "create" | "skip";
+                    reason: string | null;
+                    people: number;
+                    dependentsLeft: string[];
+                    sourcesToCarry: number;
+                }[];
+            };
+            meta: object;
+        }>;
+        rollover: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                fromYear: number;
+                householdIds?: string[] | undefined;
+            };
+            output: {
+                fromYear: number;
+                toYear: number;
+                created: {
+                    householdId: string;
+                    householdName: string;
+                    fromEngagementId: string;
+                    filers: string[];
+                    engagementId: string;
+                    people: number;
+                    dependentsLeft: string[];
+                    sourcesCarried: number;
+                    requestsCreated: number;
+                }[];
+                skipped: {
+                    householdId: string;
+                    householdName: string;
+                    fromEngagementId: string;
+                    filers: string[];
+                    reason: string;
+                }[];
+                failed: {
+                    householdId: string;
+                    householdName: string;
+                    fromEngagementId: string;
+                    filers: string[];
+                    error: string;
+                }[];
+            };
+            meta: object;
+        }>;
+    }>>;
 }>>;
 export type AppRouter = typeof appRouter;

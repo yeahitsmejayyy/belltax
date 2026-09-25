@@ -525,3 +525,28 @@ export const FeeUpdateInput = z.object({
   unitAmountCents: z.int().min(1).max(10_000_000).optional(),
   active: z.boolean().optional(),
 });
+
+// ── New-season rollover (ticket 34) ──
+// Every completed original return from `fromYear` becomes a new return for the next year, with the same
+// people and still-open sources, and its day-one checklist. Preview and rollover share one plan.
+export const SeasonPreviewInput = z.object({ fromYear: TaxYear });
+export const SeasonRolloverInput = z.object({ fromYear: TaxYear, householdIds: z.array(Id).min(1).max(5000).optional() });
+const SeasonItemBase = z.object({ householdId: Id, householdName: z.string(), fromEngagementId: Id, filers: z.array(z.string()) });
+export const SeasonPlanItem = SeasonItemBase.extend({
+  action: z.enum(["create", "skip"]),
+  reason: z.string().nullable(), // why it's skipped
+  people: z.int().nonnegative(), // who'll be on the new return
+  dependentsLeft: z.array(z.string()), // last year's dependents who won't be (moved, or claimed on another return)
+  sourcesToCarry: z.int().nonnegative(),
+});
+export type SeasonPlanItem = z.infer<typeof SeasonPlanItem>;
+export const SeasonPreview = z.object({ fromYear: TaxYear, toYear: TaxYear, items: z.array(SeasonPlanItem) });
+export type SeasonPreview = z.infer<typeof SeasonPreview>;
+export const SeasonReport = z.object({
+  fromYear: TaxYear,
+  toYear: TaxYear,
+  created: z.array(SeasonItemBase.extend({ engagementId: Id, people: z.int(), dependentsLeft: z.array(z.string()), sourcesCarried: z.int(), requestsCreated: z.int() })),
+  skipped: z.array(SeasonItemBase.extend({ reason: z.string() })),
+  failed: z.array(SeasonItemBase.extend({ error: z.string() })),
+});
+export type SeasonReport = z.infer<typeof SeasonReport>;
