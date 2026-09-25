@@ -499,3 +499,23 @@ export const ActivityPage = z.object({
   next: z.object({ occurredAt: Timestamp, id: Id }).nullable(), // null on the last page
 });
 export type ActivityPage = z.infer<typeof ActivityPage>;
+
+// ---- Practice settings: letter template and fee schedule (admin) ----
+
+export const LetterTemplateView = z.object({
+  current: z.object({ version: z.int().positive(), body: z.string(), createdAt: Timestamp, createdBy: z.string().nullable() }),
+  versions: z.array(z.object({ version: z.int().positive(), createdAt: Timestamp, letters: z.int().nonnegative() })), // newest first
+  mergeFields: z.array(z.string()),
+  requiredFields: z.array(z.string()),
+});
+export type LetterTemplateView = z.infer<typeof LetterTemplateView>;
+export const LetterTemplateBodyInput = z.object({ body: z.string().trim().min(40).max(20_000) });
+export const LetterTemplatePreview = z.object({ problems: z.array(z.string()), rendered: z.string().nullable() });
+
+export const FeeView = z.object({ code: z.string(), description: z.string(), unitAmountCents: z.int().positive(), active: z.boolean(), updatedAt: Timestamp });
+export const FeeUpdateInput = z.object({
+  code: z.string().regex(/^[a-z0-9_]+$/),
+  description: z.string().trim().min(1).max(120).optional(),
+  unitAmountCents: z.int().min(1).max(10_000_000).optional(),
+  active: z.boolean().optional(),
+});

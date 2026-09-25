@@ -1,39 +1,35 @@
+import type { Database } from "bun:sqlite";
 import { PRACTICE_NAME } from "@app/schema";
 
-// The engagement letter template. Bump LETTER_TEMPLATE_VERSION whenever the wording changes: every
-// letter records the version it was rendered from, and a sent letter's text never changes afterward.
+// The engagement letter template lives in the database (letter_templates, migration 003), versioned:
+// publishing adds a version and past versions are frozen, so every letter records exactly which
+// wording it was rendered from. The shipped wording is version 1.
 //
-// This is a working draft for the demo and the build. Have the final wording reviewed by a tax
-// professional before it goes to a real client. Not legal advice.
-
-export const LETTER_TEMPLATE_VERSION = 1;
+// Have the wording reviewed by a tax professional before it goes to a real client. Not legal advice.
 
 export const CONSENT_TEXT = "I have read this engagement letter, I agree to its terms, and typing my name is my signature.";
 
-const TEMPLATE = `Engagement letter — tax year {{tax_year}}{{amended_note}}
+// Every field a template may use, and the ones a letter can't do without.
+export const MERGE_FIELDS = ["practice_name", "household_name", "tax_year", "amended_note", "date", "returns", "filers"] as const;
+export const REQUIRED_FIELDS = ["household_name", "tax_year", "filers"] as const;
+const FIELD = /\{\{(\w+)\}\}/g;
 
-Prepared {{date}} for the {{household_name}} household
-Filing: {{returns}}
+export type LetterTemplate = { version: number; body: string };
 
-1. What we'll do
-{{practice_name}} will prepare the federal and California individual income tax returns listed above for tax year {{tax_year}}, using the documents and answers you provide through the client portal. We don't audit or verify the information you give us, though we may ask questions when something looks incomplete.
+export const currentTemplate = (db: Database): LetterTemplate =>
+  db.query<LetterTemplate, []>("SELECT version, body FROM letter_templates ORDER BY version DESC LIMIT 1").get()!;
 
-2. What you'll do
-You're responsible for giving us complete and accurate information, keeping the records that support your return, and reviewing the finished return before it's filed. The tax return is yours: you're responsible for what it says, even though we prepare it.
-
-3. Filing
-We'll file electronically once you've reviewed the return and signed the separate IRS and California e-file authorizations. Those are signed through our tax software, not this portal.
-
-4. Fees
-Our fees for this work are shown on your invoice in the portal. Fees are due before the return is filed unless we agree otherwise in writing.
-
-5. Your information
-We keep your information confidential and protect it under our written information security plan. We only share it with taxing authorities as needed to file your return, or as the law requires.
-
-6. Ending this engagement
-Either of us can end this engagement in writing at any time. You'll pay for work completed up to that point.
-
-Signed by each person filing: {{filers}}`;
+// Problems with a template, in plain words. Empty means it can be published.
+export function templateProblems(body: string): string[] {
+  const used = new Set([...body.matchAll(FIELD)].map((m) => m[1]!));
+  const unknown = [...used].filter((f) => !(MERGE_FIELDS as readonly string[]).includes(f));
+  const missing = REQUIRED_FIELDS.filter((f) => !used.has(f));
+  const problems: string[] = [];
+  if (unknown.length) problems.push(`Unknown merge field${unknown.length > 1 ? "s" : ""}: ${unknown.map((f) => `{{${f}}}`).join(", ")}.`);
+  if (missing.length) problems.push(`A letter must include ${missing.map((f) => `{{${f}}}`).join(", ")}.`);
+  if (/\{\{(?!\w+\}\})/.test(body)) problems.push("There's an unclosed {{ in the text.");
+  return problems;
+}
 
 export type LetterFields = {
   practiceName?: string;
@@ -45,8 +41,8 @@ export type LetterFields = {
   filers: string[];
 };
 
-export function renderLetter(f: LetterFields): { body: string; templateVersion: number } {
-  const values: Record<string, string> = {
+export function renderLetter(template: LetterTemplate, f: LetterFields): { body: string; templateVersion: number } {
+  const values: Record<(typeof MERGE_FIELDS)[number], string> = {
     practice_name: f.practiceName ?? PRACTICE_NAME,
     household_name: f.householdName,
     tax_year: String(f.taxYear),
@@ -55,12 +51,12 @@ export function renderLetter(f: LetterFields): { body: string; templateVersion: 
     returns: f.returns.join("; "),
     filers: f.filers.join(", "),
   };
-  const body = TEMPLATE.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
-    const v = values[key];
-    if (v === undefined) throw new Error(`engagement letter template: unknown merge field {{${key}}}`);
+  const body = template.body.replace(FIELD, (_, key: string) => {
+    const v = values[key as keyof typeof values];
+    if (v === undefined) throw new Error(`engagement letter template v${template.version}: unknown merge field {{${key}}}`);
     return v;
   });
-  return { body, templateVersion: LETTER_TEMPLATE_VERSION };
+  return { body, templateVersion: template.version };
 }
 
 export const FILING_STATUS_LABEL: Record<string, string> = {

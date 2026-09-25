@@ -1550,5 +1550,124 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             meta: object;
         }>;
     }>>;
+    settings: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        letterTemplate: import("@trpc/server").TRPCBuiltRouter<{
+            ctx: {
+                user: {
+                    id: string;
+                    role: "client" | "preparer";
+                    personId: string | null;
+                } | null;
+                client: {
+                    ip: string;
+                    userAgent: string;
+                };
+                surface: "portal" | "admin";
+            };
+            meta: object;
+            errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+            transformer: false;
+        }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+            get: import("@trpc/server").TRPCQueryProcedure<{
+                input: void;
+                output: {
+                    current: {
+                        version: number;
+                        body: string;
+                        createdAt: string;
+                        createdBy: string | null;
+                    };
+                    versions: {
+                        version: number;
+                        createdAt: string;
+                        letters: number;
+                    }[];
+                    mergeFields: string[];
+                    requiredFields: string[];
+                };
+                meta: object;
+            }>;
+            preview: import("@trpc/server").TRPCQueryProcedure<{
+                input: {
+                    body: string;
+                };
+                output: {
+                    problems: string[];
+                    rendered: string | null;
+                };
+                meta: object;
+            }>;
+            publish: import("@trpc/server").TRPCMutationProcedure<{
+                input: {
+                    body: string;
+                };
+                output: {
+                    version: number;
+                };
+                meta: object;
+            }>;
+        }>>;
+        fees: import("@trpc/server").TRPCBuiltRouter<{
+            ctx: {
+                user: {
+                    id: string;
+                    role: "client" | "preparer";
+                    personId: string | null;
+                } | null;
+                client: {
+                    ip: string;
+                    userAgent: string;
+                };
+                surface: "portal" | "admin";
+            };
+            meta: object;
+            errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+            transformer: false;
+        }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+            list: import("@trpc/server").TRPCQueryProcedure<{
+                input: void;
+                output: {
+                    code: string;
+                    description: string;
+                    unitAmountCents: number;
+                    active: boolean;
+                    updatedAt: string;
+                }[];
+                meta: object;
+            }>;
+            update: import("@trpc/server").TRPCMutationProcedure<{
+                input: {
+                    code: string;
+                    description?: string | undefined;
+                    unitAmountCents?: number | undefined;
+                    active?: boolean | undefined;
+                };
+                output: {
+                    code: string;
+                    description: string;
+                    unitAmountCents: number;
+                    active: boolean;
+                    updatedAt: string;
+                };
+                meta: object;
+            }>;
+        }>>;
+    }>>;
 }>>;
 export type AppRouter = typeof appRouter;

@@ -3,8 +3,8 @@ import { SOURCE_DOCUMENT_KINDS, Stage } from "@app/schema";
 import { HOUSEHOLDS, namePools, planHousehold, type HouseholdPlan, type HouseholdSpec, type ReturnPlan } from "./households";
 import { demoPdf } from "./pdf";
 import { createRng } from "./random";
-import { suggestedLines } from "../../money/pricing";
-import { CONSENT_TEXT, FILING_STATUS_LABEL, renderLetter } from "../../letters/template";
+import { loadFees, suggestedLines } from "../../money/pricing";
+import { CONSENT_TEXT, currentTemplate, FILING_STATUS_LABEL, renderLetter } from "../../letters/template";
 import type { Storage } from "../../storage";
 
 // Demo world only. Builds 25 invented households spread across every pipeline stage, following the
@@ -240,7 +240,7 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
         const letterReturns = ctx.plan.returns.filter((r) => (rp.status === "mfs" ? r.status === "mfs" : r === rp));
         const nameOf = (k: string) => `${ctx.people.get(k)!.first} ${ctx.people.get(k)!.last}`;
         const filersOfPlan = (r: ReturnPlan) => [r.primary, ...(r.spouse ? [r.spouse] : [])].map(nameOf);
-        const { body } = renderLetter({
+        const { body } = renderLetter(currentTemplate(db), {
           householdName: ctx.plan.displayName,
           taxYear: year,
           amended: kind === "amended",
@@ -279,7 +279,7 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
       const invId = rng.id();
       const number = `${year + 1}-${String(summary.returns).padStart(4, "0")}${kind === "amended" ? "1" : ""}`;
       const kinds = rp.sources.map((k) => ctx.plan.sources.find((x) => x.key === k)!.kind);
-      const lines = suggestedLines({
+      const lines = suggestedLines(loadFees(db), {
         isAmended: kind === "amended",
         businesses: kinds.filter((k) => k === "business").length,
         rentals: kinds.filter((k) => k === "rental_property").length,

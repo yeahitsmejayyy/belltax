@@ -5,7 +5,7 @@ import { engagementFor } from "../access";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import type { SessionUser } from "../identity";
-import { CONSENT_TEXT, FILING_STATUS_LABEL, renderLetter, sha256 } from "../letters/template";
+import { CONSENT_TEXT, currentTemplate, FILING_STATUS_LABEL, renderLetter, sha256 } from "../letters/template";
 import { authedProcedure, preparerProcedure, router } from "../trpc";
 
 // The engagement letter: drafted from the template, sent, signed by every filer on the returns it
@@ -153,7 +153,7 @@ export const letterRouter = router({
       const allFilers = returns.flatMap((r) => filersOf(r.id));
       if (!allFilers.length) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Add a primary filer before drafting the letter." });
 
-      const { body, templateVersion } = renderLetter({
+      const { body, templateVersion } = renderLetter(currentTemplate(db), {
         householdName: first.display_name,
         taxYear: first.tax_year,
         amended: first.kind === "amended",

@@ -1,28 +1,30 @@
 import type { Database } from "bun:sqlite";
 
-// The fee schedule, in cents. One place for the seed and for invoice suggestions.
-// A settings screen can own this later; until then it's code, reviewed like code.
-export const PRICES = {
-  federal: 25000, // Form 1040
-  state: 10000, // California Form 540
-  scheduleC: 15000, // per business
-  scheduleE: 12500, // per rental property
-  scheduleD: 7500, // investments
-  amended: 20000, // Form 1040-X
-} as const;
+// The fee schedule lives in the database (fee_schedule, migration 003), editable from the admin's
+// settings. Invoices copy the amounts into their own lines, so a fee change never touches an
+// issued invoice: it only changes what's suggested next.
 
 export type Line = { description: string; quantity: number; unitAmountCents: number };
+export type Fee = { code: string; description: string; unitAmountCents: number; active: boolean };
+export type Fees = Record<string, Fee>;
 
-// What a return usually costs, from what's on it. The preparer edits before issuing.
-export function suggestedLines(c: { isAmended: boolean; businesses: number; rentals: number; investments: number }): Line[] {
-  if (c.isAmended) return [{ description: "Amended return (Form 1040-X)", quantity: 1, unitAmountCents: PRICES.amended }];
-  return [
-    { description: "Federal return (Form 1040)", quantity: 1, unitAmountCents: PRICES.federal },
-    { description: "California return (Form 540)", quantity: 1, unitAmountCents: PRICES.state },
-    ...(c.businesses ? [{ description: "Schedule C · self-employment", quantity: c.businesses, unitAmountCents: PRICES.scheduleC }] : []),
-    ...(c.rentals ? [{ description: "Schedule E · rental property", quantity: c.rentals, unitAmountCents: PRICES.scheduleE }] : []),
-    ...(c.investments ? [{ description: "Schedule D · investments", quantity: 1, unitAmountCents: PRICES.scheduleD }] : []),
-  ];
+export function loadFees(db: Database): Fees {
+  const rows = db
+    .query<{ code: string; description: string; unit_amount_cents: number; active: number }, []>(
+      "SELECT code, description, unit_amount_cents, active FROM fee_schedule ORDER BY position",
+    )
+    .all();
+  return Object.fromEntries(rows.map((r) => [r.code, { code: r.code, description: r.description, unitAmountCents: r.unit_amount_cents, active: r.active === 1 }]));
+}
+
+// What a return usually costs, from what's on it. Inactive fees are left out. The preparer edits before issuing.
+export function suggestedLines(fees: Fees, c: { isAmended: boolean; businesses: number; rentals: number; investments: number }): Line[] {
+  const line = (code: string, quantity = 1): Line[] => {
+    const f = fees[code];
+    return f && f.active && quantity > 0 ? [{ description: f.description, quantity, unitAmountCents: f.unitAmountCents }] : [];
+  };
+  if (c.isAmended) return line("amended");
+  return [...line("federal"), ...line("state"), ...line("schedule_c", c.businesses), ...line("schedule_e", c.rentals), ...line("schedule_d", c.investments ? 1 : 0)];
 }
 
 export function suggestedLinesFor(db: Database, engagementId: string): Line[] {
@@ -34,7 +36,7 @@ export function suggestedLinesFor(db: Database, engagementId: string): Line[] {
          FROM return_complexity c WHERE c.engagement_id = ?`,
     )
     .get(engagementId, engagementId)!;
-  return suggestedLines({ isAmended: c.is_amended === 1, businesses: c.businesses, rentals: c.rentals, investments: c.brokerages });
+  return suggestedLines(loadFees(db), { isAmended: c.is_amended === 1, businesses: c.businesses, rentals: c.rentals, investments: c.brokerages });
 }
 
 // Invoice numbers run per filing year: 2026-0001, 2026-0002…

@@ -245,6 +245,24 @@ export const WebhookReceiptRow = z.object({
   received_at: Timestamp,
 });
 
+// ---- Practice settings (migration 003) ----
+
+export const LetterTemplateRow = z.object({
+  version: z.int().positive(),
+  body: text,
+  created_at: Timestamp,
+  created_by: Id.nullable(),
+});
+
+export const FeeScheduleRow = z.object({
+  code: z.string().regex(/^[a-z0-9_]+$/),
+  description: text,
+  unit_amount_cents: Cents,
+  active: z.union([z.literal(0), z.literal(1)]),
+  position: z.int().positive(),
+  updated_at: Timestamp,
+});
+
 // ---- Audit ----
 
 export const EventRow = z.object({
@@ -283,6 +301,8 @@ export const tables = {
   payments: PaymentRow,
   webhook_receipts: WebhookReceiptRow,
   events: EventRow,
+  letter_templates: LetterTemplateRow,
+  fee_schedule: FeeScheduleRow,
 } as const;
 
 export type TableName = keyof typeof tables;

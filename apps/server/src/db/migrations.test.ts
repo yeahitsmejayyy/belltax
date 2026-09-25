@@ -19,11 +19,13 @@ const tempDir = () => {
   temps.push(d);
   return d;
 };
-// A migrations folder holding the real baseline plus whatever the test adds.
+// A migrations folder holding every real migration, plus whatever the test adds after them.
+const REAL = loadMigrations();
+const next = (n = 1, name = "test") => `${String(REAL.length + n).padStart(3, "0")}-${name}.sql`;
 function folder(extra: Record<string, string> = {}) {
   const dir = join(tempDir(), "migrations");
   mkdirSync(dir);
-  copyFileSync(join(MIGRATIONS_DIR, "001-baseline.sql"), join(dir, "001-baseline.sql"));
+  for (const m of REAL) copyFileSync(join(MIGRATIONS_DIR, `${String(m.version).padStart(3, "0")}-${m.name}.sql`), join(dir, `${String(m.version).padStart(3, "0")}-${m.name}.sql`));
   for (const [name, sql] of Object.entries(extra)) writeFileSync(join(dir, name), sql);
   return dir;
 }
@@ -54,7 +56,7 @@ describe("applying", () => {
   });
 
   test("new migrations apply on top, in order", () => {
-    const dir = folder({ "002-add-preferred-name.sql": "ALTER TABLE people ADD COLUMN preferred_name TEXT;" });
+    const dir = folder({ [next(1, "add-preferred-name")]: "ALTER TABLE people ADD COLUMN preferred_name TEXT;" });
     const db = memory();
     migrate(db, join(dir, "..", "migrations"));
     expect(db.query("SELECT name FROM pragma_table_info('people') WHERE name = 'preferred_name'").all()).toHaveLength(1);
@@ -63,36 +65,36 @@ describe("applying", () => {
 
 describe("refusing", () => {
   test("gaps, duplicates and bad names", () => {
-    expect(() => loadMigrations(folder({ "003-skipped-two.sql": "SELECT 1;" }))).toThrow(/no gaps or duplicates/);
+    expect(() => loadMigrations(folder({ [next(2, "skipped-one")]: "SELECT 1;" }))).toThrow(/no gaps or duplicates/);
     expect(() => loadMigrations(folder({ "2-no-padding.sql": "SELECT 1;" }))).toThrow(/must look like 001-some-name.sql/);
-    expect(() => loadMigrations(folder({ "002-Upper.sql": "SELECT 1;" }))).toThrow(/must look like/);
+    expect(() => loadMigrations(folder({ [next(1, "Upper")]: "SELECT 1;" }))).toThrow(/must look like/);
   });
 
   test("an applied migration that was edited", () => {
-    const dir = folder({ "002-add-note.sql": "ALTER TABLE households ADD COLUMN note TEXT;" });
+    const dir = folder({ [next(1, "add-note")]: "ALTER TABLE households ADD COLUMN note TEXT;" });
     const db = memory();
     migrate(db, dir);
-    appendFileSync(join(dir, "002-add-note.sql"), "\n-- a harmless-looking edit\n");
+    appendFileSync(join(dir, next(1, "add-note")), "\n-- a harmless-looking edit\n");
     expect(() => migrationStatus(db, dir)).toThrow(/was edited after it was applied/);
   });
 
   test("a database that's ahead of the code", () => {
     const db = memory();
-    migrate(db, folder({ "002-add-note.sql": "ALTER TABLE households ADD COLUMN note TEXT;" }));
+    migrate(db, folder({ [next(1, "add-note")]: "ALTER TABLE households ADD COLUMN note TEXT;" }));
     expect(() => migrationStatus(db, folder())).toThrow(/doesn't know/);
   });
 
   test("a failing migration rolls back completely and records nothing", () => {
-    const dir = folder({ "002-half-done.sql": "CREATE TABLE half_done (id TEXT);\nTHIS IS NOT SQL;" });
+    const dir = folder({ [next(1, "half-done")]: "CREATE TABLE half_done (id TEXT);\nTHIS IS NOT SQL;" });
     const db = memory();
-    expect(() => migrate(db, dir)).toThrow(/002-half-done failed and was rolled back/);
+    expect(() => migrate(db, dir)).toThrow(new RegExp(`${next(1, "half-done").replace(".sql", "")} failed and was rolled back`));
     expect(tables(db)).not.toContain("half_done");
-    expect(migrationStatus(db, dir).applied).toEqual([1]);
+    expect(migrationStatus(db, dir).applied).toEqual(REAL.map((m) => m.version));
   });
 
   test("a foreign-keys-off migration that leaves orphans is rolled back", () => {
     const dir = folder({
-      "002-orphan.sql": `-- migrate: foreign-keys-off
+      [next(1, "orphan")]: `-- migrate: foreign-keys-off
 INSERT INTO people (id, household_id, first_name, last_name, created_at)
 VALUES ('0190a000-0000-7000-8000-000000000001', '0190a000-0000-7000-8000-00000000dead', 'Nobody', 'Anywhere', '2026-01-01T00:00:00.000Z');`,
     });
@@ -144,7 +146,7 @@ ${views.map((v) => `${sqlOf("view", v)};`).join("\n")}
       pipeline: db.query("SELECT engagement_id, balance_cents FROM pipeline_rows ORDER BY engagement_id").all(),
       objects: db.query("SELECT type, name FROM sqlite_master WHERE type IN ('index', 'trigger', 'view') ORDER BY type, name").all(),
     };
-    writeFileSync(join(dir, "002-payments-allow-card.sql"), rebuildPaymentsAllowingCard(db));
+    writeFileSync(join(dir, next(1, "payments-allow-card")), rebuildPaymentsAllowingCard(db));
     expect(migrate(db, dir).map((m) => m.name)).toEqual(["payments-allow-card"]);
 
     // Same rows, same derived balances, same set of indexes/triggers/views.
