@@ -37,7 +37,10 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   Frontends type against a **committed copy** of the contract (`src/lib/app-router.d.ts`), never server source.
   After changing any procedure run `bun run sync:types`; `contract.test.ts` fails while a copy is stale.
   Demo identity is a per-app cookie (`btp_demo_portal` / `btp_demo_admin`): browsers share cookies across ports.
-- `packages/ui` — shared tokens (`tokens.css`, empty until ticket 10), `cn`, and the demo identity helpers.
+- `packages/ui` — the design system both apps share. `tokens.css` holds every value (colour light/dark, Geist
+  self-hosted, radius, motion). `theme.css` maps them to Tailwind v4 utilities. There are also brand marks, `cn`, and the demo
+  identity helpers. The rules behind the values: `principles.md` (root); `tokens.test.ts` enforces its contrast rule.
+  Design references: `.assets/` (gitignored), starting with its README and manifest.
 - `apps/site` — marketing site (skelly-site, last).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
 
