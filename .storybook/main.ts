@@ -8,6 +8,7 @@ const config: StorybookConfig = {
   stories: ["../packages/ui/src/**/*.mdx", "../packages/ui/src/**/*.stories.@(ts|tsx)"],
   addons: ["@storybook/addon-docs", "@storybook/addon-a11y", "@storybook/addon-vitest"],
   core: { disableTelemetry: true },
+  staticDirs: [{ from: "../packages/ui/src/brand", to: "/brand" }],
   viteFinal: async (vite) => {
     vite.plugins = [...(vite.plugins ?? []), tailwindcss()];
     return vite;
