@@ -36,6 +36,10 @@ jobs:
       - name: No real data in the repo
         run: bun run check:data
 
+      # Known vulnerabilities in any installed package: fail on high or critical.
+      - name: Dependency audit
+        run: bun audit --audit-level=high
+
       - name: Typecheck (server, schema, ui, portal, admin)
         run: bun run typecheck
 

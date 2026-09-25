@@ -17,6 +17,37 @@ type Options = {
   devOrigin?: string; // that app's Vite dev server, allowed cross-origin in demo mode only
 };
 
+// Every response on both listeners carries these. The built apps are self-contained: no inline or
+// third-party script. Styles allow 'unsafe-inline' because Radix and Sonner inject <style> at runtime;
+// script is where the risk is, and it stays 'self' only.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+export function withSecurityHeaders(res: Response, pathname: string): Response {
+  const headers = new Headers(res.headers);
+  headers.set("Content-Security-Policy", CSP);
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "no-referrer");
+  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  // The tunnel terminates TLS in front of us; in demo there's no HTTPS to pin.
+  if (runtime().mode === "live") headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  // Anything that isn't the app shell or its assets may carry client data: never cache it.
+  const api = pathname.startsWith("/trpc") || pathname.startsWith("/api/") || pathname === "/health";
+  if (api && !headers.get("Cache-Control")?.includes("no-store")) headers.set("Cache-Control", "no-store");
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+}
+
 const count = (table: string) => (runtime().db.query(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
 
 export function createFetchHandler({ surface, webDist, devOrigin }: Options) {
@@ -52,6 +83,10 @@ export function createFetchHandler({ surface, webDist, devOrigin }: Options) {
 
   return async function fetch(req: Request, socketIp?: string): Promise<Response> {
     const { pathname } = new URL(req.url);
+    return withSecurityHeaders(await route(req, pathname, socketIp), pathname);
+  };
+
+  async function route(req: Request, pathname: string, socketIp?: string): Promise<Response> {
 
     if (req.method === "OPTIONS") return cors(new Response(null, { status: 204 }), req);
 
@@ -77,5 +112,5 @@ export function createFetchHandler({ surface, webDist, devOrigin }: Options) {
 
     if (req.method !== "GET" && req.method !== "HEAD") return new Response("Method not allowed", { status: 405 });
     return serveSpa(pathname);
-  };
+  }
 }
