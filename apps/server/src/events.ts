@@ -37,3 +37,12 @@ export function appendEvent(
     ],
   );
 }
+
+// Who did it, in words, for timelines and the activity feed. Expects the events table aliased `ev`.
+export const ACTOR_NAME_SQL = `CASE ev.actor_kind
+    WHEN 'preparer' THEN 'Preparer'
+    WHEN 'stripe' THEN 'Stripe'
+    WHEN 'system' THEN 'System'
+    ELSE COALESCE((SELECT p.first_name || ' ' || p.last_name FROM users u JOIN people p ON p.id = u.person_id WHERE u.id = ev.actor_user_id), 'Client')
+  END`;
+

@@ -3,6 +3,7 @@ import { documentRouter } from "./routes/document";
 import { engagementRouter } from "./routes/engagement";
 import { healthRouter } from "./routes/health";
 import { accessRouter, householdRouter, loginRouter, personRouter } from "./routes/household";
+import { acknowledgeProcedure, activityRouter, inboxRouter } from "./routes/inbox";
 import { intakeRouter } from "./routes/intake";
 import { invoiceRouter, paymentRouter } from "./routes/invoice";
 import { letterRouter } from "./routes/letter";
@@ -15,7 +16,7 @@ export const appRouter = router({
   demo: demoRouter,
   engagement: mergeRouters(engagementRouter, returningRouter),
   intake: intakeRouter,
-  request: mergeRouters(requestRouter, router({ createExpected: createExpectedProcedure })),
+  request: mergeRouters(requestRouter, router({ createExpected: createExpectedProcedure, acknowledge: acknowledgeProcedure })),
   source: sourceRouter,
   document: documentRouter,
   letter: letterRouter,
@@ -25,6 +26,8 @@ export const appRouter = router({
   person: personRouter,
   login: loginRouter,
   access: accessRouter,
+  inbox: inboxRouter,
+  activity: activityRouter,
 });
 
 export type AppRouter = typeof appRouter;

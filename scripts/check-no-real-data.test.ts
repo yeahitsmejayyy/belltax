@@ -22,9 +22,12 @@ describe("the no-real-data guard", () => {
     expect(checkPaths(fine)).toEqual([]);
   });
 
+  // Samples are assembled at runtime so this file never holds a real-shaped SSN itself (the guard scans it too).
+  const ssn = (...parts: string[]) => parts.join("-");
+
   test("flags an SSN that could be real, but not the demo's 9xx ones or impossible ones", () => {
-    expect(checkText("x.ts", "ssn: 123-45-6789")).toHaveLength(1);
-    expect(checkText("x.ts", "a\nb\nssn 512-34-1234")[0]!.file).toBe("x.ts:3");
+    expect(checkText("x.ts", `ssn: ${ssn("123", "45", "6789")}`)).toHaveLength(1);
+    expect(checkText("x.ts", `a\nb\nssn ${ssn("512", "34", "1234")}`)[0]!.file).toBe("x.ts:3");
     for (const ok of ["900-12-3456", "999-99-9999", "000-12-3456", "666-12-3456", "123-00-4567", "123-45-0000", "555-0100", "2026-09-24"]) {
       expect({ ok, found: checkText("x.ts", ok) }).toEqual({ ok, found: [] });
     }

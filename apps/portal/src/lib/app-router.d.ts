@@ -450,6 +450,15 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             };
             meta: object;
         }>;
+        acknowledge: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                requestId: string;
+            };
+            output: {
+                id: string;
+            };
+            meta: object;
+        }>;
     }> & import("@trpc/server").TRPCDecorateCreateRouterOptions<{
         list: import("@trpc/server").TRPCQueryProcedure<{
             input: {
@@ -1442,6 +1451,101 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             };
             output: {
                 grantId: string;
+            };
+            meta: object;
+        }>;
+    }>>;
+    inbox: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        list: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                taxYear?: number | undefined;
+                staleDays?: number | undefined;
+            } | undefined;
+            output: {
+                taxYear: number | null;
+                items: {
+                    id: string;
+                    kind: "document_review" | "letter_signed" | "payment_failed" | "question_answered" | "stale";
+                    at: string;
+                    engagementId: string;
+                    householdName: string;
+                    taxYear: number;
+                    who: string;
+                    summary: string;
+                    action: "acknowledge_answer" | "advance_stage" | "follow_up_payment" | "open_return" | "review_document";
+                    subjectId: string;
+                }[];
+                counts: Record<"document_review" | "letter_signed" | "payment_failed" | "question_answered" | "stale", number>;
+                total: number;
+            };
+            meta: object;
+        }>;
+    }>>;
+    activity: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        list: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                householdId?: string | undefined;
+                engagementId?: string | undefined;
+                actorKind?: "client" | "preparer" | "stripe" | "system" | undefined;
+                typePrefix?: string | undefined;
+                from?: string | undefined;
+                to?: string | undefined;
+                cursor?: {
+                    occurredAt: string;
+                    id: string;
+                } | undefined;
+                limit?: number | undefined;
+            } | undefined;
+            output: {
+                items: {
+                    id: string;
+                    occurredAt: string;
+                    type: string;
+                    actorKind: "client" | "preparer" | "stripe" | "system";
+                    actorName: string;
+                    subjectType: string;
+                    subjectId: string;
+                    reason: string | null;
+                    householdId: string | null;
+                    householdName: string | null;
+                    engagementId: string | null;
+                }[];
+                next: {
+                    occurredAt: string;
+                    id: string;
+                } | null;
             };
             meta: object;
         }>;

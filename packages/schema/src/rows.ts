@@ -147,6 +147,7 @@ export const RequestRow = z.object({
   created_at: Timestamp,
   responded_at: Timestamp.nullable(),
   closed_at: Timestamp.nullable(),
+  acknowledged_at: Timestamp.nullable(),
 });
 
 export const DocumentRow = z.object({

@@ -4,7 +4,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Config } from "../config";
-import { migrationStatus } from "../db/migrate";
+import { loadMigrations, migrationStatus } from "../db/migrate";
 import { bootDatabase, connect, DB_FILE } from "../db/open";
 import { createBackup, latestBackup, restoreBackup, rotateBackups, verifyBackup } from "./backup";
 import { assertLiveReady, BIND_HOST, checkHost, serverOptions, tightenPermissions } from "./hardening";
@@ -33,7 +33,7 @@ describe("backup", () => {
   test("writes one encrypted, versioned file with nothing readable inside", async () => {
     const { file, manifest } = await backup(new Date("2026-09-24T10:00:00.000Z"));
     expect(file).toBe(join(backupDir, "belltaxprep-20260924T100000Z.btpbak"));
-    expect(manifest).toMatchObject({ format: 1, schemaVersion: 1, uploads: { files: docCount() } });
+    expect(manifest).toMatchObject({ format: 1, schemaVersion: loadMigrations().length, uploads: { files: docCount() } });
     expect(statSync(file).mode & 0o777).toBe(0o600);
     const bytes = readFileSync(file);
     expect(bytes.subarray(0, 6).toString()).toBe("BTPBK1");

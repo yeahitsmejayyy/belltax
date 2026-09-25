@@ -451,3 +451,51 @@ export const SourceView = z.object({
   expectedDocuments: z.array(z.string()), // document kinds this source usually produces
 });
 export type SourceView = z.infer<typeof SourceView>;
+
+// ---- Admin inbox and activity feed ----
+
+export const InboxKind = z.enum(["document_review", "question_answered", "letter_signed", "payment_failed", "stale"]);
+export type InboxKind = z.infer<typeof InboxKind>;
+
+export const InboxListInput = z.object({ taxYear: TaxYear.optional(), staleDays: z.int().min(1).max(90).default(7) }).optional();
+export const InboxItem = z.object({
+  id: z.string(), // stable per item: kind + subject id
+  kind: InboxKind,
+  at: Timestamp, // when it happened
+  engagementId: Id,
+  householdName: z.string(),
+  taxYear: TaxYear,
+  who: z.string(), // the person or party behind it
+  summary: z.string(), // one plain sentence
+  action: z.enum(["review_document", "acknowledge_answer", "advance_stage", "follow_up_payment", "open_return"]),
+  subjectId: z.string(), // the document, request, letter, payment or return to act on
+});
+export type InboxItem = z.infer<typeof InboxItem>;
+export const Inbox = z.object({
+  taxYear: TaxYear.nullable(),
+  items: z.array(InboxItem), // newest first
+  counts: z.record(InboxKind, z.int().nonnegative()),
+  total: z.int().nonnegative(),
+});
+export type Inbox = z.infer<typeof Inbox>;
+
+export const RequestAcknowledgeInput = z.object({ requestId: Id });
+
+export const ActivityListInput = z
+  .object({
+    householdId: Id.optional(),
+    engagementId: Id.optional(),
+    actorKind: ActorKind.optional(),
+    typePrefix: z.string().regex(/^[a-z_]+(\.[a-z_]*)?$/).optional(), // "document." or "letter.signed"
+    from: Timestamp.optional(),
+    to: Timestamp.optional(),
+    cursor: z.object({ occurredAt: Timestamp, id: Id }).optional(), // from the previous page's `next`
+    limit: z.int().min(1).max(200).default(50),
+  })
+  .optional();
+export const ActivityItem = TimelineEvent.extend({ householdId: Id.nullable(), householdName: z.string().nullable(), engagementId: Id.nullable() });
+export const ActivityPage = z.object({
+  items: z.array(ActivityItem),
+  next: z.object({ occurredAt: Timestamp, id: Id }).nullable(), // null on the last page
+});
+export type ActivityPage = z.infer<typeof ActivityPage>;
