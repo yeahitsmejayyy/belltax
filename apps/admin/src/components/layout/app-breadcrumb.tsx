@@ -5,7 +5,7 @@ import {
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from "@app/ui/components/breadcrumb";
 
 type BreadcrumbItemType = {
     label: string;

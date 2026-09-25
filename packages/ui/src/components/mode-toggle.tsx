@@ -1,14 +1,14 @@
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "./button";
+import { Switch } from "./switch";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useTheme } from "@/components/theme-provider";
-import { SunIcon } from "./ui/sun";
-import { MoonIcon } from "./ui/moon";
+} from "./dropdown-menu";
+import { useTheme } from "./theme-provider";
+import { SunIcon } from "./sun";
+import { MoonIcon } from "./moon";
 
 type ModeToggleProps = {
     variant?: "dropdown" | "switch";

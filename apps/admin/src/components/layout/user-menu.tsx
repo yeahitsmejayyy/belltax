@@ -3,14 +3,14 @@ import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+} from "@app/ui/components/popover";
+import { Button } from "@app/ui/components/button";
 import {
     Avatar,
     AvatarFallback,
     AvatarImage,
-} from "@/components/ui/avatar";
-import { ModeToggle } from "@/components/mode-toggle";
+} from "@app/ui/components/avatar";
+import { ModeToggle } from "@app/ui/components/mode-toggle";
 
 type UserMenuProps = {
     username: string;

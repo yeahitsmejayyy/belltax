@@ -49,3 +49,14 @@ jobs:
 
       - name: Build portal and admin
         run: bun run build
+
+      # The design system: every story renders in Chromium, its play function runs, and axe checks it
+      # (report-only until principles.md's open contrast questions are settled).
+      - name: Install Chromium for Storybook tests
+        run: bunx playwright install --with-deps chromium-headless-shell
+
+      - name: Storybook interaction tests
+        run: bun run test:storybook
+
+      - name: Build Storybook
+        run: bun run storybook:build

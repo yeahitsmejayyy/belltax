@@ -56,13 +56,13 @@ pipeline, and each maps to who's waiting:
 
 | Tone | Means | Stages |
 | --- | --- | --- |
-| Outline (neutral) | waiting on the client | Invited, Intake, Documents |
-| Brand | waiting on the preparer | Ready to prep, Preparing, Client review* |
+| Outline (neutral) | waiting on the client | Invited, Intake, Documents, Client review |
+| Brand | waiting on the preparer | Ready to prep, Preparing |
 | Info | waiting on the IRS / FTB | Filed |
 | Success | done | Complete |
 
-\*Client review is the client's move in the portal, and the preparer's to chase in the admin. The same pill
-geometry is used for document, invoice and payment status.
+The same pill geometry is used for document, invoice and payment status (`StagePill`, `StatusChip` in
+`packages/ui`).
 
 ## 7. Motion: 150–300ms, eased, never bouncy
 

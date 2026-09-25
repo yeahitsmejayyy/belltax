@@ -6,8 +6,8 @@ import {
     BreadcrumbList,
     BreadcrumbPage,
     BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
+} from "@app/ui/components/breadcrumb";
+import { Separator } from "@app/ui/components/separator";
 
 type BreadcrumbItemType = {
     label: string;

@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@app/ui/components/theme-provider";
+import { Toaster } from "@app/ui/components/sonner";
 
 import "@app/ui/tokens.css";
 import "@/index.css";

@@ -40,7 +40,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - `packages/ui` — the design system both apps share. `tokens.css` holds every value (colour light/dark, Geist
   self-hosted, radius, motion). `theme.css` maps them to Tailwind v4 utilities. There are also brand marks, `cn`, and the demo
   identity helpers. The rules behind the values: `principles.md` (root); `tokens.test.ts` enforces its contrast rule.
-  Design references: `.assets/` (gitignored), starting with its README and manifest.
+  Design references: `.assets/` (gitignored), starting with its README and manifest. Shared components live in
+  `packages/ui/src/components` (shadcn primitives + StagePill, StatusChip, ModeBadge, SplitButton, Field); apps import
+  `@app/ui/components/<name>`, never copy them. Every component gets stories in `packages/ui/src/stories`.
 - `apps/site` — marketing site (skelly-site, last).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
 
@@ -50,6 +52,8 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - `bun run sync:types` · `bun run seed` · `bun run migrate [--status]` · `bun test` · `bun run typecheck`
 - Intake questions live in `packages/schema/src/intake/v1.ts` (the portal imports it; the server validates with it).
   After editing, run `bun run intake:doc` to regenerate `docs/intake-v1.md`; a test fails while it's stale.
+- `bun run storybook` (:6006) · `bun run storybook:build` · `bun run test:storybook` (stories + play functions in
+  Chromium via Vitest 4; set `CHROMIUM_PATH` to use a Chromium already on the machine).
 - `bun run check:data` — fails if anything tracked looks like real data (databases, backups, uploads, `.env`,
   PDFs/HEIC, or an SSN not starting with 9). CI (`.github/workflows/ci.yml`) runs it on every push, then
   typecheck, tests and both app builds. The same four commands locally mean CI will pass.

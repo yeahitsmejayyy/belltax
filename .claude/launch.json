@@ -41,6 +41,15 @@
         "dev:admin"
       ],
       "port": 5174
+    },
+    {
+      "name": "storybook",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "storybook"
+      ],
+      "port": 6006
     }
   ]
 }

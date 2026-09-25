@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@app/ui/components/card";
 import { trpc } from "@/lib/trpc";
-import { Badge } from "../ui/badge";
+import { Badge } from "@app/ui/components/badge";
 import { cn } from "@/lib/utils";
 import { CircleCheck, X } from "lucide-react";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@app/ui/components/skeleton";
 export function HealthStatusWidget() {
     const healthCheck = trpc.health.check.useQuery();
     const status = healthCheck.data?.status;
