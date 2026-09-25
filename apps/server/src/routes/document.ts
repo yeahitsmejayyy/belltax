@@ -42,15 +42,21 @@ export const toDocumentView = (r: DocumentRow, user: SessionUser): DocumentView 
   mine: r.uploaded_by === user.id,
 });
 
+// Two halves so each uses its own index: by return, and by the people on it (person-level documents).
+// As one OR, SQLite scanned every document without a return (ticket 35). The + keeps it off that index.
+export const LIST_DOCUMENTS_SQL = `SELECT ${DOCUMENT_COLUMNS}
+         FROM documents d JOIN document_kinds k ON k.code = d.kind
+        WHERE d.engagement_id = ? AND d.purged_at IS NULL
+       UNION ALL
+       SELECT ${DOCUMENT_COLUMNS}
+         FROM return_people rp JOIN documents d ON d.person_id = rp.person_id JOIN document_kinds k ON k.code = d.kind
+        WHERE rp.engagement_id = ? AND +d.engagement_id IS NULL AND d.purged_at IS NULL
+        ORDER BY created_at DESC, id DESC`;
+
 export function listDocuments(engagementId: string, user: SessionUser): DocumentView[] {
   const rows = runtime()
     .db.query<DocumentRow, [string, string]>(
-      `SELECT ${DOCUMENT_COLUMNS}
-         FROM documents d JOIN document_kinds k ON k.code = d.kind
-        WHERE d.purged_at IS NULL
-          AND (d.engagement_id = ?
-               OR (d.engagement_id IS NULL AND d.person_id IN (SELECT person_id FROM return_people WHERE engagement_id = ?)))
-        ORDER BY d.created_at DESC, d.id DESC`,
+      LIST_DOCUMENTS_SQL,
     )
     .all(engagementId, engagementId);
   return rows.map((r) => toDocumentView(r, user));

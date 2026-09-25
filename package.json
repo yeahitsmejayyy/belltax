@@ -20,6 +20,8 @@
     "purge": "bun --filter @app/server purge",
     "export": "bun --filter @app/server export",
     "export:open": "bun --filter @app/server export:open",
+    "bench:seed": "bun --filter @app/server bench:seed",
+    "bench": "bun --filter @app/server bench",
     "sync:types": "bun scripts/sync-types.ts",
     "dev:portal": "bun --filter @app/portal dev",
     "dev:admin": "bun --filter @app/admin dev",

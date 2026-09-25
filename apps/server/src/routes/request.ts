@@ -21,6 +21,9 @@ type Row = {
   created_at: string;
 };
 
+export const LATEST_DOCUMENT_SQL = `SELECT ${DOCUMENT_COLUMNS} FROM documents d JOIN document_kinds k ON k.code = d.kind
+  WHERE d.request_id = ? AND d.purged_at IS NULL ORDER BY d.created_at DESC, d.id DESC LIMIT 1`;
+
 export function listRequests(engagementId: string, user: SessionUser): RequestView[] {
   const { db } = runtime();
   const rows = db
@@ -30,10 +33,7 @@ export function listRequests(engagementId: string, user: SessionUser): RequestVi
         ORDER BY (status = 'open') DESC, created_at, id`,
     )
     .all(engagementId);
-  const latest = db.query<DocumentRow, [string]>(
-    `SELECT ${DOCUMENT_COLUMNS} FROM documents d JOIN document_kinds k ON k.code = d.kind
-      WHERE d.request_id = ? AND d.purged_at IS NULL ORDER BY d.created_at DESC, d.id DESC LIMIT 1`,
-  );
+  const latest = db.query<DocumentRow, [string]>(LATEST_DOCUMENT_SQL);
   return rows.map((r) => {
     const doc = latest.get(r.id);
     return {

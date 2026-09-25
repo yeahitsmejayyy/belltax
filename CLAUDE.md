@@ -55,6 +55,8 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - `bun run export <householdId|--all> [--encrypt]` · `bun run export:open <file> <empty-dir>` — the offline client
   record (record.json + files + README) into `EXPORT_DIR`, outside the repo; `src/export/household.ts`. A new table must
   be added to `HOUSEHOLD_SCOPE` or `PRACTICE_WIDE` there (a test fails until it is).
+- `bun run bench:seed [copies]` · `bun run bench` — the scale check (demo data under `data/bench/`, never live).
+  Budget 100 ms per hot path at 2,000 households; results and query plans in `docs/performance.md`.
 - Demo mode wipes and re-seeds `data/demo/` on every boot (25 invented households, see `apps/server/src/db/seed/`).
 - **Schema changes are new numbered migrations** in `apps/server/src/db/migrations/` — never edit an applied one.
   Live refuses to boot behind the code; back up, then `bun run migrate`. See `docs/migrations.md`.

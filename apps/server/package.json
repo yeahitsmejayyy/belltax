@@ -15,7 +15,9 @@
     "live:check": "bun src/live/cli.ts check",
     "purge": "bun src/live/purge-cli.ts",
     "export": "bun src/export/cli.ts",
-    "export:open": "bun src/export/cli.ts open"
+    "export:open": "bun src/export/cli.ts open",
+    "bench:seed": "bun src/bench/cli.ts seed",
+    "bench": "bun src/bench/cli.ts run"
   },
   "dependencies": {
     "@app/schema": "workspace:*",
