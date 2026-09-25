@@ -21,7 +21,8 @@
     "sync:types": "bun scripts/sync-types.ts",
     "dev:portal": "bun --filter @app/portal dev",
     "dev:admin": "bun --filter @app/admin dev",
-    "build": "bun --filter @app/portal build && bun --filter @app/admin build"
+    "build": "bun --filter @app/portal build && bun --filter @app/admin build",
+    "check:data": "bun scripts/check-no-real-data.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

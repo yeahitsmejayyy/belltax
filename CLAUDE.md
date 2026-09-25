@@ -1,5 +1,7 @@
 # belltaxprep
 
+[![CI](https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml/badge.svg)](https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml)
+
 Client portal + preparer admin for a small tax practice. Everything around the return; never the
 return itself (ProSeries owns that). Read `belltaxprep-portal.md` for the brief.
 
@@ -43,6 +45,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 
 - `bun install` · `bun run dev` (server) · `bun run dev:portal` · `bun run dev:admin` · `bun run build` (both apps)
 - `bun run sync:types` · `bun run seed` · `bun run migrate [--status]` · `bun test` · `bun run typecheck`
+- `bun run check:data` — fails if anything tracked looks like real data (databases, backups, uploads, `.env`,
+  PDFs/HEIC, or an SSN not starting with 9). CI (`.github/workflows/ci.yml`) runs it on every push, then
+  typecheck, tests and both app builds. The same four commands locally mean CI will pass.
 - Live only (see `docs/live-runbook.md`): `bun run start` · `bun run live:check` · `bun run backup` ·
   `bun run backup:verify <file>` · `bun run restore <file> <empty-dir>` · `bun run purge [--confirm]`
 - Demo mode wipes and re-seeds `data/demo/` on every boot (25 invented households, see `apps/server/src/db/seed/`).
