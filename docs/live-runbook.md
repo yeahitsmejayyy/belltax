@@ -128,6 +128,24 @@ a scratch folder you delete afterward. Write the date of both drills in the WISP
   stays until every return its person is on is complete and two years old. The purge also removes any stray file
   a previous run left behind.
 
+## Export client records (the offline copy)
+
+A complete copy of each household that needs no app to read: `record.json` (people with SSN last-4 only, logins
+without credentials, every return by year with its answers, requests, documents and invoices, letters with their
+signatures, and the audit trail), the uploaded files under their original names, and a `README.txt`.
+
+```bash
+EXPORT_DIR=/Volumes/Exports bun run export --all --encrypt
+```
+
+- `--encrypt` seals each household into one `.btpexport` file with `BACKUP_PASSPHRASE`. Without it you get plain
+  folders; only do that onto an encrypted disk.
+- One household: `bun run export <householdId>`. The admin can do the same (`household.export`).
+- Open a sealed one: `bun run export:open <file> <empty-folder>`.
+- Each export is recorded in the activity feed as `household.exported`.
+
+Do it at the end of each season, and keep the copies with the backups.
+
 ## If something's wrong
 
 - **"the live database is behind the code":** back up, then `bun run migrate`.

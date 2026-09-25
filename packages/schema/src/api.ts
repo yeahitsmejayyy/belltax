@@ -334,6 +334,10 @@ export const HouseholdCreateInput = z.object({ displayName: Name });
 export const HouseholdUpdateInput = z.object({ householdId: Id, displayName: Name.optional(), archived: z.boolean().optional() });
 export const HouseholdListInput = z.object({ search: z.string().trim().max(100).optional(), includeArchived: z.boolean().optional() }).optional();
 export const HouseholdGetInput = z.object({ householdId: Id });
+// The offline copy (ticket 33): written on the practice's machine, never sent over the wire.
+export const HouseholdExportInput = z.object({ householdId: Id, encrypt: z.boolean().default(false) });
+export const HouseholdExportResult = z.object({ path: z.string(), encrypted: z.boolean(), documents: z.int().nonnegative(), bytes: z.int().nonnegative() });
+export type HouseholdExportResult = z.infer<typeof HouseholdExportResult>;
 
 export const PersonAddInput = z.object({
   householdId: Id,

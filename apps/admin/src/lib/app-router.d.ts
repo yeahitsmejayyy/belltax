@@ -1242,6 +1242,19 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             };
             meta: object;
         }>;
+        export: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                householdId: string;
+                encrypt?: boolean | undefined;
+            };
+            output: {
+                path: string;
+                encrypted: boolean;
+                documents: number;
+                bytes: number;
+            };
+            meta: object;
+        }>;
         list: import("@trpc/server").TRPCQueryProcedure<{
             input: {
                 search?: string | undefined;

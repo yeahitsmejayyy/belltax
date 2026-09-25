@@ -13,7 +13,9 @@
     "backup:verify": "bun src/live/cli.ts verify",
     "restore": "bun src/live/cli.ts restore",
     "live:check": "bun src/live/cli.ts check",
-    "purge": "bun src/live/purge-cli.ts"
+    "purge": "bun src/live/purge-cli.ts",
+    "export": "bun src/export/cli.ts",
+    "export:open": "bun src/export/cli.ts open"
   },
   "dependencies": {
     "@app/schema": "workspace:*",

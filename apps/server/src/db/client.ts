@@ -6,7 +6,7 @@ import type { Storage } from "../storage";
 // Routes read it from here rather than from the tRPC context: the context is part of the AppRouter
 // type the web app imports, and a bun:sqlite handle there would leak Bun types into a browser build.
 
-type Runtime = { db: Database; storage: Storage; mode: RunMode };
+type Runtime = { db: Database; storage: Storage; mode: RunMode; dataDir?: string }; // dataDir: where the database and uploads live (exports must go elsewhere)
 let current: Runtime | null = null;
 
 export function useRuntime(runtime: Runtime) {

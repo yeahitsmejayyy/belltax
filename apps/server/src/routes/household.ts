@@ -4,6 +4,8 @@ import {
   AccessRevokeInput,
   HouseholdCreateInput,
   HouseholdDetail,
+  HouseholdExportInput,
+  HouseholdExportResult,
   HouseholdGetInput,
   HouseholdListInput,
   HouseholdSummary,
@@ -17,6 +19,7 @@ import {
 import { z } from "zod";
 import { runtime } from "../db/client";
 import { appendEvent, VIEW_TYPE_SQL } from "../events";
+import { exportDirFor, exportHousehold } from "../export/household";
 import { preparerProcedure, router } from "../trpc";
 
 // Onboarding: the preparer's side of "Invite client". Households, the people in them, logins and grants.
@@ -102,6 +105,24 @@ export const householdRouter = router({
         });
       })();
       return { id: input.householdId };
+    }),
+
+  // Write the household's offline copy to EXPORT_DIR on this machine (demo: a temp folder). Sealed with
+  // BACKUP_PASSPHRASE when asked. The path comes back; the contents never cross the wire.
+  export: preparerProcedure
+    .input(HouseholdExportInput)
+    .output(HouseholdExportResult)
+    .mutation(async ({ ctx, input }) => {
+      const { db, storage, mode, dataDir } = runtime();
+      if (!householdExists(input.householdId)) throw notFound("Household");
+      const outDir = exportDirFor(mode);
+      if (!outDir) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Set EXPORT_DIR to a folder outside the repo, then try again." });
+      const passphrase = input.encrypt ? (process.env.BACKUP_PASSPHRASE ?? "") : undefined;
+      try {
+        return await exportHousehold({ db, storage, dataDir, householdId: input.householdId, outDir, actor: ctx.user, passphrase });
+      } catch (e) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: e instanceof Error ? e.message : "The export failed." });
+      }
     }),
 
   // The Clients screen: newest activity first.

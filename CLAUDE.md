@@ -52,6 +52,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   typecheck, tests and both app builds. The same four commands locally mean CI will pass.
 - Live only (see `docs/live-runbook.md`): `bun run start` · `bun run live:check` · `bun run backup` ·
   `bun run backup:verify <file>` · `bun run restore <file> <empty-dir>` · `bun run purge [--confirm]`
+- `bun run export <householdId|--all> [--encrypt]` · `bun run export:open <file> <empty-dir>` — the offline client
+  record (record.json + files + README) into `EXPORT_DIR`, outside the repo; `src/export/household.ts`. A new table must
+  be added to `HOUSEHOLD_SCOPE` or `PRACTICE_WIDE` there (a test fails until it is).
 - Demo mode wipes and re-seeds `data/demo/` on every boot (25 invented households, see `apps/server/src/db/seed/`).
 - **Schema changes are new numbered migrations** in `apps/server/src/db/migrations/` — never edit an applied one.
   Live refuses to boot behind the code; back up, then `bun run migrate`. See `docs/migrations.md`.

@@ -95,23 +95,43 @@ export async function createBackup(opts: {
     const stamp = manifest.createdAt.replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
     const file = join(opts.backupDir, `${PRODUCT_NAME}-${stamp}${EXT}`);
     const partial = `${file}.partial`;
-    const salt = randomBytes(16);
-    const iv = randomBytes(12);
-    const cipher = createCipheriv("aes-256-gcm", keyFrom(passphrase, salt), iv);
-    writeFileSync(partial, Buffer.concat([MAGIC, salt, iv]), { mode: 0o600 });
-    const out = createWriteStream(partial, { flags: "a" });
     const tarArgs = ["-czf", "-", "-C", staging, DB_FILE, "manifest.json"];
     if (existsSync(join(opts.dataDir, "uploads"))) tarArgs.push("-C", opts.dataDir, "uploads");
-    const sealed = pipeline(cipher, out);
-    await run("tar", tarArgs, { stdoutTo: cipher });
-    await sealed;
-    appendFileSync(partial, cipher.getAuthTag());
-    renameSync(partial, file); // a backup file either exists whole or not at all
+    await sealTar(tarArgs, file, passphrase);
     return { file, manifest };
   } finally {
     rmSync(staging, { recursive: true, force: true });
   }
 }
+
+// tar + gzip streamed into AES-256-GCM, written as "BTPBK1" · salt · iv · ciphertext · tag. Shared with
+// the client record export (export/household.ts), which seals a folder the same way.
+export async function sealTar(tarArgs: string[], file: string, passphrase: string) {
+  const partial = `${file}.partial`;
+  const salt = randomBytes(16);
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", keyFrom(passphrase, salt), iv);
+  writeFileSync(partial, Buffer.concat([MAGIC, salt, iv]), { mode: 0o600 });
+  const out = createWriteStream(partial, { flags: "a" });
+  const sealed = pipeline(cipher, out);
+  await run("tar", tarArgs, { stdoutTo: cipher });
+  await sealed;
+  appendFileSync(partial, cipher.getAuthTag());
+  renameSync(partial, file); // a sealed file either exists whole or not at all
+}
+
+// Decrypt a sealed file and extract it into `target`, verifying the GCM tag before anything is extracted.
+export async function unsealTo(file: string, passphrase: string | undefined, target: string) {
+  const { dir, archive } = await decryptToTemp(file, checkPassphrase(passphrase));
+  try {
+    mkdirSync(target, { recursive: true, mode: 0o700 });
+    await run("tar", ["-xzf", archive, "-C", target]);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+export { checkPassphrase };
 
 // Decrypt to a private temp archive, verifying the GCM tag before anything is trusted.
 async function decryptToTemp(file: string, passphrase: string): Promise<{ dir: string; archive: string }> {

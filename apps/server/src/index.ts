@@ -17,7 +17,7 @@ if (config.mode === "live") {
 }
 const storage = createStorage(config.dataDir);
 const { db, seeded } = await bootDatabase(config, { storage });
-useRuntime({ db, storage, mode: config.mode });
+useRuntime({ db, storage, mode: config.mode, dataDir: config.dataDir });
 
 const log = createRequestLog({ mode: config.mode, dataDir: config.dataDir });
 

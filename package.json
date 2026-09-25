@@ -18,6 +18,8 @@
     "live:check": "bun --filter @app/server live:check",
     "start": "bun --filter @app/server start",
     "purge": "bun --filter @app/server purge",
+    "export": "bun --filter @app/server export",
+    "export:open": "bun --filter @app/server export:open",
     "sync:types": "bun scripts/sync-types.ts",
     "dev:portal": "bun --filter @app/portal dev",
     "dev:admin": "bun --filter @app/admin dev",
