@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import type { Database } from "bun:sqlite";
 import {
   AddonTrigger,
+  EfileJurisdiction,
+  EfileStatus,
   PackageFilingStatus,
   ActorKind,
   DocumentCategory,
@@ -97,6 +99,8 @@ describe("zod ↔ SQL drift", () => {
       "events.actor_kind": ActorKind.options,
       "price_packages.filing_status": PackageFilingStatus.options,
       "price_addons.applies_when": AddonTrigger.options,
+      "efile_submissions.jurisdiction": EfileJurisdiction.options,
+      "efile_submissions.status": EfileStatus.options,
     };
     const found: Record<string, string[]> = {};
     const rows = db.query<{ name: string; sql: string }, []>("SELECT name, sql FROM sqlite_master WHERE type = 'table'").all();

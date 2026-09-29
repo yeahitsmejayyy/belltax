@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   ActorKind,
   DocumentStatus,
+  EfileJurisdiction,
+  EfileStatus,
   EngagementKind,
   FilingStatus,
   InvoiceStatus,
@@ -30,6 +32,28 @@ export const EngagementListInput = z
   .optional();
 export type EngagementListInput = z.infer<typeof EngagementListInput>;
 
+// A return's e-file state for one jurisdiction: its latest attempt, or null status when not e-filed yet.
+export const EfileState = z.object({
+  jurisdiction: EfileJurisdiction,
+  status: EfileStatus.nullable(),
+  submittedAt: Timestamp.nullable(),
+  decidedAt: Timestamp.nullable(),
+  rejectionCode: z.string().nullable(), // preparer only; clients never see codes
+  rejectionNote: z.string().nullable(),
+  attempts: z.int().nonnegative(),
+});
+export type EfileState = z.infer<typeof EfileState>;
+export const EfileRecordInput = z
+  .object({
+    engagementId: Id,
+    jurisdiction: EfileJurisdiction,
+    // submit: first e-file, or again after a rejection. accept / reject: the IRS's or FTB's answer.
+    action: z.enum(["submit", "accept", "reject"]),
+    rejectionCode: z.string().trim().min(1).max(40).optional(),
+    reason: z.string().trim().min(3).max(500).optional(),
+  })
+  .refine((v) => v.action !== "reject" || (v.rejectionCode && v.reason), { message: "A rejection needs its code and what it means.", path: ["reason"] });
+
 export const PipelineRow = z.object({
   engagementId: Id,
   householdId: Id,
@@ -44,6 +68,7 @@ export const PipelineRow = z.object({
   openRequests: z.int().nonnegative(),
   balanceCents: z.int(),
   complexity: z.enum(["simple", "involved"]),
+  efile: z.object({ federal: EfileStatus.nullable(), state: EfileStatus.nullable() }),
 });
 export type PipelineRow = z.infer<typeof PipelineRow>;
 
@@ -214,6 +239,7 @@ export const EngagementDetail = z.object({
   documents: z.array(DocumentView),
   letter: LetterSummary.nullable(),
   invoices: z.array(InvoiceSummary),
+  efile: z.array(EfileState), // federal, then state
   timeline: z.array(TimelineEvent), // newest first
 });
 export type EngagementDetail = z.infer<typeof EngagementDetail>;
@@ -471,7 +497,7 @@ export type SourceView = z.infer<typeof SourceView>;
 
 // ---- Admin inbox and activity feed ----
 
-export const InboxKind = z.enum(["document_review", "question_answered", "letter_signed", "payment_failed", "stale"]);
+export const InboxKind = z.enum(["document_review", "question_answered", "letter_signed", "payment_failed", "efile_rejected", "stale"]);
 export type InboxKind = z.infer<typeof InboxKind>;
 
 export const InboxListInput = z.object({ taxYear: TaxYear.optional(), staleDays: z.int().min(1).max(90).default(7) }).optional();
@@ -484,7 +510,7 @@ export const InboxItem = z.object({
   taxYear: TaxYear,
   who: z.string(), // the person or party behind it
   summary: z.string(), // one plain sentence
-  action: z.enum(["review_document", "acknowledge_answer", "advance_stage", "follow_up_payment", "open_return"]),
+  action: z.enum(["review_document", "acknowledge_answer", "advance_stage", "follow_up_payment", "resubmit_efile", "open_return"]),
   subjectId: z.string(), // the document, request, letter, payment or return to act on
 });
 export type InboxItem = z.infer<typeof InboxItem>;

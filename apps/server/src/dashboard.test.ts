@@ -98,7 +98,12 @@ describe("the numbers match the database", () => {
       expect(h.link).toMatch(/^\//);
       expect(h.title.length).toBeGreaterThan(0);
     }
-    expect(check(s, "efile_rejections")).toMatchObject({ tracked: false, count: 0 });
+    expect(check(s, "efile_rejections")).toMatchObject({ tracked: true, tone: "danger" });
+    expect(check(s, "efile_rejections").count).toBe(
+      count(`SELECT COUNT(DISTINCT s.engagement_id) AS n FROM efile_submissions s JOIN engagements e ON e.id = s.engagement_id
+              WHERE s.status = 'rejected' AND e.stage = 'filed' AND e.tax_year = 2025
+                AND NOT EXISTS (SELECT 1 FROM efile_submissions t WHERE t.engagement_id = s.engagement_id AND t.jurisdiction = s.jurisdiction AND t.submitted_at > s.submitted_at)`),
+    );
     expect(s.needAttention).toBe(s.health.filter((h) => h.tracked && h.key !== "inbox" && h.count > 0).length);
     expect(check(s, "failed_payments").title).toMatch(/^\d+ failed payments? · \$[\d,]+\.\d\d$/);
   });

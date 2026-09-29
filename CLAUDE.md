@@ -50,6 +50,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - **The practice's details** (name, preparer, reply-to email, texting phone, city/state) live in `practice_settings`
   (one row, migration 007): `settings.practice.*` to edit, `practice.public` for the portal and site (no phone). Letters,
   invoices and invites read them; never hard-code the practice name.
+- **E-file status** is recorded by hand from ProSeries (`efile_submissions`, migration 008; `src/efile/efile.ts`): moving to
+  Filed submits federal and state, `engagement.recordEfile` answers or resubmits, Complete needs both accepted. One row per
+  attempt, answered once, never deleted.
 - **Pricing** is packages (one per filing status) + add-ons (`price_packages`, `price_addons`, migration 006), edited via
   `settings.pricing.*`; `pricing.public` feeds the marketing site. `src/money/pricing.ts` turns a return's facts (filing
   status, sources, intake answers) into a suggested invoice. An add-on with no price is "Included": named on the invoice

@@ -1,5 +1,7 @@
 import { z } from "zod";
 import {
+  EfileJurisdiction,
+  EfileStatus,
   ActorKind,
   DocumentCategory,
   DocumentStatus,
@@ -262,6 +264,18 @@ export const LetterTemplateRow = z.object({
   created_by: Id.nullable(),
 });
 
+// One e-file attempt (migration 008); the latest per jurisdiction is the return's status.
+export const EfileSubmissionRow = z.object({
+  id: Id,
+  engagement_id: Id,
+  jurisdiction: EfileJurisdiction,
+  status: EfileStatus,
+  submitted_at: Timestamp,
+  decided_at: Timestamp.nullable(),
+  rejection_code: text.nullable(),
+  rejection_note: text.nullable(),
+});
+
 // The practice's own details, one row (migration 007).
 export const PracticeSettingsRow = z.object({
   id: z.literal(1),
@@ -346,6 +360,7 @@ export const tables = {
   price_packages: PricePackageRow,
   price_addons: PriceAddonRow,
   practice_settings: PracticeSettingsRow,
+  efile_submissions: EfileSubmissionRow,
 } as const;
 
 export type TableName = keyof typeof tables;

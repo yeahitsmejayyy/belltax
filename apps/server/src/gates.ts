@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { Stage } from "@app/schema";
+import { efileBlockers } from "./efile/efile";
 
 // "What shouldn't happen yet": the workflow rules for moving a return forward one stage.
 // The database refuses what must never be true; these are the API's checks (rules R12, R13, R25, R30),
@@ -58,10 +59,10 @@ const GATES: Partial<Record<Stage, Check>> = {
     return out;
   },
 
-  // filed → complete: paid in full (R30)
+  // filed → complete: accepted by the IRS and the FTB (ticket 40), and paid in full (R30)
   complete: (db, id) => {
     const due = q<{ due: number }>(db, "SELECT COALESCE(SUM(balance_cents), 0) AS due FROM invoice_balances WHERE engagement_id = ? AND status = 'issued'", id).due;
-    return due > 0 ? [`$${(due / 100).toFixed(2)} is still owed.`] : [];
+    return [...efileBlockers(db, id), ...(due > 0 ? [`$${(due / 100).toFixed(2)} is still owed.`] : [])];
   },
 };
 

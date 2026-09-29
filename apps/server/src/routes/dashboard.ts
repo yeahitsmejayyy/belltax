@@ -183,6 +183,14 @@ export function dashboardSummary(db: Database, taxYearIn?: number, today = new D
     taxYear,
   );
 
+  // Returns whose latest e-file for a jurisdiction was rejected (ticket 40).
+  const rejected = names(
+    `SELECT DISTINCT ${RETURN_NAME} AS name FROM efile_submissions s JOIN pipeline_rows pr ON pr.engagement_id = s.engagement_id
+      WHERE s.status = 'rejected' AND pr.tax_year = ? AND pr.stage = 'filed'
+        AND NOT EXISTS (SELECT 1 FROM efile_submissions t WHERE t.engagement_id = s.engagement_id AND t.jurisdiction = s.jurisdiction AND t.submitted_at > s.submitted_at)`,
+    taxYear,
+  );
+
   type Check = DashboardSummary["health"][number];
   const check = (key: Check["key"], count: number, tone: Check["tone"], title: string, detail: string, names: string[], link: string, tracked = true): Check => ({
     key, count, tone: count === 0 && tracked ? "ok" : tone, title, detail, names: list(names), link, tracked,
@@ -197,7 +205,8 @@ export function dashboardSummary(db: Database, taxYearIn?: number, today = new D
     check("overdue_invoices", overdueNames.length, "warning", overdueNames.length ? plural(overdueNames.length, "overdue invoice") : "No overdue invoices", list(overdueNames).join(", "), overdueNames, "/invoices?overdue=1"),
     check("unsigned_letters", unsigned.length, "warning", unsigned.length ? `${plural(unsigned.length, "engagement letter")} not signed` : "Every sent letter is signed", list(unsigned).join(", "), unsigned, "/pipeline?letter=unsigned"),
     check("invites_pending", invites.length, "warning", invites.length ? `${plural(invites.length, "invite")} not accepted after ${STALE_DAYS} days` : "Every invite accepted", list(invites).join(", "), invites, "/clients?invite=pending"),
-    check("efile_rejections", 0, "info", "E-file status isn't tracked yet", "Record acceptances and rejections once e-file tracking lands.", [], "/pipeline?stage=filed", false),
+    check("efile_rejections", rejected.length, "danger", rejected.length ? `${plural(rejected.length, "e-file rejection")}` : "No e-file rejections",
+      rejected.length ? list(rejected).join(", ") : `All ${plural(n("filed") + n("complete"), "filed return")} were accepted or are pending.`, rejected, "/inbox?kind=efile_rejected"),
     check("inbox", inbox.total, "info", inbox.total ? `${plural(inbox.total, "item")} waiting in Inbox` : "Inbox is clear", "Uploads, replies and payment updates to review.", [], "/inbox"),
   ];
 

@@ -76,3 +76,9 @@ export type PaymentStatus = z.infer<typeof PaymentStatus>;
 
 export const ActorKind = z.enum(["client", "preparer", "system", "stripe"]);
 export type ActorKind = z.infer<typeof ActorKind>;
+
+// E-file (migration 008): federal goes to the IRS, state to the California FTB.
+export const EfileJurisdiction = z.enum(["federal", "state"]);
+export type EfileJurisdiction = z.infer<typeof EfileJurisdiction>;
+export const EfileStatus = z.enum(["submitted", "accepted", "rejected"]);
+export type EfileStatus = z.infer<typeof EfileStatus>;

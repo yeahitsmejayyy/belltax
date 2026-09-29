@@ -147,6 +147,10 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     openRequests: number;
                     balanceCents: number;
                     complexity: "involved" | "simple";
+                    efile: {
+                        federal: "accepted" | "rejected" | "submitted" | null;
+                        state: "accepted" | "rejected" | "submitted" | null;
+                    };
                 }[];
             };
             meta: object;
@@ -288,6 +292,15 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                         createdAt: string;
                     }[];
                 }[];
+                efile: {
+                    jurisdiction: "federal" | "state";
+                    status: "accepted" | "rejected" | "submitted" | null;
+                    submittedAt: string | null;
+                    decidedAt: string | null;
+                    rejectionCode: string | null;
+                    rejectionNote: string | null;
+                    attempts: number;
+                }[];
                 timeline: {
                     id: string;
                     occurredAt: string;
@@ -311,6 +324,25 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 stage: "complete" | "documents" | "filed" | "intake" | "invited" | "preparing" | "ready" | "review";
                 stageChangedAt: string;
             };
+            meta: object;
+        }>;
+        recordEfile: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                engagementId: string;
+                jurisdiction: "federal" | "state";
+                action: "accept" | "reject" | "submit";
+                rejectionCode?: string | undefined;
+                reason?: string | undefined;
+            };
+            output: {
+                jurisdiction: "federal" | "state";
+                status: "accepted" | "rejected" | "submitted" | null;
+                submittedAt: string | null;
+                decidedAt: string | null;
+                rejectionCode: string | null;
+                rejectionNote: string | null;
+                attempts: number;
+            }[];
             meta: object;
         }>;
         setFilingStatus: import("@trpc/server").TRPCMutationProcedure<{
@@ -1578,17 +1610,17 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 taxYear: number | null;
                 items: {
                     id: string;
-                    kind: "document_review" | "letter_signed" | "payment_failed" | "question_answered" | "stale";
+                    kind: "document_review" | "efile_rejected" | "letter_signed" | "payment_failed" | "question_answered" | "stale";
                     at: string;
                     engagementId: string;
                     householdName: string;
                     taxYear: number;
                     who: string;
                     summary: string;
-                    action: "acknowledge_answer" | "advance_stage" | "follow_up_payment" | "open_return" | "review_document";
+                    action: "acknowledge_answer" | "advance_stage" | "follow_up_payment" | "open_return" | "resubmit_efile" | "review_document";
                     subjectId: string;
                 }[];
-                counts: Record<"document_review" | "letter_signed" | "payment_failed" | "question_answered" | "stale", number>;
+                counts: Record<"document_review" | "efile_rejected" | "letter_signed" | "payment_failed" | "question_answered" | "stale", number>;
                 total: number;
             };
             meta: object;

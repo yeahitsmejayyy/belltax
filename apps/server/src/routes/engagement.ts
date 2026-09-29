@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import {
+  EfileRecordInput,
+  EfileState,
   AdvanceStageInput,
   EngagementDetail,
   EngagementCreateInput,
@@ -15,6 +17,7 @@ import {
 import { z } from "zod";
 import { engagementFor } from "../access";
 import { runtime } from "../db/client";
+import { efileByReturn, efileProblem, efileStates, recordEfile, submitOnFiling } from "../efile/efile";
 import { appendEvent, recordView, VIEW_TYPE_SQL } from "../events";
 import { blockersFor, nextStage } from "../gates";
 import { listDocuments } from "./document";
@@ -68,6 +71,7 @@ export const engagementRouter = router({
 
       for (const r of all) counts[r.stage]++;
       const now = Date.now();
+      const efile = efileByReturn(db, taxYear);
       const rows = all
         .filter((r) => !input?.stage || r.stage === input.stage)
         .sort(
@@ -88,6 +92,7 @@ export const engagementRouter = router({
           openRequests: r.open_requests,
           balanceCents: r.balance_cents,
           complexity: r.complexity,
+          efile: efile.get(r.engagement_id) ?? { federal: null, state: null },
         }));
       return { taxYear, years, counts, rows };
     }),
@@ -228,6 +233,7 @@ export const engagementRouter = router({
         documents: listDocuments(e.id, ctx.user),
         letter,
         invoices,
+        efile: efileStates(db, e.id),
         timeline,
       };
     }),
@@ -261,8 +267,24 @@ export const engagementRouter = router({
           reason: input.reason ?? null,
           data: { from, to: input.to },
         });
+        // Filed means it was just e-filed: federal and state are now waiting on the IRS and the FTB.
+        if (input.to === "filed") submitOnFiling(db, ctx.user, e);
       })();
       return { stage: input.to, stageChangedAt: at };
+    }),
+
+  // What ProSeries shows for an e-file: submitted, accepted, or rejected with its code. Recorded by hand.
+  recordEfile: preparerProcedure
+    .input(EfileRecordInput)
+    .output(z.array(EfileState))
+    .mutation(({ ctx, input }) => {
+      const { db } = runtime();
+      const e = engagementFor(ctx.user, input.engagementId);
+      const current = efileStates(db, e.id).find((s) => s.jurisdiction === input.jurisdiction)!;
+      const problem = efileProblem(e.stage, current, input);
+      if (problem) throw new TRPCError({ code: "PRECONDITION_FAILED", message: problem });
+      db.transaction(() => recordEfile(db, ctx.user, e, current, input))();
+      return efileStates(db, e.id);
     }),
 
   setFilingStatus: preparerProcedure

@@ -141,6 +141,12 @@ describe("invoice lifecycle", () => {
     const i = z.array(InvoiceSummary).parse((await w.call(P(), "invoice.list", { engagementId: id })).data).find((x) => x.status === "issued")!;
     expect(i.payments.some((p) => p.provider === "manual")).toBe(true); // the seeded Zelle deposit
     await w.call(P(), "payment.record", { invoiceId: i.id, amountCents: i.balanceCents, method: "check", receivedOn: today() }, "mutation");
+    // Complete also needs both e-files accepted (ticket 40): get whatever's pending or rejected over the line.
+    for (const jurisdiction of ["federal", "state"]) {
+      const state = () => w.get<{ status: string } | null>("SELECT status FROM efile_submissions WHERE engagement_id = ? AND jurisdiction = ? ORDER BY submitted_at DESC, id DESC LIMIT 1", id, jurisdiction)?.status;
+      if (state() === "rejected") await w.call(P(), "engagement.recordEfile", { engagementId: id, jurisdiction, action: "submit" }, "mutation");
+      if (state() === "submitted") await w.call(P(), "engagement.recordEfile", { engagementId: id, jurisdiction, action: "accept" }, "mutation");
+    }
     expect((await w.call(P(), "engagement.advanceStage", { engagementId: id, to: "complete" }, "mutation")).status).toBe(200);
   });
 });

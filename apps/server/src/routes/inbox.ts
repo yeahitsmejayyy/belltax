@@ -10,7 +10,7 @@ import { preparerProcedure, router } from "../trpc";
 // itself when the underlying thing is dealt with: review the upload, acknowledge the answer, move the
 // return, settle the payment. Nothing to "mark as read" except answers, which have acknowledged_at.
 
-const KINDS: InboxKind[] = ["document_review", "question_answered", "letter_signed", "payment_failed", "stale"];
+const KINDS: InboxKind[] = ["document_review", "question_answered", "letter_signed", "payment_failed", "efile_rejected", "stale"];
 const DAY = 86_400_000;
 
 type Row = { subject_id: string; at: string; engagement_id: string; household: string; tax_year: number; who: string; detail: string | null };
@@ -81,6 +81,21 @@ export function inboxFor(db: Database, input?: { taxYear?: number; staleDays?: n
       ),
       "follow_up_payment",
       (r) => `${r.household}'s payment failed${r.detail ? `: ${r.detail}` : "."}`,
+    ],
+    [
+      // A return's latest e-file for a jurisdiction came back rejected: fix it in ProSeries and submit again.
+      "efile_rejected",
+      q(
+        `SELECT s.id AS subject_id, s.decided_at AS at, s.engagement_id, h.display_name AS household, e.tax_year,
+                CASE s.jurisdiction WHEN 'federal' THEN 'IRS' ELSE 'FTB' END AS who,
+                s.jurisdiction || ' · ' || s.rejection_code AS detail
+           FROM efile_submissions s JOIN engagements e ON e.id = s.engagement_id JOIN households h ON h.id = e.household_id
+          WHERE s.status = 'rejected' AND e.stage = 'filed' AND e.tax_year = ?
+            AND NOT EXISTS (SELECT 1 FROM efile_submissions t WHERE t.engagement_id = s.engagement_id AND t.jurisdiction = s.jurisdiction AND t.submitted_at > s.submitted_at)`,
+        taxYear,
+      ),
+      "resubmit_efile",
+      (r) => `The ${r.who} rejected ${r.household}'s ${r.detail!.split(" · ")[0]} return (${r.detail!.split(" · ")[1]}).`,
     ],
     [
       "stale",

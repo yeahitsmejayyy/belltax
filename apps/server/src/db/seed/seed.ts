@@ -159,6 +159,7 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
   // Letters are per household, year and kind, so a married couple filing separately shares one.
   const letters = new Map<string, { id: string; sha: string; signers: Set<string>; signed: Set<string>; sentAt: string | null }>();
 
+  let filedSeen = 0; // cycles the e-file states across filed returns
   function buildReturn(ctx: Ctx, rp: ReturnPlan, year: number, stage: Stage, opts2: { kind?: "original" | "amended"; amends?: string; returning: boolean; extra?: string }) {
     const kind = opts2.kind ?? "original";
     const yearOffset = year - taxYear;
@@ -205,6 +206,26 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
       }
       const from = stage === "complete" ? "filed" : STAGES[STAGES.indexOf(stage) - 1];
       event("engagement.stage_changed", { kind: "preparer", userId: preparerId }, { household: hh, engagement: engId, subjectType: "engagement", subjectId: engId, when: stageChanged, data: { from, to: stage } });
+    }
+
+    // E-file (ticket 40): complete returns were accepted by both; the filed ones show each state the preparer
+    // records: both still waiting, federal accepted with state waiting, and a federal rejection to resubmit.
+    if (stage === "filed" || stage === "complete") {
+      const filedAt = stage === "complete" ? new Date((Date.parse(created) + 2 * Date.parse(stageChanged)) / 3).toISOString() : stageChanged;
+      const later = (h: number) => new Date(Date.parse(filedAt) + h * 3_600_000).toISOString();
+      const variant = stage === "complete" ? "accepted" : (["waiting", "federal_accepted", "federal_rejected"] as const)[filedSeen++ % 3]!;
+      for (const jurisdiction of ["federal", "state"] as const) {
+        const answer =
+          variant === "accepted" ? "accepted"
+          : variant === "waiting" ? null
+          : variant === "federal_accepted" ? (jurisdiction === "federal" ? "accepted" : null)
+          : jurisdiction === "federal" ? "rejected" : "accepted";
+        insert("efile_submissions", {
+          id: rng.id(), engagement_id: engId, jurisdiction, status: answer ?? "submitted", submitted_at: filedAt, decided_at: answer ? later(jurisdiction === "federal" ? 20 : 30) : null,
+          rejection_code: answer === "rejected" ? "IND-031-04" : null,
+          rejection_note: answer === "rejected" ? "The prior-year AGI entered to sign the return doesn't match the IRS's records." : null,
+        });
+      }
     }
     const primaryUser = ctx.users.get(rp.primary)!;
     const between = (a: number, b: number) => at(createdDays - (createdDays - Math.max(0, stageChangeDaysAgo())) * (a + (b - a) * rng.next()));
