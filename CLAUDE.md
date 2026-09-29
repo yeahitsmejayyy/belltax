@@ -44,7 +44,8 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   `packages/ui/src/components` (shadcn primitives plus the product pieces: StagePill, StatusChip, DataTable, Chart, Logo,
   Banner, EmptyState, FileDropzone, Stepper, StatCard, Board, Timeline, DocumentViewer, BottomTabs; money/dates in `format.ts`); apps import
   `@app/ui/components/<name>`, never copy them. Every component gets stories in `packages/ui/src/stories`; interaction tests go in a hidden `<Name>Test` twin
-  (`tags: ["!dev"]`), never on the visible story. The admin shell is `AppSidebar` + `AppHeader` (on shadcn's `sidebar`). Search is `InlineSearch` (header field with a results dropdown) + `CommandPalette` (⌘K), both fed the same `SearchGroup[]`. Invite client / Add without invite open `InviteClientDialog` (Household → Members → Filers → Send). Story fixtures live in `packages/ui/src/stories/fixtures.tsx`.
+  (`tags: ["!dev"]`), never on the visible story. The admin shell is `AppSidebar` + `AppHeader` (on shadcn's `sidebar`). Search is `InlineSearch` (header field with a results dropdown) + `CommandPalette` (⌘K), both fed the same `SearchGroup[]`,
+  from `search.query` (server: word-prefix SQL, no index; never searches SSN digits). Invite client / Add without invite open `InviteClientDialog` (Household → Members → Filers → Send). Story fixtures live in `packages/ui/src/stories/fixtures.tsx`.
 - `apps/site` — marketing site (skelly-site, last).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
 - **The practice's details** (name, preparer, reply-to email, texting phone, city/state) live in `practice_settings`

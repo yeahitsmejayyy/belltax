@@ -2007,6 +2007,46 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             meta: object;
         }>;
     }>>;
+    search: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        query: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                q?: string | undefined;
+            };
+            output: {
+                q: string;
+                recent: boolean;
+                groups: {
+                    type: "client" | "invoice" | "person" | "return";
+                    heading: string;
+                    hits: {
+                        type: "client" | "invoice" | "person" | "return";
+                        id: string;
+                        label: string;
+                        sublabel: string;
+                        householdId: string;
+                        engagementId: string | null;
+                    }[];
+                }[];
+            };
+            meta: object;
+        }>;
+    }>>;
     dashboard: import("@trpc/server").TRPCBuiltRouter<{
         ctx: {
             user: {

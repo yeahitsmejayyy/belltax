@@ -108,6 +108,17 @@ cursor, like `activity.list` already is. No index would help.
 | `dashboard.summary` (ticket 38) | every KPI, chart and health check | 33.9 |
 | `dashboard.badges` (ticket 38) | the sidebar counts, called on every page | 8.8 |
 | `invoice.all`, first page (ticket 39) | the Invoices screen, problems first | 7.3 |
+| `search.query`, a surname (ticket 41) | ⌘K across every group | 6.2 |
+| `search.query`, "2025" (ticket 41) | ⌘K matching thousands of returns | 5.7 |
+| `search.query`, nothing typed (ticket 41) | ⌘K's recent returns | 7.5 |
+
+**Search needs no index.** Word-prefix `LIKE` over the tables is ~30 ms at 10,000 households (the most expensive
+query, recent returns, 36 ms), so an FTS5 table and the triggers to keep it in sync would add machinery without a need.
+Revisit if the practice ever passes 10,000 households.
+
+**The next ceiling, at 10,000 households:** `engagement.list` (107 ms) and `dashboard.summary` (192 ms) go over budget.
+Both are whole-year aggregates. That's five times this practice's target size; the remedy then is paging the pipeline
+by stage and caching the dashboard's weekly filings, not indexes.
 
 `dashboard.badges` builds the whole inbox to count it, so it moves with `inbox.list`. If it ever matters, give the
 inbox a count-only path; today it's well inside the budget.

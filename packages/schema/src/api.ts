@@ -556,6 +556,25 @@ export type LetterTemplateView = z.infer<typeof LetterTemplateView>;
 export const LetterTemplateBodyInput = z.object({ body: z.string().trim().min(40).max(20_000) });
 export const LetterTemplatePreview = z.object({ problems: z.array(z.string()), rendered: z.string().nullable() });
 
+// ── Search, ⌘K and the header field (ticket 41, admin 26-dialogs-and-sheets-cmdk) ──
+export const SearchInput = z.object({ q: z.string().max(100).default("") });
+export const SearchResultType = z.enum(["client", "person", "return", "invoice"]);
+export const SearchHit = z.object({
+  type: SearchResultType,
+  id: Id, // what it opens: the household, person, return or invoice
+  label: z.string(), // "Dana & Sam Marigold", "Marigold · TY 2025", "2026-0014"
+  sublabel: z.string(),
+  householdId: Id,
+  engagementId: Id.nullable(), // for a return or an invoice
+});
+export type SearchHit = z.infer<typeof SearchHit>;
+export const SearchResults = z.object({
+  q: z.string(),
+  recent: z.boolean(), // true: nothing typed, these are the returns you opened last
+  groups: z.array(z.object({ type: SearchResultType, heading: z.string(), hits: z.array(SearchHit) })),
+});
+export type SearchResults = z.infer<typeof SearchResults>;
+
 // ── Invoices across the practice (ticket 39, admin 29-clients-invoices-and-activity-invoices) ──
 export const InvoiceTab = z.enum(["failed", "overdue", "open", "draft", "paid", "void"]);
 export type InvoiceTab = z.infer<typeof InvoiceTab>;

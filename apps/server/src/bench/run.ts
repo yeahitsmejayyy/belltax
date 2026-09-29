@@ -53,6 +53,9 @@ export function benchCases(db: Database): BenchCase[] {
     { name: "dashboard.summary", what: "every KPI, chart and health check", run: () => call("admin", preparer, "dashboard.summary", { taxYear: year }) },
     { name: "dashboard.badges", what: "the sidebar counts, on every page", run: () => call("admin", preparer, "dashboard.badges", { taxYear: year }) },
     { name: "invoice.all (first page)", what: "the Invoices screen, problems first", run: () => call("admin", preparer, "invoice.all", { taxYear: year }) },
+    { name: "search.query (a name)", what: "⌘K: a common surname, every group", run: () => call("admin", preparer, "search.query", { q: "castillo" }) },
+    { name: "search.query (a year)", what: "⌘K: matches thousands of returns", run: () => call("admin", preparer, "search.query", { q: "2025" }) },
+    { name: "search.query (recent)", what: "⌘K opened with nothing typed", run: () => call("admin", preparer, "search.query", { q: "" }) },
     { name: "invoice.list", what: "one return's invoices", run: () => call("admin", preparer, "invoice.list", { engagementId: busy }) },
   ];
 }

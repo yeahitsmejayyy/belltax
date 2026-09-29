@@ -11,6 +11,7 @@ import { letterRouter } from "./routes/letter";
 import { requestRouter } from "./routes/request";
 import { publicPracticeRouter } from "./routes/practice";
 import { publicPricingRouter } from "./routes/pricing";
+import { searchRouter } from "./routes/search";
 import { seasonRouter } from "./routes/season";
 import { settingsRouter } from "./routes/settings";
 import { createExpectedProcedure, returningRouter, sourceRouter } from "./routes/source";
@@ -35,6 +36,7 @@ export const appRouter = router({
   activity: activityRouter,
   settings: settingsRouter,
   season: seasonRouter,
+  search: searchRouter,
   dashboard: dashboardRouter,
   pricing: publicPricingRouter,
   practice: publicPracticeRouter,
