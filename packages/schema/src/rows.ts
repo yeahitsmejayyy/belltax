@@ -220,6 +220,14 @@ export const InvoiceLineRow = z.object({
   description: text,
   quantity: z.int().positive(),
   unit_amount_cents: Cents,
+  price_code: z.string().min(1).max(40).nullable(), // the package or add-on it came from (migration 006)
+});
+
+// An add-on covered by the package: named on the invoice, never charged (migration 006).
+export const InvoiceIncludedRow = z.object({
+  invoice_id: Id,
+  price_code: z.string().min(1).max(40),
+  name: text,
 });
 
 export const PaymentRow = z.object({
@@ -254,12 +262,31 @@ export const LetterTemplateRow = z.object({
   created_by: Id.nullable(),
 });
 
-export const FeeScheduleRow = z.object({
-  code: z.string().regex(/^[a-z0-9_]+$/),
-  description: text,
+// Pricing (migration 006): a package per filing status, and add-ons on top. NULL price means "Included".
+const PriceCode = z.string().regex(/^[a-z0-9_]{1,40}$/);
+const Flag = z.union([z.literal(0), z.literal(1)]);
+export const PricePackageRow = z.object({
+  code: PriceCode,
+  filing_status: z.enum(["single", "mfj", "mfs", "hoh"]),
+  name: text,
+  description: z.string(),
   unit_amount_cents: Cents,
-  active: z.union([z.literal(0), z.literal(1)]),
+  active: Flag,
   position: z.int().positive(),
+  retired_at: Timestamp.nullable(),
+  updated_at: Timestamp,
+});
+export const AddonTrigger = z.enum(["self_employment", "rental", "investments", "ihss", "covered_california", "other_state", "amended"]);
+export type AddonTrigger = z.infer<typeof AddonTrigger>;
+export const PriceAddonRow = z.object({
+  code: PriceCode,
+  name: text,
+  description: z.string(),
+  unit_amount_cents: Cents.nullable(),
+  applies_when: AddonTrigger.nullable(),
+  active: Flag,
+  position: z.int().positive(),
+  retired_at: Timestamp.nullable(),
   updated_at: Timestamp,
 });
 
@@ -298,11 +325,13 @@ export const tables = {
   signatures: SignatureRow,
   invoices: InvoiceRow,
   invoice_lines: InvoiceLineRow,
+  invoice_included: InvoiceIncludedRow,
   payments: PaymentRow,
   webhook_receipts: WebhookReceiptRow,
   events: EventRow,
   letter_templates: LetterTemplateRow,
-  fee_schedule: FeeScheduleRow,
+  price_packages: PricePackageRow,
+  price_addons: PriceAddonRow,
 } as const;
 
 export type TableName = keyof typeof tables;

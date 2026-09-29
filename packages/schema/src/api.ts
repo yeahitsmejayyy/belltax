@@ -16,6 +16,7 @@ import {
   Stage,
 } from "./enums";
 import { Id, IsoDate as IsoDateString, TaxYear, Timestamp } from "./primitives";
+import { AddonTrigger } from "./rows";
 import { INTAKE_VERSION, IntakeAnswersV1 } from "./intake/v1";
 
 // Shapes that cross the wire. The server validates outputs against these, so the web app can trust them.
@@ -167,6 +168,7 @@ export const InvoiceSummary = z.object({
   balanceCents: z.int(),
   dueOn: z.string().nullable(),
   lines: z.array(z.object({ description: z.string(), quantity: z.int(), unitAmountCents: z.int() })),
+  included: z.array(z.string()), // add-ons covered at no charge, by name: "IHSS home care income"
   payments: z.array(
     z.object({
       id: Id,
@@ -297,14 +299,24 @@ export const InvoiceLineInput = z.object({
   description: z.string().trim().min(1).max(200),
   quantity: z.int().min(1).max(99),
   unitAmountCents: z.int().min(1).max(10_000_000),
+  priceCode: z.string().regex(/^[a-z0-9_]{1,40}$/).nullable().optional(), // the package or add-on it came from
 });
+// A starting invoice for a return: its package, the add-ons its facts call for, and the included ones.
+export const InvoiceSuggestion = z.object({
+  packageCode: z.string().nullable(),
+  lines: z.array(InvoiceLineInput.required({ priceCode: true })),
+  included: z.array(z.object({ code: z.string(), name: z.string() })),
+});
+export type InvoiceSuggestion = z.infer<typeof InvoiceSuggestion>;
+const IncludedCodes = z.array(z.string().regex(/^[a-z0-9_]{1,40}$/)).max(20);
 export const InvoiceListInput = EngagementRef;
 export const InvoiceSuggestInput = EngagementRef;
 export const InvoiceCreateInput = EngagementRef.extend({
-  lines: z.array(InvoiceLineInput).min(1).max(20).optional(), // omitted: the suggested lines
+  lines: z.array(InvoiceLineInput).min(1).max(20).optional(), // omitted: the suggestion, included add-ons too
+  included: IncludedCodes.optional(), // included add-ons by code; with `lines`, none unless listed
   dueOn: IsoDateString.optional(),
 });
-export const InvoiceUpdateLinesInput = z.object({ invoiceId: Id, lines: z.array(InvoiceLineInput).min(1).max(20) });
+export const InvoiceUpdateLinesInput = z.object({ invoiceId: Id, lines: z.array(InvoiceLineInput).min(1).max(20), included: IncludedCodes.optional() });
 export const InvoiceRefInput = z.object({ invoiceId: Id });
 export const InvoiceVoidInput = z.object({ invoiceId: Id, reason: z.string().trim().min(3).max(500) });
 export const PaymentRecordInput = z.object({
@@ -518,13 +530,64 @@ export type LetterTemplateView = z.infer<typeof LetterTemplateView>;
 export const LetterTemplateBodyInput = z.object({ body: z.string().trim().min(40).max(20_000) });
 export const LetterTemplatePreview = z.object({ problems: z.array(z.string()), rendered: z.string().nullable() });
 
-export const FeeView = z.object({ code: z.string(), description: z.string(), unitAmountCents: z.int().positive(), active: z.boolean(), updatedAt: Timestamp });
-export const FeeUpdateInput = z.object({
-  code: z.string().regex(/^[a-z0-9_]+$/),
-  description: z.string().trim().min(1).max(120).optional(),
-  unitAmountCents: z.int().min(1).max(10_000_000).optional(),
-  active: z.boolean().optional(),
+// ── Pricing: packages + add-ons (ticket 36, migration 006) ──
+const PriceCode = z.string().regex(/^[a-z0-9_]{1,40}$/);
+const PriceName = z.string().trim().min(1).max(80);
+const PriceDescription = z.string().trim().max(160);
+const PriceCents = z.int().min(1).max(10_000_000);
+export const PackageFilingStatus = z.enum(["single", "mfj", "mfs", "hoh"]);
+
+export const PackageView = z.object({
+  code: PriceCode,
+  filingStatus: PackageFilingStatus,
+  name: z.string(),
+  description: z.string(),
+  unitAmountCents: z.int().positive(),
+  active: z.boolean(),
+  usedThisYear: z.int().nonnegative(), // returns in the chosen tax year whose invoices used it
+  updatedAt: Timestamp,
 });
+export const AddonView = z.object({
+  code: PriceCode,
+  name: z.string(),
+  description: z.string(),
+  unitAmountCents: z.int().positive().nullable(), // null: included
+  appliesWhen: AddonTrigger.nullable(),
+  active: z.boolean(),
+  usedThisYear: z.int().nonnegative(),
+  updatedAt: Timestamp,
+});
+export const PricingView = z.object({ taxYear: TaxYear.nullable(), packages: z.array(PackageView), addons: z.array(AddonView) });
+export type PricingView = z.infer<typeof PricingView>;
+export const PricingListInput = z.object({ taxYear: TaxYear.optional() }).optional();
+
+// New when `code` is left out (it's made from the name), otherwise an edit.
+export const PackageSaveInput = z.object({
+  code: PriceCode.optional(),
+  filingStatus: PackageFilingStatus,
+  name: PriceName,
+  description: PriceDescription.default(""),
+  unitAmountCents: PriceCents,
+  active: z.boolean().default(true),
+});
+export const AddonSaveInput = z.object({
+  code: PriceCode.optional(),
+  name: PriceName,
+  description: PriceDescription.default(""),
+  unitAmountCents: PriceCents.nullable(), // null: included
+  appliesWhen: AddonTrigger.nullable().default(null),
+  active: z.boolean().default(true),
+});
+export const PriceRemoveInput = z.object({ code: PriceCode });
+// Never used: deleted. Used on any invoice: retired, so what was charged still reads.
+export const PriceRemoveResult = z.object({ outcome: z.enum(["deleted", "retired"]) });
+
+// What the marketing site shows: active prices only, no usage.
+export const PublicPricing = z.object({
+  packages: z.array(PackageView.pick({ code: true, filingStatus: true, name: true, description: true, unitAmountCents: true })),
+  addons: z.array(AddonView.pick({ code: true, name: true, description: true, unitAmountCents: true })),
+});
+export type PublicPricing = z.infer<typeof PublicPricing>;
 
 // ── New-season rollover (ticket 34) ──
 // Every completed original return from `fromYear` becomes a new return for the next year, with the same

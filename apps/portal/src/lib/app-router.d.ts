@@ -275,6 +275,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                         quantity: number;
                         unitAmountCents: number;
                     }[];
+                    included: string[];
                     payments: {
                         id: string;
                         amountCents: number;
@@ -985,6 +986,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     quantity: number;
                     unitAmountCents: number;
                 }[];
+                included: string[];
                 payments: {
                     id: string;
                     amountCents: number;
@@ -1004,10 +1006,18 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 engagementId: string;
             };
             output: {
-                description: string;
-                quantity: number;
-                unitAmountCents: number;
-            }[];
+                packageCode: string | null;
+                lines: {
+                    description: string;
+                    quantity: number;
+                    unitAmountCents: number;
+                    priceCode: string | null;
+                }[];
+                included: {
+                    code: string;
+                    name: string;
+                }[];
+            };
             meta: object;
         }>;
         create: import("@trpc/server").TRPCMutationProcedure<{
@@ -1017,7 +1027,9 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     description: string;
                     quantity: number;
                     unitAmountCents: number;
+                    priceCode?: string | null | undefined;
                 }[] | undefined;
+                included?: string[] | undefined;
                 dueOn?: string | undefined;
             };
             output: {
@@ -1034,6 +1046,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     quantity: number;
                     unitAmountCents: number;
                 }[];
+                included: string[];
                 payments: {
                     id: string;
                     amountCents: number;
@@ -1055,7 +1068,9 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     description: string;
                     quantity: number;
                     unitAmountCents: number;
+                    priceCode?: string | null | undefined;
                 }[];
+                included?: string[] | undefined;
             };
             output: {
                 id: string;
@@ -1071,6 +1086,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     quantity: number;
                     unitAmountCents: number;
                 }[];
+                included: string[];
                 payments: {
                     id: string;
                     amountCents: number;
@@ -1103,6 +1119,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     quantity: number;
                     unitAmountCents: number;
                 }[];
+                included: string[];
                 payments: {
                     id: string;
                     amountCents: number;
@@ -1136,6 +1153,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     quantity: number;
                     unitAmountCents: number;
                 }[];
+                included: string[];
                 payments: {
                     id: string;
                     amountCents: number;
@@ -1190,6 +1208,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     quantity: number;
                     unitAmountCents: number;
                 }[];
+                included: string[];
                 payments: {
                     id: string;
                     amountCents: number;
@@ -1648,7 +1667,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 meta: object;
             }>;
         }>>;
-        fees: import("@trpc/server").TRPCBuiltRouter<{
+        pricing: import("@trpc/server").TRPCBuiltRouter<{
             ctx: {
                 user: {
                     id: string;
@@ -1666,29 +1685,108 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             transformer: false;
         }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
             list: import("@trpc/server").TRPCQueryProcedure<{
-                input: void;
+                input: {
+                    taxYear?: number | undefined;
+                } | undefined;
                 output: {
-                    code: string;
-                    description: string;
-                    unitAmountCents: number;
-                    active: boolean;
-                    updatedAt: string;
-                }[];
+                    taxYear: number | null;
+                    packages: {
+                        code: string;
+                        filingStatus: "hoh" | "mfj" | "mfs" | "single";
+                        name: string;
+                        description: string;
+                        unitAmountCents: number;
+                        active: boolean;
+                        usedThisYear: number;
+                        updatedAt: string;
+                    }[];
+                    addons: {
+                        code: string;
+                        name: string;
+                        description: string;
+                        unitAmountCents: number | null;
+                        appliesWhen: "amended" | "covered_california" | "ihss" | "investments" | "other_state" | "rental" | "self_employment" | null;
+                        active: boolean;
+                        usedThisYear: number;
+                        updatedAt: string;
+                    }[];
+                };
                 meta: object;
             }>;
-            update: import("@trpc/server").TRPCMutationProcedure<{
+            savePackage: import("@trpc/server").TRPCMutationProcedure<{
                 input: {
-                    code: string;
+                    code?: string | undefined;
+                    filingStatus: "hoh" | "mfj" | "mfs" | "single";
+                    name: string;
                     description?: string | undefined;
-                    unitAmountCents?: number | undefined;
+                    unitAmountCents: number;
                     active?: boolean | undefined;
                 };
                 output: {
+                    taxYear: number | null;
+                    packages: {
+                        code: string;
+                        filingStatus: "hoh" | "mfj" | "mfs" | "single";
+                        name: string;
+                        description: string;
+                        unitAmountCents: number;
+                        active: boolean;
+                        usedThisYear: number;
+                        updatedAt: string;
+                    }[];
+                    addons: {
+                        code: string;
+                        name: string;
+                        description: string;
+                        unitAmountCents: number | null;
+                        appliesWhen: "amended" | "covered_california" | "ihss" | "investments" | "other_state" | "rental" | "self_employment" | null;
+                        active: boolean;
+                        usedThisYear: number;
+                        updatedAt: string;
+                    }[];
+                };
+                meta: object;
+            }>;
+            saveAddon: import("@trpc/server").TRPCMutationProcedure<{
+                input: {
+                    code?: string | undefined;
+                    name: string;
+                    description?: string | undefined;
+                    unitAmountCents: number | null;
+                    appliesWhen?: "amended" | "covered_california" | "ihss" | "investments" | "other_state" | "rental" | "self_employment" | null | undefined;
+                    active?: boolean | undefined;
+                };
+                output: {
+                    taxYear: number | null;
+                    packages: {
+                        code: string;
+                        filingStatus: "hoh" | "mfj" | "mfs" | "single";
+                        name: string;
+                        description: string;
+                        unitAmountCents: number;
+                        active: boolean;
+                        usedThisYear: number;
+                        updatedAt: string;
+                    }[];
+                    addons: {
+                        code: string;
+                        name: string;
+                        description: string;
+                        unitAmountCents: number | null;
+                        appliesWhen: "amended" | "covered_california" | "ihss" | "investments" | "other_state" | "rental" | "self_employment" | null;
+                        active: boolean;
+                        usedThisYear: number;
+                        updatedAt: string;
+                    }[];
+                };
+                meta: object;
+            }>;
+            remove: import("@trpc/server").TRPCMutationProcedure<{
+                input: {
                     code: string;
-                    description: string;
-                    unitAmountCents: number;
-                    active: boolean;
-                    updatedAt: string;
+                };
+                output: {
+                    outcome: "deleted" | "retired";
                 };
                 meta: object;
             }>;
@@ -1764,6 +1862,43 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     fromEngagementId: string;
                     filers: string[];
                     error: string;
+                }[];
+            };
+            meta: object;
+        }>;
+    }>>;
+    pricing: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        public: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                packages: {
+                    code: string;
+                    filingStatus: "hoh" | "mfj" | "mfs" | "single";
+                    name: string;
+                    description: string;
+                    unitAmountCents: number;
+                }[];
+                addons: {
+                    code: string;
+                    name: string;
+                    description: string;
+                    unitAmountCents: number | null;
                 }[];
             };
             meta: object;

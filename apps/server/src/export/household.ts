@@ -48,11 +48,12 @@ export const HOUSEHOLD_SCOPE: Record<string, string> = {
   documents: `engagement_id IN (${E}) OR (engagement_id IS NULL AND person_id IN (SELECT id FROM people WHERE household_id = ?1))`,
   invoices: `engagement_id IN (${E})`,
   invoice_lines: `invoice_id IN (${I})`,
+  invoice_included: `invoice_id IN (${I})`,
   payments: `invoice_id IN (${I})`,
   events: `household_id = ?1 OR engagement_id IN (${E})`,
 };
 // The practice's own settings and bookkeeping: no client's record.
-export const PRACTICE_WIDE = ["document_kinds", "letter_templates", "fee_schedule", "webhook_receipts", "schema_migrations"];
+export const PRACTICE_WIDE = ["document_kinds", "letter_templates", "price_packages", "price_addons", "webhook_receipts", "schema_migrations"];
 const OMIT: Record<string, string[]> = { users: ["password_hash"] }; // a login, never its credential
 const JSON_COLUMNS: Record<string, string[]> = { intake_responses: ["answers"], events: ["data"] };
 const ORDER: Record<string, string> = {
@@ -64,6 +65,7 @@ const ORDER: Record<string, string> = {
   return_people: "engagement_id, person_id",
   intake_responses: "engagement_id",
   household_access: "granted_at, id",
+  invoice_included: "invoice_id, price_code",
   signatures: "signed_at, id",
 };
 
@@ -101,7 +103,7 @@ export type ExportRecord = {
     sources: Row[];
     requests: Row[];
     documents: DocOut[];
-    invoices: (Row & { lines: Row[]; payments: Row[] })[];
+    invoices: (Row & { lines: Row[]; included: Row[]; payments: Row[] })[];
   })[];
   personal_documents: DocOut[];
   events: Row[];
@@ -128,7 +130,7 @@ export function buildRecord(rows: Record<string, Row[]>, meta: { exportedAt: str
       sources: by("return_sources", "engagement_id", e.id),
       requests: by("requests", "engagement_id", e.id),
       documents: by("documents", "engagement_id", e.id).map(doc),
-      invoices: by("invoices", "engagement_id", e.id).map((i) => ({ ...i, lines: by("invoice_lines", "invoice_id", i.id), payments: by("payments", "invoice_id", i.id) })),
+      invoices: by("invoices", "engagement_id", e.id).map((i) => ({ ...i, lines: by("invoice_lines", "invoice_id", i.id), included: by("invoice_included", "invoice_id", i.id), payments: by("payments", "invoice_id", i.id) })),
     })),
     personal_documents: rows.documents!.filter((d) => d.engagement_id === null).map(doc),
     events: rows.events!,
@@ -154,7 +156,8 @@ export function flattenRecord(r: ExportRecord): Record<string, Row[]> {
     return_sources: returns.flatMap((e) => e.sources),
     requests: returns.flatMap((e) => e.requests),
     documents: [...returns.flatMap((e) => e.documents), ...r.personal_documents].map((d) => strip(d, "file")),
-    invoices: returns.flatMap((e) => e.invoices.map((i) => strip(i, "lines", "payments"))),
+    invoices: returns.flatMap((e) => e.invoices.map((i) => strip(i, "lines", "included", "payments"))),
+    invoice_included: returns.flatMap((e) => e.invoices.flatMap((i) => i.included)),
     invoice_lines: returns.flatMap((e) => e.invoices.flatMap((i) => i.lines)),
     payments: returns.flatMap((e) => e.invoices.flatMap((i) => i.payments)),
     events: r.events,
@@ -187,7 +190,8 @@ record.json
                          sources     which sources were expected that year
                          requests    what the practice asked for, and the answers given
                          documents   every document, and where its file is in this folder
-                         invoices    each invoice with its lines and payments (amounts in cents)
+                         invoices    each invoice with its lines, what it included at no charge,
+                                     and its payments (amounts in cents)
   personal_documents   documents that belong to a person rather than a year (e.g. a photo ID)
   events               the audit trail: every change and every view, who did it and when
 

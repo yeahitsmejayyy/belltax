@@ -4,6 +4,7 @@ import {
   InvoiceListInput,
   InvoiceRefInput,
   InvoiceSuggestInput,
+  InvoiceSuggestion,
   InvoiceSummary,
   InvoiceUpdateLinesInput,
   InvoiceVoidInput,
@@ -16,13 +17,11 @@ import { engagementFor, type EngagementRef } from "../access";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import type { SessionUser } from "../identity";
-import { nextInvoiceNumber, suggestedLinesFor, type Line } from "../money/pricing";
+import { nextInvoiceNumber, suggestionFor, type Line } from "../money/pricing";
 import { authedProcedure, preparerProcedure, router } from "../trpc";
 
 // Invoices: lines are facts, the balance is derived (invoice_balances, R28), lines freeze once issued
 // (R27). Money arrives by hand today; Stripe (ticket 09) adds a second path into the same payments table.
-
-const Line = z.object({ description: z.string(), quantity: z.int(), unitAmountCents: z.int() });
 
 // Clients never see drafts: an invoice exists for them once it's issued.
 export function listInvoices(engagementId: string, user: SessionUser): InvoiceSummary[] {
@@ -50,6 +49,10 @@ export function listInvoices(engagementId: string, user: SessionUser): InvoiceSu
         )
         .all(r.invoice_id as string)
         .map((l) => ({ description: l.description, quantity: l.quantity, unitAmountCents: l.unit_amount_cents })),
+      included: db
+        .query<{ name: string }, [string]>("SELECT name FROM invoice_included WHERE invoice_id = ? ORDER BY name")
+        .all(r.invoice_id as string)
+        .map((x) => x.name),
       payments: db
         .query<Record<string, string | number | null>, [string]>(
           `SELECT id, amount_cents, status, provider, method, received_on, note, failure_message, created_at
@@ -80,13 +83,35 @@ function invoiceFor(user: SessionUser, invoiceId: string): InvoiceRef & { eng: E
   return { ...inv, eng };
 }
 
-function writeLines(db: Database, invoiceId: string, lines: Line[]) {
+type LineIn = Omit<Line, "priceCode"> & { priceCode?: string | null };
+
+// A line's price code must name a current package or add-on; an included code, a current included add-on.
+function checkCodes(db: Database, lines: LineIn[], included: string[]) {
+  for (const l of lines) {
+    if (!l.priceCode) continue;
+    const known = db.query("SELECT 1 FROM price_packages WHERE code = ?1 AND retired_at IS NULL UNION ALL SELECT 1 FROM price_addons WHERE code = ?1 AND retired_at IS NULL").get(l.priceCode);
+    if (!known) throw new TRPCError({ code: "BAD_REQUEST", message: `"${l.description}" points at a price that isn't in your pricing.` });
+  }
+  return included.map((code) => {
+    const a = db.query<{ name: string; unit_amount_cents: number | null }, [string]>("SELECT name, unit_amount_cents FROM price_addons WHERE code = ? AND retired_at IS NULL").get(code);
+    if (!a) throw new TRPCError({ code: "BAD_REQUEST", message: "An included add-on isn't in your pricing." });
+    if (a.unit_amount_cents !== null) throw new TRPCError({ code: "BAD_REQUEST", message: `${a.name} has a price; add it as a line instead.` });
+    return { code, name: a.name };
+  });
+}
+
+function writeLines(db: Database, invoiceId: string, lines: LineIn[]) {
   db.run("DELETE FROM invoice_lines WHERE invoice_id = ?", [invoiceId]);
   lines.forEach((l, i) =>
-    db.run("INSERT INTO invoice_lines (id, invoice_id, position, description, quantity, unit_amount_cents) VALUES (?, ?, ?, ?, ?, ?)", [
-      Bun.randomUUIDv7(), invoiceId, i + 1, l.description, l.quantity, l.unitAmountCents,
+    db.run("INSERT INTO invoice_lines (id, invoice_id, position, description, quantity, unit_amount_cents, price_code) VALUES (?, ?, ?, ?, ?, ?, ?)", [
+      Bun.randomUUIDv7(), invoiceId, i + 1, l.description, l.quantity, l.unitAmountCents, l.priceCode ?? null,
     ]),
   );
+}
+
+function writeIncluded(db: Database, invoiceId: string, included: { code: string; name: string }[]) {
+  db.run("DELETE FROM invoice_included WHERE invoice_id = ?", [invoiceId]);
+  for (const x of included) db.run("INSERT INTO invoice_included (invoice_id, price_code, name) VALUES (?, ?, ?)", [invoiceId, x.code, x.name]);
 }
 
 const summaryOf = (invoiceId: string, engagementId: string, user: SessionUser) => listInvoices(engagementId, user).find((i) => i.id === invoiceId)!;
@@ -101,13 +126,14 @@ export const invoiceRouter = router({
       return listInvoices(input.engagementId, ctx.user);
     }),
 
-  // The fee schedule applied to what's on this return. A starting point the preparer edits.
+  // Pricing applied to what's on this return: its package, the add-ons its facts call for, the included ones.
+  // A starting point the preparer edits (admin 23-dialogs-and-sheets-dlg-invoice).
   suggest: preparerProcedure
     .input(InvoiceSuggestInput)
-    .output(z.array(Line))
+    .output(InvoiceSuggestion)
     .query(({ ctx, input }) => {
       engagementFor(ctx.user, input.engagementId);
-      return suggestedLinesFor(runtime().db, input.engagementId);
+      return suggestionFor(runtime().db, input.engagementId);
     }),
 
   create: preparerProcedure
@@ -116,7 +142,10 @@ export const invoiceRouter = router({
     .mutation(({ ctx, input }) => {
       const { db } = runtime();
       const eng = engagementFor(ctx.user, input.engagementId);
-      const lines = input.lines ?? suggestedLinesFor(db, eng.id);
+      const suggestion = input.lines ? null : suggestionFor(db, eng.id);
+      const lines: LineIn[] = input.lines ?? suggestion!.lines;
+      if (!lines.length) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Nothing to charge yet: set the filing status, or add lines by hand." });
+      const included = checkCodes(db, lines, input.included ?? suggestion?.included.map((x) => x.code) ?? []);
       const id = Bun.randomUUIDv7();
       db.transaction(() => {
         const number = nextInvoiceNumber(db, eng.tax_year + 1);
@@ -124,6 +153,7 @@ export const invoiceRouter = router({
           id, eng.id, number, input.dueOn ?? null, now(),
         ]);
         writeLines(db, id, lines);
+        writeIncluded(db, id, included);
         appendEvent(db, { actor: ctx.user, type: "invoice.created", subjectType: "invoice", subjectId: id, householdId: eng.household_id, engagementId: eng.id, data: { number } });
       })();
       return summaryOf(id, eng.id, ctx.user);
@@ -137,8 +167,10 @@ export const invoiceRouter = router({
       const { db } = runtime();
       const inv = invoiceFor(ctx.user, input.invoiceId);
       if (inv.status !== "draft") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Only a draft invoice can be edited. Void it and create a new one." });
+      const included = checkCodes(db, input.lines, input.included ?? []);
       db.transaction(() => {
         writeLines(db, inv.id, input.lines);
+        if (input.included) writeIncluded(db, inv.id, included); // left out: what it already includes stays
         appendEvent(db, { actor: ctx.user, type: "invoice.updated", subjectType: "invoice", subjectId: inv.id, householdId: inv.eng.household_id, engagementId: inv.eng.id, data: { lines: input.lines.length } });
       })();
       return summaryOf(inv.id, inv.eng.id, ctx.user);

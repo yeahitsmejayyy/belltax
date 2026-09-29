@@ -1,13 +1,14 @@
 import { TRPCError } from "@trpc/server";
-import { FeeUpdateInput, FeeView, LetterTemplateBodyInput, LetterTemplatePreview, LetterTemplateView, now } from "@app/schema";
+import { LetterTemplateBodyInput, LetterTemplatePreview, LetterTemplateView, now } from "@app/schema";
 import { z } from "zod";
 import { runtime } from "../db/client";
+import { settingsPricingRouter } from "./pricing";
 import { appendEvent } from "../events";
 import { currentTemplate, MERGE_FIELDS, renderLetter, REQUIRED_FIELDS, templateProblems } from "../letters/template";
 import { preparerProcedure, router } from "../trpc";
 
-// Admin settings: the engagement letter template (versioned; publish adds, never edits) and the fee
-// schedule (edited in place; issued invoices keep their own copies of amounts).
+// Admin settings: the engagement letter template (versioned; publish adds, never edits) and pricing, packages
+// + add-ons (routes/pricing.ts; issued invoices keep their own copies of amounts).
 
 // Invented values, so a preview never shows anyone real.
 const SAMPLE = {
@@ -72,46 +73,4 @@ const letterTemplateRouter = router({
     }),
 });
 
-const feesRouter = router({
-  list: preparerProcedure.output(z.array(FeeView)).query(() =>
-    runtime()
-      .db.query<{ code: string; description: string; unit_amount_cents: number; active: number; updated_at: string }, []>(
-        "SELECT code, description, unit_amount_cents, active, updated_at FROM fee_schedule ORDER BY position",
-      )
-      .all()
-      .map((f) => ({ code: f.code, description: f.description, unitAmountCents: f.unit_amount_cents, active: f.active === 1, updatedAt: f.updated_at })),
-  ),
-
-  update: preparerProcedure
-    .input(FeeUpdateInput)
-    .output(FeeView)
-    .mutation(({ ctx, input }) => {
-      const { db } = runtime();
-      const before = db
-        .query<{ description: string; unit_amount_cents: number; active: number }, [string]>("SELECT description, unit_amount_cents, active FROM fee_schedule WHERE code = ?")
-        .get(input.code);
-      if (!before) throw new TRPCError({ code: "NOT_FOUND", message: "Fee not found." });
-      const after = {
-        description: input.description ?? before.description,
-        unit_amount_cents: input.unitAmountCents ?? before.unit_amount_cents,
-        active: input.active === undefined ? before.active : input.active ? 1 : 0,
-      };
-      const at = now();
-      db.transaction(() => {
-        db.run("UPDATE fee_schedule SET description = ?, unit_amount_cents = ?, active = ?, updated_at = ? WHERE code = ?", [
-          after.description, after.unit_amount_cents, after.active, at, input.code,
-        ]);
-        // Fees aren't personal data, so the change itself is recorded for the audit trail.
-        appendEvent(db, {
-          actor: ctx.user,
-          type: "settings.fee_updated",
-          subjectType: "fee",
-          subjectId: input.code,
-          data: { from_cents: before.unit_amount_cents, to_cents: after.unit_amount_cents, active: after.active === 1 },
-        });
-      })();
-      return { code: input.code, description: after.description, unitAmountCents: after.unit_amount_cents, active: after.active === 1, updatedAt: at };
-    }),
-});
-
-export const settingsRouter = router({ letterTemplate: letterTemplateRouter, fees: feesRouter });
+export const settingsRouter = router({ letterTemplate: letterTemplateRouter, pricing: settingsPricingRouter });

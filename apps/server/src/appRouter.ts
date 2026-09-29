@@ -8,6 +8,7 @@ import { intakeRouter } from "./routes/intake";
 import { invoiceRouter, paymentRouter } from "./routes/invoice";
 import { letterRouter } from "./routes/letter";
 import { requestRouter } from "./routes/request";
+import { publicPricingRouter } from "./routes/pricing";
 import { seasonRouter } from "./routes/season";
 import { settingsRouter } from "./routes/settings";
 import { createExpectedProcedure, returningRouter, sourceRouter } from "./routes/source";
@@ -32,6 +33,7 @@ export const appRouter = router({
   activity: activityRouter,
   settings: settingsRouter,
   season: seasonRouter,
+  pricing: publicPricingRouter,
 });
 
 export type AppRouter = typeof appRouter;

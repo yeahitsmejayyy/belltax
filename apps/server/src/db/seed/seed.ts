@@ -3,7 +3,7 @@ import { SOURCE_DOCUMENT_KINDS, Stage } from "@app/schema";
 import { HOUSEHOLDS, namePools, planHousehold, type HouseholdPlan, type HouseholdSpec, type ReturnPlan } from "./households";
 import { demoPdf } from "./pdf";
 import { createRng } from "./random";
-import { loadFees, suggestedLines } from "../../money/pricing";
+import { suggestionFor } from "../../money/pricing";
 import { CONSENT_TEXT, currentTemplate, FILING_STATUS_LABEL, renderLetter } from "../../letters/template";
 import type { Storage } from "../../storage";
 
@@ -319,18 +319,16 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
     if (reached(stage, "review")) {
       const invId = rng.id();
       const number = `${year + 1}-${String(summary.returns).padStart(4, "0")}${kind === "amended" ? "1" : ""}`;
-      const kinds = rp.sources.map((k) => ctx.plan.sources.find((x) => x.key === k)!.kind);
-      const lines = suggestedLines(loadFees(db), {
-        isAmended: kind === "amended",
-        businesses: kinds.filter((k) => k === "business").length,
-        rentals: kinds.filter((k) => k === "rental_property").length,
-        investments: kinds.includes("brokerage") ? 1 : 0,
-      }).map((l) => [l.description, l.quantity, l.unitAmountCents] as [string, number, number]);
+      // Priced the way the preparer would: the return's package plus the add-ons its sources and answers call for.
+      const suggestion = suggestionFor(db, engId);
+      const lines = suggestion.lines.map((l) => [l.description, l.quantity, l.unitAmountCents, l.priceCode] as [string, number, number, string | null]);
+      if (!lines.length) throw new Error(`seed bug: nothing to invoice for ${engId}`);
       const createdInv = between(0.9, 0.95);
       insert("invoices", { id: invId, engagement_id: engId, number, status: "draft", due_on: `${year + 1}-04-15`, created_at: createdInv });
-      lines.forEach(([description, quantity, unit], i) =>
-        insert("invoice_lines", { id: rng.id(), invoice_id: invId, position: i + 1, description, quantity, unit_amount_cents: unit }),
+      lines.forEach(([description, quantity, unit, code], i) =>
+        insert("invoice_lines", { id: rng.id(), invoice_id: invId, position: i + 1, description, quantity, unit_amount_cents: unit, price_code: code }),
       );
+      for (const x of suggestion.included) insert("invoice_included", { invoice_id: invId, price_code: x.code, name: x.name });
       db.run("UPDATE invoices SET status = 'issued', issued_at = ? WHERE id = ?", [createdInv, invId]);
       event("invoice.issued", { kind: "preparer", userId: preparerId }, { household: hh, engagement: engId, subjectType: "invoice", subjectId: invId, when: createdInv });
 

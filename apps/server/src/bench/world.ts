@@ -14,7 +14,7 @@ const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g;
 const TABLES = [
   "households", "people", "users", "household_access", "engagement_letters", "engagements", "return_people",
   "intake_responses", "sources", "source_owners", "return_sources", "requests", "documents", "signatures",
-  "invoices", "invoice_lines", "payments", "events",
+  "invoices", "invoice_lines", "invoice_included", "payments", "events",
 ] as const;
 const ORDER: Partial<Record<(typeof TABLES)[number], string>> = {
   engagements: "kind DESC, created_at", // originals before the amendments that point at them

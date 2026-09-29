@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import type { Database } from "bun:sqlite";
 import {
+  AddonTrigger,
+  PackageFilingStatus,
   ActorKind,
   DocumentCategory,
   DocumentStatus,
@@ -93,11 +95,14 @@ describe("zod ↔ SQL drift", () => {
       "payments.status": PaymentStatus.options,
       "webhook_receipts.provider": WebhookProvider.options,
       "events.actor_kind": ActorKind.options,
+      "price_packages.filing_status": PackageFilingStatus.options,
+      "price_addons.applies_when": AddonTrigger.options,
     };
     const found: Record<string, string[]> = {};
     const rows = db.query<{ name: string; sql: string }, []>("SELECT name, sql FROM sqlite_master WHERE type = 'table'").all();
     for (const { name, sql } of rows) {
-      for (const m of sql.matchAll(/CHECK \((\w+) IN \(([^)]*)\)\)/g)) {
+      // `CHECK (x IN (...))`, and the nullable form `CHECK (x IS NULL OR x IN (...))`.
+      for (const m of sql.matchAll(/CHECK \((?:\w+ IS NULL OR\s+)?(\w+) IN\s*\(([^)]*)\)\)/g)) {
         const values = [...m[2]!.matchAll(/'([^']*)'/g)].map((v) => v[1]!);
         if (values.length) found[`${name}.${m[1]}`] = values;
       }

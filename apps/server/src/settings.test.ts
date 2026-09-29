@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import { FeeView, InvoiceSummary, LetterTemplateView, LetterView } from "@app/schema";
+import { LetterTemplateView, LetterView } from "@app/schema";
 import { z } from "zod";
 import { demoWorld } from "./test-harness";
 
-// Practice settings: a versioned letter template and an editable fee schedule.
+// Practice settings: a versioned letter template. Pricing (packages + add-ons) is in pricing.test.ts.
 
 let w: Awaited<ReturnType<typeof demoWorld>>;
 beforeAll(async () => {
@@ -73,48 +73,11 @@ describe("the letter template", () => {
   });
 });
 
-describe("the fee schedule", () => {
-  const fees = async () => z.array(FeeView).parse((await w.call(P(), "settings.fees.list", undefined)).data);
-  const suggest = async (engagementId: string) =>
-    (await w.call(P(), "invoice.suggest", { engagementId })).data as { description: string; unitAmountCents: number }[];
-
-  test("ships with today's prices", async () => {
-    const list = await fees();
-    expect(list.find((f) => f.code === "federal")).toMatchObject({ unitAmountCents: 25000, active: true });
-    expect(list.map((f) => f.code)).toEqual(["federal", "state", "schedule_c", "schedule_e", "schedule_d", "amended"]);
-  });
-
-  test("a fee change affects new suggestions only, never an issued invoice", async () => {
-    const issued = w.get<{ invoice_id: string; engagement_id: string; total_cents: number }>(
-      "SELECT invoice_id, engagement_id, total_cents FROM invoice_balances WHERE status = 'issued' LIMIT 1",
-    );
-    const res = await m("settings.fees.update", { code: "federal", unitAmountCents: 27500 });
-    expect(FeeView.parse(res.data).unitAmountCents).toBe(27500);
-    expect(JSON.parse(w.eventsOf("settings.fee_updated", "federal")[0]!.data)).toMatchObject({ from_cents: 25000, to_cents: 27500 });
-
-    expect((await suggest(issued.engagement_id)).find((l) => l.description.startsWith("Federal"))!.unitAmountCents).toBe(27500);
-    const after = z.array(InvoiceSummary).parse((await w.call(P(), "invoice.list", { engagementId: issued.engagement_id })).data);
-    expect(after.find((i) => i.id === issued.invoice_id)!.totalCents).toBe(issued.total_cents);
-  });
-
-  test("an inactive fee drops out of suggestions", async () => {
-    const withState = w.get<{ id: string }>("SELECT id FROM engagements WHERE kind = 'original' AND tax_year = 2025 LIMIT 1").id;
-    await m("settings.fees.update", { code: "state", active: false });
-    expect((await suggest(withState)).some((l) => l.description.startsWith("California"))).toBe(false);
-    await m("settings.fees.update", { code: "state", active: true });
-  });
-
-  test("unknown codes and non-positive amounts are refused", async () => {
-    expect((await m("settings.fees.update", { code: "nope", unitAmountCents: 100 })).status).toBe(404);
-    expect((await m("settings.fees.update", { code: "federal", unitAmountCents: 0 })).status).toBe(400);
-  });
-});
-
 describe("authorization", () => {
   test("404 on the portal, 403 for a client on the admin", async () => {
     const client = w.get<{ id: string }>("SELECT id FROM users WHERE role = 'client' LIMIT 1").id;
-    expect((await w.call(P(), "settings.fees.list", undefined, "query", "portal")).status).toBe(404);
+    expect((await w.call(P(), "settings.pricing.list", undefined, "query", "portal")).status).toBe(404);
     expect((await w.call(client, "settings.letterTemplate.get", undefined, "query", "admin")).status).toBe(403);
-    expect((await w.call(client, "settings.fees.update", { code: "federal", unitAmountCents: 1 }, "mutation", "admin")).status).toBe(403);
+    expect((await w.call(client, "settings.pricing.savePackage", { code: "single", filingStatus: "single", name: "Single", unitAmountCents: 1 }, "mutation", "admin")).status).toBe(403);
   });
 });

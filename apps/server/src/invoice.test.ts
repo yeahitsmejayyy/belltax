@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import { InvoiceSummary, now } from "@app/schema";
+import { InvoiceSuggestion, InvoiceSummary, now } from "@app/schema";
 import { z } from "zod";
 import { demoWorld } from "./test-harness";
 
@@ -48,17 +48,17 @@ describe("the payments table keeps the two paths apart", () => {
 });
 
 describe("suggested lines follow what's on the return", () => {
-  const suggest = async (engagementId: string) =>
-    z.array(z.object({ description: z.string(), quantity: z.int(), unitAmountCents: z.int() })).parse(
-      (await w.call(P(), "invoice.suggest", { engagementId })).data,
-    );
-  test("rentals add Schedule E per property; a business adds Schedule C; an amendment is just the 1040-X", async () => {
-    const landlord = engWith("e.tax_year = 2025 AND EXISTS (SELECT 1 FROM return_sources rs JOIN sources s ON s.id = rs.source_id WHERE rs.engagement_id = e.id AND s.kind = 'rental_property')");
-    expect((await suggest(landlord)).map((l) => l.description)).toContain("Schedule E · rental property");
-    const gig = engWith("e.tax_year = 2025 AND EXISTS (SELECT 1 FROM return_sources rs JOIN sources s ON s.id = rs.source_id WHERE rs.engagement_id = e.id AND s.kind = 'business')");
-    expect((await suggest(gig)).map((l) => l.description)).toContain("Schedule C · self-employment");
+  const suggest = async (engagementId: string) => InvoiceSuggestion.parse((await w.call(P(), "invoice.suggest", { engagementId })).data);
+  test("the package for its filing status, then add-ons: rental per property, side work for a business", async () => {
+    const landlord = engWith("e.tax_year = 2025 AND e.filing_status IS NOT NULL AND EXISTS (SELECT 1 FROM return_sources rs JOIN sources s ON s.id = rs.source_id WHERE rs.engagement_id = e.id AND s.kind = 'rental_property')");
+    const l = await suggest(landlord);
+    expect(l.packageCode).not.toBeNull();
+    expect(l.lines[0]!.priceCode).toBe(l.packageCode);
+    expect(l.lines.find((x) => x.priceCode === "rental")?.quantity).toBeGreaterThanOrEqual(1);
+    const gig = engWith("e.tax_year = 2025 AND e.filing_status IS NOT NULL AND EXISTS (SELECT 1 FROM return_sources rs JOIN sources s ON s.id = rs.source_id WHERE rs.engagement_id = e.id AND s.kind = 'business')");
+    expect((await suggest(gig)).lines.map((x) => x.priceCode)).toContain("side_work");
     const amended = engWith("e.kind = 'amended'");
-    expect(await suggest(amended)).toEqual([{ description: "Amended return (Form 1040-X)", quantity: 1, unitAmountCents: 20000 }]);
+    expect(await suggest(amended)).toEqual({ packageCode: null, lines: [], included: [] }); // the amended add-on ships inactive
   });
 });
 
@@ -66,10 +66,13 @@ describe("invoice lifecycle", () => {
   test("draft from suggestions → edit → issue; clients only ever see issued invoices", async () => {
     const id = fresh();
     const client = primaryUser(id);
+    const suggested = InvoiceSuggestion.parse((await w.call(P(), "invoice.suggest", { engagementId: id })).data);
     const draft = inv(await w.call(P(), "invoice.create", { engagementId: id, dueOn: "2026-04-15" }, "mutation"));
     expect(draft).toMatchObject({ status: "draft", settlement: "draft", dueOn: "2026-04-15" });
     expect(draft.number).toMatch(/^2026-\d{4}$/);
-    expect(draft.lines[0]!.description).toBe("Federal return (Form 1040)");
+    // Left to itself, a new invoice is the suggestion: the package first, then the add-ons.
+    expect(draft.lines.map((l) => l.description)).toEqual(suggested.lines.map((l) => l.description));
+    expect(draft.included).toEqual(suggested.included.map((x) => x.name).sort());
     expect(w.eventsOf("invoice.created", draft.id)).toHaveLength(1);
     expect(z.array(InvoiceSummary).parse((await w.call(client, "invoice.list", { engagementId: id })).data)).toEqual([]);
 
