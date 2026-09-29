@@ -3,6 +3,7 @@ import { LetterCreateInput, LetterGetInput, LetterRefInput, LetterSignInput, Let
 import { z } from "zod";
 import { engagementFor } from "../access";
 import { runtime } from "../db/client";
+import { practice } from "./practice";
 import { appendEvent, recordView } from "../events";
 import type { SessionUser } from "../identity";
 import { CONSENT_TEXT, currentTemplate, FILING_STATUS_LABEL, renderLetter, sha256 } from "../letters/template";
@@ -157,7 +158,10 @@ export const letterRouter = router({
       const allFilers = returns.flatMap((r) => filersOf(r.id));
       if (!allFilers.length) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Add a primary filer before drafting the letter." });
 
+      const who = practice(db);
       const { body, templateVersion } = renderLetter(currentTemplate(db), {
+        practiceName: who.practiceName,
+        preparerName: who.preparerName,
         householdName: first.display_name,
         taxYear: first.tax_year,
         amended: first.kind === "amended",

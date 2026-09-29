@@ -4,6 +4,7 @@ import { HOUSEHOLDS, namePools, planHousehold, type HouseholdPlan, type Househol
 import { demoPdf } from "./pdf";
 import { createRng } from "./random";
 import { suggestionFor } from "../../money/pricing";
+import { practice } from "../../routes/practice";
 import { CONSENT_TEXT, currentTemplate, FILING_STATUS_LABEL, renderLetter } from "../../letters/template";
 import type { Storage } from "../../storage";
 
@@ -281,7 +282,10 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
         const letterReturns = ctx.plan.returns.filter((r) => (rp.status === "mfs" ? r.status === "mfs" : r === rp));
         const nameOf = (k: string) => `${ctx.people.get(k)!.first} ${ctx.people.get(k)!.last}`;
         const filersOfPlan = (r: ReturnPlan) => [r.primary, ...(r.spouse ? [r.spouse] : [])].map(nameOf);
+        const who = practice(db);
         const { body } = renderLetter(currentTemplate(db), {
+          practiceName: who.practiceName,
+          preparerName: who.preparerName,
           householdName: ctx.plan.displayName,
           taxYear: year,
           amended: kind === "amended",

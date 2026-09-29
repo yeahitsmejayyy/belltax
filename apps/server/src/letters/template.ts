@@ -1,5 +1,4 @@
 import type { Database } from "bun:sqlite";
-import { PRACTICE_NAME } from "@app/schema";
 
 // The engagement letter template lives in the database (letter_templates, migration 003), versioned:
 // publishing adds a version and past versions are frozen, so every letter records exactly which
@@ -10,7 +9,7 @@ import { PRACTICE_NAME } from "@app/schema";
 export const CONSENT_TEXT = "I have read this engagement letter, I agree to its terms, and typing my name is my signature.";
 
 // Every field a template may use, and the ones a letter can't do without.
-export const MERGE_FIELDS = ["practice_name", "household_name", "tax_year", "amended_note", "date", "returns", "filers"] as const;
+export const MERGE_FIELDS = ["practice_name", "preparer_name", "household_name", "tax_year", "amended_note", "date", "returns", "filers"] as const;
 export const REQUIRED_FIELDS = ["household_name", "tax_year", "filers"] as const;
 const FIELD = /\{\{(\w+)\}\}/g;
 
@@ -32,7 +31,8 @@ export function templateProblems(body: string): string[] {
 }
 
 export type LetterFields = {
-  practiceName?: string;
+  practiceName: string; // from Settings → Practice (routes/practice.ts)
+  preparerName: string;
   householdName: string;
   taxYear: number;
   amended: boolean;
@@ -43,7 +43,8 @@ export type LetterFields = {
 
 export function renderLetter(template: LetterTemplate, f: LetterFields): { body: string; templateVersion: number } {
   const values: Record<(typeof MERGE_FIELDS)[number], string> = {
-    practice_name: f.practiceName ?? PRACTICE_NAME,
+    practice_name: f.practiceName,
+    preparer_name: f.preparerName,
     household_name: f.householdName,
     tax_year: String(f.taxYear),
     amended_note: f.amended ? " (amended return)" : "",

@@ -47,6 +47,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   (`tags: ["!dev"]`), never on the visible story. The admin shell is `AppSidebar` + `AppHeader` (on shadcn's `sidebar`). Search is `InlineSearch` (header field with a results dropdown) + `CommandPalette` (⌘K), both fed the same `SearchGroup[]`. Invite client / Add without invite open `InviteClientDialog` (Household → Members → Filers → Send). Story fixtures live in `packages/ui/src/stories/fixtures.tsx`.
 - `apps/site` — marketing site (skelly-site, last).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
+- **The practice's details** (name, preparer, reply-to email, texting phone, city/state) live in `practice_settings`
+  (one row, migration 007): `settings.practice.*` to edit, `practice.public` for the portal and site (no phone). Letters,
+  invoices and invites read them; never hard-code the practice name.
 - **Pricing** is packages (one per filing status) + add-ons (`price_packages`, `price_addons`, migration 006), edited via
   `settings.pricing.*`; `pricing.public` feeds the marketing site. `src/money/pricing.ts` turns a return's facts (filing
   status, sources, intake answers) into a suggested invoice. An add-on with no price is "Included": named on the invoice

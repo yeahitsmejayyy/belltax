@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "../config";
 import { DB_FILE, connect } from "../db/open";
@@ -45,12 +46,33 @@ async function main() {
     case "check": {
       const tunnel = process.env.TUNNEL_TARGET_PORT ? Number(process.env.TUNNEL_TARGET_PORT) : undefined;
       const checks = checkHost(config, { backupDir, tunnelTargetPort: tunnel });
+      checks.push(practiceCheck(join(config.dataDir, DB_FILE)));
       for (const c of checks) console.log(`${c.status === "ok" ? "✔" : c.status === "warn" ? "!" : "✖"} ${c.name.padEnd(22)} ${c.detail}`);
       if (checks.some((c) => c.status === "fail")) process.exitCode = 1;
       break;
     }
     default:
       throw new Error("usage: backup | verify <file> | restore <file> <empty-dir> | check");
+  }
+}
+
+// The practice's details go on every letter, invoice and invite; the shipped ones are placeholders.
+function practiceCheck(file: string): { name: string; status: "ok" | "warn" | "fail"; detail: string } {
+  if (!existsSync(file)) return { name: "practice details", status: "warn", detail: "no database yet" };
+  const db = connect(file);
+  try {
+    let p: { reply_to_email: string; practice_name: string } | null = null;
+    try {
+      p = db.query<{ reply_to_email: string; practice_name: string }, []>("SELECT reply_to_email, practice_name FROM practice_settings WHERE id = 1").get();
+    } catch {
+      // A database from before migration 007; the migration check above already says what to do.
+    }
+    if (!p) return { name: "practice details", status: "warn", detail: "not set up yet: back up, then bun run migrate" };
+    return p.reply_to_email.endsWith(".example")
+      ? { name: "practice details", status: "warn", detail: "still the placeholders: set them in Settings → Practice before the first invite" }
+      : { name: "practice details", status: "ok", detail: `${p.practice_name} · ${p.reply_to_email}` };
+  } finally {
+    db.close();
   }
 }
 

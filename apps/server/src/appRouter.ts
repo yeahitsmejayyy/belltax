@@ -8,6 +8,7 @@ import { intakeRouter } from "./routes/intake";
 import { invoiceRouter, paymentRouter } from "./routes/invoice";
 import { letterRouter } from "./routes/letter";
 import { requestRouter } from "./routes/request";
+import { publicPracticeRouter } from "./routes/practice";
 import { publicPricingRouter } from "./routes/pricing";
 import { seasonRouter } from "./routes/season";
 import { settingsRouter } from "./routes/settings";
@@ -34,6 +35,7 @@ export const appRouter = router({
   settings: settingsRouter,
   season: seasonRouter,
   pricing: publicPricingRouter,
+  practice: publicPracticeRouter,
 });
 
 export type AppRouter = typeof appRouter;

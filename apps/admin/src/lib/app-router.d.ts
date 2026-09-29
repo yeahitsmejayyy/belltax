@@ -1791,6 +1791,60 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 meta: object;
             }>;
         }>>;
+        practice: import("@trpc/server").TRPCBuiltRouter<{
+            ctx: {
+                user: {
+                    id: string;
+                    role: "client" | "preparer";
+                    personId: string | null;
+                } | null;
+                client: {
+                    ip: string;
+                    userAgent: string;
+                };
+                surface: "portal" | "admin";
+            };
+            meta: object;
+            errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+            transformer: false;
+        }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+            get: import("@trpc/server").TRPCQueryProcedure<{
+                input: void;
+                output: {
+                    practiceName: string;
+                    preparerName: string;
+                    preparerCredential: string | null;
+                    replyToEmail: string;
+                    phone: string | null;
+                    city: string | null;
+                    state: string | null;
+                    updatedAt: string;
+                };
+                meta: object;
+            }>;
+            update: import("@trpc/server").TRPCMutationProcedure<{
+                input: {
+                    practiceName: string;
+                    preparerName: string;
+                    preparerCredential?: string | null | undefined;
+                    replyToEmail: string;
+                    phone?: string | null | undefined;
+                    city?: string | null | undefined;
+                    state?: string | null | undefined;
+                };
+                output: {
+                    practiceName: string;
+                    preparerName: string;
+                    preparerCredential: string | null;
+                    replyToEmail: string;
+                    phone: string | null;
+                    city: string | null;
+                    state: string | null;
+                    updatedAt: string;
+                };
+                meta: object;
+            }>;
+        }>>;
     }>>;
     season: import("@trpc/server").TRPCBuiltRouter<{
         ctx: {
@@ -1900,6 +1954,36 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     description: string;
                     unitAmountCents: number | null;
                 }[];
+            };
+            meta: object;
+        }>;
+    }>>;
+    practice: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        public: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                practiceName: string;
+                preparerName: string;
+                preparerCredential: string | null;
+                replyToEmail: string;
+                city: string | null;
+                state: string | null;
             };
             meta: object;
         }>;

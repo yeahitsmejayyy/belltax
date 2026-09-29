@@ -530,6 +530,33 @@ export type LetterTemplateView = z.infer<typeof LetterTemplateView>;
 export const LetterTemplateBodyInput = z.object({ body: z.string().trim().min(40).max(20_000) });
 export const LetterTemplatePreview = z.object({ problems: z.array(z.string()), rendered: z.string().nullable() });
 
+// ── Practice details (ticket 37, migration 007) ──
+const digits10 = (v: string) => v.replace(/\D/g, "").length === 10;
+export const PracticeView = z.object({
+  practiceName: z.string(),
+  preparerName: z.string(),
+  preparerCredential: z.string().nullable(),
+  replyToEmail: z.string(),
+  phone: z.string().nullable(),
+  city: z.string().nullable(),
+  state: z.string().nullable(),
+  updatedAt: Timestamp,
+});
+export type PracticeView = z.infer<typeof PracticeView>;
+const optional = (max: number) => z.string().trim().max(max).transform((v) => (v === "" ? null : v)).nullable().optional();
+export const PracticeUpdateInput = z.object({
+  practiceName: z.string().trim().min(1, "Enter the practice name.").max(80),
+  preparerName: z.string().trim().min(1, "Enter the preparer's name.").max(80),
+  preparerCredential: optional(80),
+  replyToEmail: z.string().trim().email("Enter a valid email, like m@example.com."),
+  phone: optional(20).refine((v) => v == null || digits10(v), "Enter a 10-digit US number, or leave it blank."),
+  city: optional(60),
+  state: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "Use the two-letter state, like CA.").nullable().optional().or(z.literal("").transform(() => null)),
+});
+// What anyone may see: the portal footer, the invite email, the marketing site. No texting number.
+export const PublicPractice = PracticeView.pick({ practiceName: true, preparerName: true, preparerCredential: true, replyToEmail: true, city: true, state: true });
+export type PublicPractice = z.infer<typeof PublicPractice>;
+
 // ── Pricing: packages + add-ons (ticket 36, migration 006) ──
 const PriceCode = z.string().regex(/^[a-z0-9_]{1,40}$/);
 const PriceName = z.string().trim().min(1).max(80);

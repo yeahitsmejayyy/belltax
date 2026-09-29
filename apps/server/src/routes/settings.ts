@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { LetterTemplateBodyInput, LetterTemplatePreview, LetterTemplateView, now } from "@app/schema";
 import { z } from "zod";
 import { runtime } from "../db/client";
+import { practice, settingsPracticeRouter } from "./practice";
 import { settingsPricingRouter } from "./pricing";
 import { appendEvent } from "../events";
 import { currentTemplate, MERGE_FIELDS, renderLetter, REQUIRED_FIELDS, templateProblems } from "../letters/template";
@@ -12,6 +13,8 @@ import { preparerProcedure, router } from "../trpc";
 
 // Invented values, so a preview never shows anyone real.
 const SAMPLE = {
+  practiceName: "Sample Practice",
+  preparerName: "Sam Preparer",
   householdName: "Sample-Household",
   taxYear: 2026,
   amended: false,
@@ -51,7 +54,7 @@ const letterTemplateRouter = router({
     .output(LetterTemplatePreview)
     .query(({ input }) => {
       const problems = templateProblems(input.body);
-      return { problems, rendered: problems.length ? null : renderLetter({ version: 0, body: input.body }, SAMPLE).body };
+      return { problems, rendered: problems.length ? null : renderLetter({ version: 0, body: input.body }, { ...SAMPLE, practiceName: practice(runtime().db).practiceName, preparerName: practice(runtime().db).preparerName }).body };
     }),
 
   // A new version. Letters already drafted, sent or signed keep their frozen text and their version.
@@ -73,4 +76,4 @@ const letterTemplateRouter = router({
     }),
 });
 
-export const settingsRouter = router({ letterTemplate: letterTemplateRouter, pricing: settingsPricingRouter });
+export const settingsRouter = router({ letterTemplate: letterTemplateRouter, pricing: settingsPricingRouter, practice: settingsPracticeRouter });

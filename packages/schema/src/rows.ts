@@ -262,6 +262,19 @@ export const LetterTemplateRow = z.object({
   created_by: Id.nullable(),
 });
 
+// The practice's own details, one row (migration 007).
+export const PracticeSettingsRow = z.object({
+  id: z.literal(1),
+  practice_name: text,
+  preparer_name: text,
+  preparer_credential: text.nullable(),
+  reply_to_email: z.string().email(),
+  phone: z.string().nullable(),
+  city: text.nullable(),
+  state: z.string().regex(/^[A-Z]{2}$/).nullable(),
+  updated_at: Timestamp,
+});
+
 // Pricing (migration 006): a package per filing status, and add-ons on top. NULL price means "Included".
 const PriceCode = z.string().regex(/^[a-z0-9_]{1,40}$/);
 const Flag = z.union([z.literal(0), z.literal(1)]);
@@ -332,6 +345,7 @@ export const tables = {
   letter_templates: LetterTemplateRow,
   price_packages: PricePackageRow,
   price_addons: PriceAddonRow,
+  practice_settings: PracticeSettingsRow,
 } as const;
 
 export type TableName = keyof typeof tables;
