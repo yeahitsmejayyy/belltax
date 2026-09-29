@@ -2,6 +2,7 @@ import type { Database } from "bun:sqlite";
 import { DashboardInput, DashboardSummary, SidebarBadges, Stage } from "@app/schema";
 import { runtime } from "../db/client";
 import { preparerProcedure, router } from "../trpc";
+import { OVERDUE_SQL } from "../money/settlement";
 import { inboxFor } from "./inbox";
 
 // The admin dashboard (.assets/screens/admin/desktop/03-dashboard-dashboard.png): everything on it is derived
@@ -42,10 +43,6 @@ export function seasonFor(taxYear: number, today: Date): DashboardSummary["seaso
   if (t <= extension) return { phase: "extension", opensOn: iso(opens), deadline: iso(extension), daysToDeadline: days(t, extension), day: days(regular, t), length: days(regular, extension) };
   return { phase: "closed", opensOn: iso(opens), deadline: iso(extension), daysToDeadline: 0, day: days(regular, extension), length: days(regular, extension) };
 }
-
-// ── Money: one definition of "overdue", shared with the invoices list (ticket 39) ────────────────────
-// Issued, still owing, and past its due date. Uses invoice_balances b joined to invoices i.
-export const OVERDUE_SQL = "b.status = 'issued' AND b.balance_cents > 0 AND i.due_on IS NOT NULL AND i.due_on < ?";
 
 // "Dana & Sam Marigold": the filers' first names and the household name, as the design writes them.
 const RETURN_NAME = "COALESCE(pr.filers || ' ' || pr.household_name, pr.household_name)";

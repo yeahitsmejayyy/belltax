@@ -968,6 +968,60 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         errorShape: import("@trpc/server").TRPCDefaultErrorShape;
         transformer: false;
     }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        all: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                taxYear?: number | undefined;
+                tab?: "draft" | "failed" | "open" | "overdue" | "paid" | "void" | undefined;
+                cursor?: {
+                    rank: number;
+                    due: string;
+                    id: string;
+                } | undefined;
+                limit?: number | undefined;
+            } | undefined;
+            output: {
+                taxYear: number | null;
+                items: {
+                    id: string;
+                    number: string;
+                    engagementId: string;
+                    householdId: string;
+                    name: string;
+                    taxYear: number;
+                    tab: "draft" | "failed" | "open" | "overdue" | "paid" | "void";
+                    settlement: "draft" | "failed_last_attempt" | "paid" | "partial" | "unpaid" | "void";
+                    totalCents: number;
+                    paidCents: number;
+                    balanceCents: number;
+                    dueOn: string | null;
+                    issuedAt: string | null;
+                    lastPayment: {
+                        status: "failed" | "pending" | "refunded" | "succeeded";
+                        amountCents: number;
+                        provider: "manual" | "stripe";
+                        method: "cash" | "check" | "other" | "zelle" | null;
+                        failureMessage: string | null;
+                        at: string;
+                    } | null;
+                }[];
+                next: {
+                    rank: number;
+                    due: string;
+                    id: string;
+                } | null;
+                counts: {
+                    all: number;
+                    failed: number;
+                    overdue: number;
+                    open: number;
+                    draft: number;
+                    paid: number;
+                    void: number;
+                };
+                outstandingCents: number;
+            };
+            meta: object;
+        }>;
         list: import("@trpc/server").TRPCQueryProcedure<{
             input: {
                 engagementId: string;

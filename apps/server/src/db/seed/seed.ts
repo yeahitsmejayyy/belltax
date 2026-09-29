@@ -334,7 +334,9 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
       const lines = suggestion.lines.map((l) => [l.description, l.quantity, l.unitAmountCents, l.priceCode] as [string, number, number, string | null]);
       if (!lines.length) throw new Error(`seed bug: nothing to invoice for ${engId}`);
       const createdInv = between(0.9, 0.95);
-      insert("invoices", { id: invId, engagement_id: engId, number, status: "draft", due_on: `${year + 1}-04-15`, created_at: createdInv });
+      // Due 14 days after it's sent, as the invoice dialog says (admin 23-dialogs-and-sheets-dlg-invoice).
+      const dueOn = new Date(Date.parse(createdInv) + 14 * 86_400_000).toISOString().slice(0, 10);
+      insert("invoices", { id: invId, engagement_id: engId, number, status: "draft", due_on: dueOn, created_at: createdInv });
       lines.forEach(([description, quantity, unit, code], i) =>
         insert("invoice_lines", { id: rng.id(), invoice_id: invId, position: i + 1, description, quantity, unit_amount_cents: unit, price_code: code }),
       );

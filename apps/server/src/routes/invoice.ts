@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import {
+  InvoiceAllInput,
+  InvoicePage,
   InvoiceCreateInput,
   InvoiceListInput,
   InvoiceRefInput,
@@ -18,6 +20,7 @@ import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import type { SessionUser } from "../identity";
 import { nextInvoiceNumber, suggestionFor, type Line } from "../money/pricing";
+import { INVOICE_TABS, TAB_RANK_SQL } from "../money/settlement";
 import { authedProcedure, preparerProcedure, router } from "../trpc";
 
 // Invoices: lines are facts, the balance is derived (invoice_balances, R28), lines freeze once issued
@@ -116,7 +119,99 @@ function writeIncluded(db: Database, invoiceId: string, included: { code: string
 
 const summaryOf = (invoiceId: string, engagementId: string, user: SessionUser) => listInvoices(engagementId, user).find((i) => i.id === invoiceId)!;
 
+// Every invoice in a tax year, one tab each, most urgent first (failed, overdue, open, draft, paid, void),
+// paged on (tab, due date, id) so a page never shifts when new invoices arrive.
+function invoicesPage(db: Database, input: z.infer<typeof InvoiceAllInput>, today = new Date().toISOString().slice(0, 10)): InvoicePage {
+  const taxYear = input?.taxYear ?? db.query<{ y: number | null }, []>("SELECT MAX(tax_year) AS y FROM engagements").get()!.y;
+  const empty = { all: 0, failed: 0, overdue: 0, open: 0, draft: 0, paid: 0, void: 0 };
+  if (taxYear === null) return { taxYear, items: [], next: null, counts: empty, outstandingCents: 0 };
+  const limit = input?.limit ?? 50;
+  const params: (string | number)[] = [today, taxYear];
+  const where = ["e.tax_year = ?2"];
+  if (input?.tab) {
+    params.push(INVOICE_TABS.indexOf(input.tab));
+    where.push(`rank = ?${params.length}`);
+  }
+  if (input?.cursor) {
+    params.push(input.cursor.rank, input.cursor.due, input.cursor.id);
+    where.push(`(rank, due_key, b.invoice_id) > (?${params.length - 2}, ?${params.length - 1}, ?${params.length})`);
+  }
+  params.push(limit + 1);
+  const rows = db
+    .query<Record<string, string | number | null>, (string | number)[]>(
+      `SELECT * FROM (
+         SELECT b.invoice_id, i.number, b.engagement_id, e.household_id, e.tax_year, b.settlement, b.total_cents, b.paid_cents, b.balance_cents,
+                i.due_on, i.issued_at, ${TAB_RANK_SQL} AS rank, COALESCE(i.due_on, '9999-12-31') AS due_key,
+                COALESCE(pr.filers || ' ' || pr.household_name, pr.household_name) AS name
+           FROM invoice_balances b JOIN invoices i ON i.id = b.invoice_id JOIN engagements e ON e.id = b.engagement_id
+           JOIN pipeline_rows pr ON pr.engagement_id = b.engagement_id
+          WHERE e.tax_year = ?2) b
+        WHERE ${where.join(" AND ").replace("e.tax_year = ?2", "b.tax_year = ?2")}
+        ORDER BY rank, due_key, b.invoice_id
+        LIMIT ?${params.length}`,
+    )
+    .all(...params);
+  const page = rows.slice(0, limit);
+  const lastPayment = db.query<{ status: string; amount_cents: number; provider: string; method: string | null; failure_message: string | null; created_at: string }, [string]>(
+    "SELECT status, amount_cents, provider, method, failure_message, created_at FROM payments WHERE invoice_id = ? ORDER BY created_at DESC, id DESC LIMIT 1",
+  );
+  const items = page.map((r) => {
+    const p = lastPayment.get(r.invoice_id as string);
+    return {
+      id: r.invoice_id as string,
+      number: r.number as string,
+      engagementId: r.engagement_id as string,
+      householdId: r.household_id as string,
+      name: r.name as string,
+      taxYear: r.tax_year as number,
+      tab: INVOICE_TABS[r.rank as number]!,
+      settlement: r.settlement as InvoiceSummary["settlement"],
+      totalCents: r.total_cents as number,
+      paidCents: r.paid_cents as number,
+      balanceCents: r.balance_cents as number,
+      dueOn: r.due_on as string | null,
+      issuedAt: r.issued_at as string | null,
+      lastPayment: p
+        ? {
+            status: p.status as InvoiceSummary["payments"][number]["status"],
+            amountCents: p.amount_cents,
+            provider: p.provider as InvoiceSummary["payments"][number]["provider"],
+            method: p.method as InvoiceSummary["payments"][number]["method"],
+            failureMessage: p.failure_message,
+            at: p.created_at,
+          }
+        : null,
+    };
+  });
+  const last = page.at(-1);
+
+  const tally = db
+    .query<{ rank: number; n: number; owed: number | null }, [string, number]>(
+      `SELECT ${TAB_RANK_SQL} AS rank, COUNT(*) AS n, SUM(CASE WHEN b.status = 'issued' AND b.balance_cents > 0 THEN b.balance_cents ELSE 0 END) AS owed
+         FROM invoice_balances b JOIN invoices i ON i.id = b.invoice_id JOIN engagements e ON e.id = b.engagement_id
+        WHERE e.tax_year = ?2 GROUP BY rank`,
+    )
+    .all(today, taxYear);
+  const counts = { ...empty };
+  for (const t of tally) counts[INVOICE_TABS[t.rank]!] = t.n;
+  counts.all = tally.reduce((a, t) => a + t.n, 0);
+
+  return {
+    taxYear,
+    items,
+    next: rows.length > limit && last ? { rank: last.rank as number, due: last.due_key as string, id: last.invoice_id as string } : null,
+    counts,
+    outstandingCents: tally.reduce((a, t) => a + (t.owed ?? 0), 0),
+  };
+}
+
 export const invoiceRouter = router({
+  // The Invoices screen: the whole practice for a tax year, problems first.
+  all: preparerProcedure
+    .input(InvoiceAllInput)
+    .output(InvoicePage)
+    .query(({ input }) => invoicesPage(runtime().db, input)),
+
   // A client's view of what they owe on a return; the preparer also sees drafts.
   list: authedProcedure
     .input(InvoiceListInput)

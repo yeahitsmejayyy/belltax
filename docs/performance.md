@@ -107,6 +107,7 @@ cursor, like `activity.list` already is. No index would help.
 | --- | --- | ---: |
 | `dashboard.summary` (ticket 38) | every KPI, chart and health check | 33.9 |
 | `dashboard.badges` (ticket 38) | the sidebar counts, called on every page | 8.8 |
+| `invoice.all`, first page (ticket 39) | the Invoices screen, problems first | 7.3 |
 
 `dashboard.badges` builds the whole inbox to count it, so it moves with `inbox.list`. If it ever matters, give the
 inbox a count-only path; today it's well inside the budget.

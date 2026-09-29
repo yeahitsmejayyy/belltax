@@ -52,6 +52,7 @@ export function benchCases(db: Database): BenchCase[] {
     { name: "invoice_balances", what: "every issued invoice's balance", run: () => db.query("SELECT settlement, COUNT(*), SUM(balance_cents) FROM invoice_balances WHERE status = 'issued' GROUP BY settlement").all() },
     { name: "dashboard.summary", what: "every KPI, chart and health check", run: () => call("admin", preparer, "dashboard.summary", { taxYear: year }) },
     { name: "dashboard.badges", what: "the sidebar counts, on every page", run: () => call("admin", preparer, "dashboard.badges", { taxYear: year }) },
+    { name: "invoice.all (first page)", what: "the Invoices screen, problems first", run: () => call("admin", preparer, "invoice.all", { taxYear: year }) },
     { name: "invoice.list", what: "one return's invoices", run: () => call("admin", preparer, "invoice.list", { engagementId: busy }) },
   ];
 }

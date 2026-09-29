@@ -530,6 +530,45 @@ export type LetterTemplateView = z.infer<typeof LetterTemplateView>;
 export const LetterTemplateBodyInput = z.object({ body: z.string().trim().min(40).max(20_000) });
 export const LetterTemplatePreview = z.object({ problems: z.array(z.string()), rendered: z.string().nullable() });
 
+// ── Invoices across the practice (ticket 39, admin 29-clients-invoices-and-activity-invoices) ──
+export const InvoiceTab = z.enum(["failed", "overdue", "open", "draft", "paid", "void"]);
+export type InvoiceTab = z.infer<typeof InvoiceTab>;
+const InvoiceCursor = z.object({ rank: z.int().min(0).max(5), due: z.string().max(10), id: Id });
+export const InvoiceAllInput = z
+  .object({
+    taxYear: TaxYear.optional(),
+    tab: InvoiceTab.optional(), // left out: every tab, most urgent first
+    cursor: InvoiceCursor.optional(), // from the previous page's `next`
+    limit: z.int().min(1).max(200).default(50),
+  })
+  .optional();
+export const InvoiceListRow = z.object({
+  id: Id,
+  number: z.string(),
+  engagementId: Id,
+  householdId: Id,
+  name: z.string(), // "Dana & Sam Marigold"
+  taxYear: TaxYear,
+  tab: InvoiceTab,
+  settlement: InvoiceSummary.shape.settlement,
+  totalCents: z.int(),
+  paidCents: z.int(),
+  balanceCents: z.int(),
+  dueOn: z.string().nullable(),
+  issuedAt: Timestamp.nullable(),
+  lastPayment: z
+    .object({ status: PaymentStatus, amountCents: z.int(), provider: PaymentProvider, method: PaymentMethod.nullable(), failureMessage: z.string().nullable(), at: Timestamp })
+    .nullable(),
+});
+export const InvoicePage = z.object({
+  taxYear: TaxYear.nullable(),
+  items: z.array(InvoiceListRow),
+  next: InvoiceCursor.nullable(),
+  counts: z.object({ all: z.int(), failed: z.int(), overdue: z.int(), open: z.int(), draft: z.int(), paid: z.int(), void: z.int() }), // the tabs
+  outstandingCents: z.int(), // still owed on issued invoices: the header's "$2,720.00 outstanding"
+});
+export type InvoicePage = z.infer<typeof InvoicePage>;
+
 // ── Dashboard (ticket 38, admin 03-dashboard-dashboard) ──
 export const DashboardInput = z.object({ taxYear: TaxYear.optional() }).optional();
 export const HealthCheckKey = z.enum(["failed_payments", "stale_returns", "missing_documents", "overdue_invoices", "unsigned_letters", "invites_pending", "efile_rejections", "inbox"]);
