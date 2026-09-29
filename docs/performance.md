@@ -100,3 +100,13 @@ return, not with bad plans. At 2,000 households the pipeline SQL takes 6 ms of i
 2,160 rows into JSON. At 10,000 households (11,000 returns in a year) the pipeline sits right at the budget.
 That is well past this practice. If it ever gets close, page the pipeline by stage and the Clients list by
 cursor, like `activity.list` already is. No index would help.
+
+## Added since
+
+| Hot path | What | 2,000 households |
+| --- | --- | ---: |
+| `dashboard.summary` (ticket 38) | every KPI, chart and health check | 33.9 |
+| `dashboard.badges` (ticket 38) | the sidebar counts, called on every page | 8.8 |
+
+`dashboard.badges` builds the whole inbox to count it, so it moves with `inbox.list`. If it ever matters, give the
+inbox a count-only path; today it's well inside the budget.

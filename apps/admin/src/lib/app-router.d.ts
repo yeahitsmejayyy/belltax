@@ -1921,6 +1921,103 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             meta: object;
         }>;
     }>>;
+    dashboard: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        summary: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                taxYear?: number | undefined;
+            } | undefined;
+            output: {
+                taxYear: number | null;
+                season: {
+                    phase: "before" | "closed" | "extension" | "regular";
+                    opensOn: string;
+                    deadline: string;
+                    daysToDeadline: number;
+                    day: number;
+                    length: number;
+                };
+                returns: {
+                    total: number;
+                    filed: number;
+                    complete: number;
+                    waitingOnAuthority: number;
+                };
+                money: {
+                    billedCents: number;
+                    collectedCents: number;
+                    outstandingCents: number;
+                };
+                waitingOnYou: {
+                    total: number;
+                    toPrepare: number;
+                    inbox: number;
+                };
+                daysInStage: {
+                    average: number;
+                    over7: number;
+                };
+                byStage: {
+                    stage: "complete" | "documents" | "filed" | "intake" | "invited" | "preparing" | "ready" | "review";
+                    count: number;
+                    waiting: "authority" | "client" | "done" | "preparer";
+                }[];
+                filingsPerWeek: {
+                    weeks: {
+                        weekOf: string;
+                        thisYear: number;
+                        lastYear: number;
+                    }[];
+                    filedSoFar: number;
+                    lastYearBySameDay: number;
+                };
+                billingByPackage: {
+                    code: string;
+                    name: string;
+                    returns: number;
+                    billedCents: number;
+                }[];
+                health: {
+                    key: "efile_rejections" | "failed_payments" | "inbox" | "invites_pending" | "missing_documents" | "overdue_invoices" | "stale_returns" | "unsigned_letters";
+                    tone: "danger" | "info" | "ok" | "warning";
+                    count: number;
+                    title: string;
+                    detail: string;
+                    names: string[];
+                    link: string;
+                    tracked: boolean;
+                }[];
+                needAttention: number;
+            };
+            meta: object;
+        }>;
+        badges: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                taxYear?: number | undefined;
+            } | undefined;
+            output: {
+                pipeline: number;
+                inbox: number;
+                invoices: number;
+            };
+            meta: object;
+        }>;
+    }>>;
     pricing: import("@trpc/server").TRPCBuiltRouter<{
         ctx: {
             user: {

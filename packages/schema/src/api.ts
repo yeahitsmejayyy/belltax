@@ -530,6 +530,49 @@ export type LetterTemplateView = z.infer<typeof LetterTemplateView>;
 export const LetterTemplateBodyInput = z.object({ body: z.string().trim().min(40).max(20_000) });
 export const LetterTemplatePreview = z.object({ problems: z.array(z.string()), rendered: z.string().nullable() });
 
+// ── Dashboard (ticket 38, admin 03-dashboard-dashboard) ──
+export const DashboardInput = z.object({ taxYear: TaxYear.optional() }).optional();
+export const HealthCheckKey = z.enum(["failed_payments", "stale_returns", "missing_documents", "overdue_invoices", "unsigned_letters", "invites_pending", "efile_rejections", "inbox"]);
+export const DashboardSummary = z.object({
+  taxYear: TaxYear.nullable(),
+  season: z.object({
+    // "regular" until the deadline (April 15, moved off a weekend), then "extension" to October 15.
+    phase: z.enum(["before", "regular", "extension", "closed"]),
+    opensOn: IsoDateString,
+    deadline: IsoDateString, // the deadline that applies now
+    daysToDeadline: z.int(),
+    day: z.int().nonnegative(), // day N of this phase
+    length: z.int().positive(), // of this phase
+  }),
+  returns: z.object({ total: z.int(), filed: z.int(), complete: z.int(), waitingOnAuthority: z.int() }),
+  money: z.object({ billedCents: z.int(), collectedCents: z.int(), outstandingCents: z.int() }),
+  waitingOnYou: z.object({ total: z.int(), toPrepare: z.int(), inbox: z.int() }),
+  daysInStage: z.object({ average: z.number(), over7: z.int() }),
+  byStage: z.array(z.object({ stage: Stage, count: z.int(), waiting: z.enum(["client", "preparer", "authority", "done"]) })),
+  filingsPerWeek: z.object({
+    weeks: z.array(z.object({ weekOf: IsoDateString, thisYear: z.int(), lastYear: z.int() })), // the last 12 weeks, oldest first
+    filedSoFar: z.int(),
+    lastYearBySameDay: z.int(),
+  }),
+  billingByPackage: z.array(z.object({ code: z.string(), name: z.string(), returns: z.int(), billedCents: z.int() })),
+  health: z.array(
+    z.object({
+      key: HealthCheckKey,
+      tone: z.enum(["ok", "info", "warning", "danger"]),
+      count: z.int(),
+      title: z.string(), // "2 failed payments · $565.00"
+      detail: z.string(), // "Dana & Sam Marigold, Remy Dovetail"
+      names: z.array(z.string()).max(3),
+      link: z.string(), // where Review goes, e.g. "/invoices?settlement=failed_last_attempt"
+      tracked: z.boolean(), // false: nothing records this yet (e-file status, ticket 40)
+    }),
+  ),
+  needAttention: z.int(),
+});
+export type DashboardSummary = z.infer<typeof DashboardSummary>;
+// The app shell's sidebar counts, cheap enough for every page.
+export const SidebarBadges = z.object({ pipeline: z.int(), inbox: z.int(), invoices: z.int() });
+
 // ── Practice details (ticket 37, migration 007) ──
 const digits10 = (v: string) => v.replace(/\D/g, "").length === 10;
 export const PracticeView = z.object({

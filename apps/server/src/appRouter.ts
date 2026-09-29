@@ -1,3 +1,4 @@
+import { dashboardRouter } from "./routes/dashboard";
 import { demoRouter } from "./routes/demo";
 import { documentRouter } from "./routes/document";
 import { engagementRouter } from "./routes/engagement";
@@ -34,6 +35,7 @@ export const appRouter = router({
   activity: activityRouter,
   settings: settingsRouter,
   season: seasonRouter,
+  dashboard: dashboardRouter,
   pricing: publicPricingRouter,
   practice: publicPracticeRouter,
 });

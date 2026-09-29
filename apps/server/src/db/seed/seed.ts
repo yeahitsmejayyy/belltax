@@ -100,7 +100,7 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
   const event = (
     type: string,
     actor: { kind: "client" | "preparer" | "system" | "stripe"; userId?: string },
-    where: { household?: string; engagement?: string; subjectType: string; subjectId: string; when: string; reason?: string },
+    where: { household?: string; engagement?: string; subjectType: string; subjectId: string; when: string; reason?: string; data?: Record<string, unknown> },
   ) =>
     insert("events", {
       id: rng.id(),
@@ -113,7 +113,7 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
       subject_type: where.subjectType,
       subject_id: where.subjectId,
       reason: where.reason ?? null,
-      data: "{}",
+      data: JSON.stringify(where.data ?? {}),
     });
 
   const writeDoc = (
@@ -198,7 +198,13 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
     rp.dependents.forEach((d) => onReturn(d.key, "dependent", d));
     event("engagement.created", { kind: "preparer", userId: preparerId }, { household: hh, engagement: engId, subjectType: "engagement", subjectId: engId, when: created });
     if (stage !== "invited") {
-      event("engagement.stage_changed", { kind: "preparer", userId: preparerId }, { household: hh, engagement: engId, subjectType: "engagement", subjectId: engId, when: stageChanged });
+      // A completed return was filed first: that step is what the dashboard's filings-per-week counts.
+      if (stage === "complete") {
+        const filedAt = new Date((Date.parse(created) + 2 * Date.parse(stageChanged)) / 3).toISOString();
+        event("engagement.stage_changed", { kind: "preparer", userId: preparerId }, { household: hh, engagement: engId, subjectType: "engagement", subjectId: engId, when: filedAt, data: { from: "review", to: "filed" } });
+      }
+      const from = stage === "complete" ? "filed" : STAGES[STAGES.indexOf(stage) - 1];
+      event("engagement.stage_changed", { kind: "preparer", userId: preparerId }, { household: hh, engagement: engId, subjectType: "engagement", subjectId: engId, when: stageChanged, data: { from, to: stage } });
     }
     const primaryUser = ctx.users.get(rp.primary)!;
     const between = (a: number, b: number) => at(createdDays - (createdDays - Math.max(0, stageChangeDaysAgo())) * (a + (b - a) * rng.next()));

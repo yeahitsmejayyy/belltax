@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { ActivityListInput, ActivityPage, Inbox, InboxListInput, now, RequestAcknowledgeInput, type InboxItem, type InboxKind } from "@app/schema";
 import { z } from "zod";
+import type { Database } from "bun:sqlite";
 import { runtime } from "../db/client";
 import { ACTOR_NAME_SQL, appendEvent, VIEW_TYPE_SQL } from "../events";
 import { preparerProcedure, router } from "../trpc";
@@ -14,110 +15,112 @@ const DAY = 86_400_000;
 
 type Row = { subject_id: string; at: string; engagement_id: string; household: string; tax_year: number; who: string; detail: string | null };
 
+// The whole inbox for a tax year, so the dashboard and the sidebar badge count exactly what the Inbox shows.
+export function inboxFor(db: Database, input?: { taxYear?: number; staleDays?: number }): Inbox {
+  const years = db.query<{ y: number }, []>("SELECT DISTINCT tax_year AS y FROM engagements ORDER BY y DESC").all();
+  const taxYear = input?.taxYear ?? years[0]?.y ?? null;
+  const counts = Object.fromEntries(KINDS.map((k) => [k, 0])) as Record<InboxKind, number>;
+  if (taxYear === null) return { taxYear, items: [], counts, total: 0 };
+  const staleBefore = new Date(Date.now() - (input?.staleDays ?? 7) * DAY).toISOString();
+
+  const RETURN = "JOIN engagements e ON e.id = X.engagement_id JOIN households h ON h.id = e.household_id";
+  const ret = (sql: string) => sql.replaceAll("X.engagement_id", "d.engagement_id");
+  const q = (sql: string, ...params: (string | number)[]) => db.query<Row, (string | number)[]>(sql).all(...params);
+
+  const sources: [InboxKind, Row[], InboxItem["action"], (r: Row) => string][] = [
+    [
+      "document_review",
+      q(
+        ret(`SELECT d.id AS subject_id, d.created_at AS at, d.engagement_id, h.display_name AS household, e.tax_year,
+                    COALESCE((SELECT p.first_name || ' ' || p.last_name FROM users u JOIN people p ON p.id = u.person_id WHERE u.id = d.uploaded_by), 'Preparer') AS who,
+                    (SELECT k.label FROM document_kinds k WHERE k.code = d.kind) AS detail
+               FROM documents d ${RETURN}
+              WHERE d.status = 'uploaded' AND d.purged_at IS NULL AND e.tax_year = ?`),
+        taxYear,
+      ),
+      "review_document",
+      (r) => `${r.who} uploaded ${r.detail?.toLowerCase() ?? "a document"}.`,
+    ],
+    [
+      "question_answered",
+      q(
+        `SELECT r.id AS subject_id, r.responded_at AS at, r.engagement_id, h.display_name AS household, e.tax_year,
+                COALESCE((SELECT ev.actor_name FROM (SELECT ${ACTOR_NAME_SQL} AS actor_name, ev.occurred_at FROM events ev
+                           WHERE ev.type = 'request.answered' AND ev.subject_id = r.id ORDER BY ev.occurred_at DESC LIMIT 1) ev), 'The client') AS who,
+                r.title AS detail
+           FROM requests r JOIN engagements e ON e.id = r.engagement_id JOIN households h ON h.id = e.household_id
+          WHERE r.kind = 'question' AND r.response IS NOT NULL AND r.acknowledged_at IS NULL AND e.tax_year = ?`,
+        taxYear,
+      ),
+      "acknowledge_answer",
+      (r) => `${r.who} answered "${r.detail}".`,
+    ],
+    [
+      "letter_signed",
+      q(
+        `SELECT e.id AS subject_id, (SELECT MAX(s.signed_at) FROM signatures s WHERE s.letter_id = l.id) AS at, e.id AS engagement_id,
+                h.display_name AS household, e.tax_year, h.display_name AS who, NULL AS detail
+           FROM engagements e JOIN engagement_letters l ON l.id = e.letter_id AND l.status = 'signed'
+           JOIN households h ON h.id = e.household_id
+          WHERE e.stage = 'ready' AND e.tax_year = ?`,
+        taxYear,
+      ),
+      "advance_stage",
+      (r) => `${r.household} signed the engagement letter. The return can move to preparing.`,
+    ],
+    [
+      "payment_failed",
+      q(
+        `SELECT p.id AS subject_id, p.created_at AS at, i.engagement_id, h.display_name AS household, e.tax_year,
+                h.display_name AS who, p.failure_message AS detail
+           FROM invoice_balances b JOIN invoices i ON i.id = b.invoice_id
+           JOIN payments p ON p.id = (SELECT p2.id FROM payments p2 WHERE p2.invoice_id = i.id ORDER BY p2.created_at DESC, p2.id DESC LIMIT 1)
+           JOIN engagements e ON e.id = i.engagement_id JOIN households h ON h.id = e.household_id
+          WHERE b.settlement = 'failed_last_attempt' AND e.tax_year = ?`,
+        taxYear,
+      ),
+      "follow_up_payment",
+      (r) => `${r.household}'s payment failed${r.detail ? `: ${r.detail}` : "."}`,
+    ],
+    [
+      "stale",
+      q(
+        `SELECT e.id AS subject_id, e.stage_changed_at AS at, e.id AS engagement_id, h.display_name AS household, e.tax_year,
+                h.display_name AS who, e.stage AS detail
+           FROM engagements e JOIN households h ON h.id = e.household_id
+          WHERE e.stage NOT IN ('filed', 'complete') AND e.stage_changed_at < ? AND e.tax_year = ?`,
+        staleBefore,
+        taxYear,
+      ),
+      "open_return",
+      (r) => `${r.household} has been in ${r.detail} for ${Math.floor((Date.now() - Date.parse(r.at)) / DAY)} days.`,
+    ],
+  ];
+
+  const items: InboxItem[] = sources.flatMap(([kind, rows, action, summary]) =>
+    rows.map((r) => ({
+      id: `${kind}:${r.subject_id}`,
+      kind,
+      at: r.at,
+      engagementId: r.engagement_id,
+      householdName: r.household,
+      taxYear: r.tax_year,
+      who: r.who,
+      summary: summary(r),
+      action,
+      subjectId: r.subject_id,
+    })),
+  );
+  for (const i of items) counts[i.kind]++;
+  items.sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
+  return { taxYear, items, counts, total: items.length };
+}
+
 export const inboxRouter = router({
   list: preparerProcedure
     .input(InboxListInput)
     .output(Inbox)
-    .query(({ input }) => {
-      const { db } = runtime();
-      const years = db.query<{ y: number }, []>("SELECT DISTINCT tax_year AS y FROM engagements ORDER BY y DESC").all();
-      const taxYear = input?.taxYear ?? years[0]?.y ?? null;
-      const counts = Object.fromEntries(KINDS.map((k) => [k, 0])) as Record<InboxKind, number>;
-      if (taxYear === null) return { taxYear, items: [], counts, total: 0 };
-      const staleBefore = new Date(Date.now() - (input?.staleDays ?? 7) * DAY).toISOString();
-
-      const RETURN = "JOIN engagements e ON e.id = X.engagement_id JOIN households h ON h.id = e.household_id";
-      const ret = (sql: string) => sql.replaceAll("X.engagement_id", "d.engagement_id");
-      const q = (sql: string, ...params: (string | number)[]) => db.query<Row, (string | number)[]>(sql).all(...params);
-
-      const sources: [InboxKind, Row[], InboxItem["action"], (r: Row) => string][] = [
-        [
-          "document_review",
-          q(
-            ret(`SELECT d.id AS subject_id, d.created_at AS at, d.engagement_id, h.display_name AS household, e.tax_year,
-                        COALESCE((SELECT p.first_name || ' ' || p.last_name FROM users u JOIN people p ON p.id = u.person_id WHERE u.id = d.uploaded_by), 'Preparer') AS who,
-                        (SELECT k.label FROM document_kinds k WHERE k.code = d.kind) AS detail
-                   FROM documents d ${RETURN}
-                  WHERE d.status = 'uploaded' AND d.purged_at IS NULL AND e.tax_year = ?`),
-            taxYear,
-          ),
-          "review_document",
-          (r) => `${r.who} uploaded ${r.detail?.toLowerCase() ?? "a document"}.`,
-        ],
-        [
-          "question_answered",
-          q(
-            `SELECT r.id AS subject_id, r.responded_at AS at, r.engagement_id, h.display_name AS household, e.tax_year,
-                    COALESCE((SELECT ev.actor_name FROM (SELECT ${ACTOR_NAME_SQL} AS actor_name, ev.occurred_at FROM events ev
-                               WHERE ev.type = 'request.answered' AND ev.subject_id = r.id ORDER BY ev.occurred_at DESC LIMIT 1) ev), 'The client') AS who,
-                    r.title AS detail
-               FROM requests r JOIN engagements e ON e.id = r.engagement_id JOIN households h ON h.id = e.household_id
-              WHERE r.kind = 'question' AND r.response IS NOT NULL AND r.acknowledged_at IS NULL AND e.tax_year = ?`,
-            taxYear,
-          ),
-          "acknowledge_answer",
-          (r) => `${r.who} answered "${r.detail}".`,
-        ],
-        [
-          "letter_signed",
-          q(
-            `SELECT e.id AS subject_id, (SELECT MAX(s.signed_at) FROM signatures s WHERE s.letter_id = l.id) AS at, e.id AS engagement_id,
-                    h.display_name AS household, e.tax_year, h.display_name AS who, NULL AS detail
-               FROM engagements e JOIN engagement_letters l ON l.id = e.letter_id AND l.status = 'signed'
-               JOIN households h ON h.id = e.household_id
-              WHERE e.stage = 'ready' AND e.tax_year = ?`,
-            taxYear,
-          ),
-          "advance_stage",
-          (r) => `${r.household} signed the engagement letter. The return can move to preparing.`,
-        ],
-        [
-          "payment_failed",
-          q(
-            `SELECT p.id AS subject_id, p.created_at AS at, i.engagement_id, h.display_name AS household, e.tax_year,
-                    h.display_name AS who, p.failure_message AS detail
-               FROM invoice_balances b JOIN invoices i ON i.id = b.invoice_id
-               JOIN payments p ON p.id = (SELECT p2.id FROM payments p2 WHERE p2.invoice_id = i.id ORDER BY p2.created_at DESC, p2.id DESC LIMIT 1)
-               JOIN engagements e ON e.id = i.engagement_id JOIN households h ON h.id = e.household_id
-              WHERE b.settlement = 'failed_last_attempt' AND e.tax_year = ?`,
-            taxYear,
-          ),
-          "follow_up_payment",
-          (r) => `${r.household}'s payment failed${r.detail ? `: ${r.detail}` : "."}`,
-        ],
-        [
-          "stale",
-          q(
-            `SELECT e.id AS subject_id, e.stage_changed_at AS at, e.id AS engagement_id, h.display_name AS household, e.tax_year,
-                    h.display_name AS who, e.stage AS detail
-               FROM engagements e JOIN households h ON h.id = e.household_id
-              WHERE e.stage NOT IN ('filed', 'complete') AND e.stage_changed_at < ? AND e.tax_year = ?`,
-            staleBefore,
-            taxYear,
-          ),
-          "open_return",
-          (r) => `${r.household} has been in ${r.detail} for ${Math.floor((Date.now() - Date.parse(r.at)) / DAY)} days.`,
-        ],
-      ];
-
-      const items: InboxItem[] = sources.flatMap(([kind, rows, action, summary]) =>
-        rows.map((r) => ({
-          id: `${kind}:${r.subject_id}`,
-          kind,
-          at: r.at,
-          engagementId: r.engagement_id,
-          householdName: r.household,
-          taxYear: r.tax_year,
-          who: r.who,
-          summary: summary(r),
-          action,
-          subjectId: r.subject_id,
-        })),
-      );
-      for (const i of items) counts[i.kind]++;
-      items.sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
-      return { taxYear, items, counts, total: items.length };
-    }),
+    .query(({ input }) => inboxFor(runtime().db, input)),
 });
 
 // The preparer has read a client's answer: it leaves the Inbox.
