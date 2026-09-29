@@ -5,7 +5,7 @@ import { contrast } from "../contrast";
 
 // The tokens as they render, with each pair's measured contrast (principles.md rule 5).
 
-const meta: Meta = { title: "Tokens", parameters: { layout: "padded" } };
+const meta: Meta = { parameters: { fill: true }, title: "Tokens" };
 export default meta;
 
 const PAIRS: [string, string, string][] = [
@@ -97,15 +97,15 @@ export const Type: StoryObj = {
 export const RadiusAndMotion: StoryObj = {
   name: "Radius and motion",
   render: () => (
-    <div className="grid gap-8">
-      <div className="flex flex-wrap gap-4">
+    <div className="grid justify-items-center gap-10">
+      <div className="flex flex-wrap justify-center gap-4">
         {["rounded-sm", "rounded-md", "rounded-lg", "rounded-xl", "rounded-full"].map((r) => (
-          <div key={r} className={`flex size-24 items-end justify-center border bg-card p-2 font-mono text-xs ${r}`}>
+          <div key={r} className={`flex size-28 items-center justify-center border bg-card p-3 text-center font-mono text-xs ${r}`}>
             {r}
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap justify-center gap-4">
         {["animate-page", "animate-slide", "animate-shield-pulse"].map((a) => (
           <div key={a} className={`flex h-16 w-44 items-center justify-center rounded-lg bg-brand-subtle font-mono text-xs text-brand-subtle-foreground ${a}`}>
             {a}

@@ -4,7 +4,7 @@ import { expect, userEvent, within } from "storybook/test";
 import { Button } from "../components/button";
 import { Field, useFieldValidation, type Validate } from "../components/field";
 
-const meta: Meta<typeof Field> = { title: "Primitives/Field", component: Field, parameters: { layout: "padded" } };
+const meta: Meta<typeof Field> = { title: "Primitives/Field", component: Field };
 export default meta;
 type Story = StoryObj<typeof Field>;
 
@@ -21,7 +21,7 @@ function Demo() {
   return (
     <form
       noValidate
-      className="grid max-w-sm gap-4"
+      className="w-full grid max-w-sm gap-4"
       onSubmit={(e) => {
         e.preventDefault();
         f.validateNow();
@@ -36,7 +36,12 @@ function Demo() {
 
 export const ValidationTiming: Story = {
   name: "Validation timing",
-  render: () => <Demo />,
+  render: () => <Demo />
+};
+export const ValidationTimingTest: Story = {
+  ...ValidationTiming,
+  name: "Validation timing · test",
+  tags: ["!dev"],
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     const input = canvas.getByLabelText("Last four of your SSN");
@@ -63,3 +68,4 @@ export const ValidationTiming: Story = {
     });
   },
 };
+

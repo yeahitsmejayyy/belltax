@@ -10,14 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Switch } from "../components/switch";
 import { Textarea } from "../components/textarea";
 
-const meta: Meta = { title: "Primitives/Form controls", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Primitives/Form controls" };
 export default meta;
 type Story = StoryObj;
 
 export const TextInput: Story = {
   name: "Input",
   render: () => (
-    <div className="grid max-w-sm gap-4">
+    <div className="w-full grid max-w-sm gap-4">
       <div className="grid gap-1.5"><Label htmlFor="i1">Email</Label><Input id="i1" type="email" placeholder="you@example.com" /></div>
       <div className="grid gap-1.5"><Label htmlFor="i2">Invalid</Label><Input id="i2" aria-invalid defaultValue="dana@" /></div>
       <div className="grid gap-1.5"><Label htmlFor="i3">Disabled</Label><Input id="i3" disabled defaultValue="Read only" /></div>
@@ -29,17 +29,23 @@ const onReason = fn();
 export const TextArea: Story = {
   name: "Textarea",
   render: () => (
-    <div className="grid max-w-md gap-1.5">
+    <div className="w-full grid max-w-md gap-1.5">
       <Label htmlFor="t1">Why is this moving back?</Label>
       <Textarea id="t1" placeholder="The client sent a corrected W-2." onChange={(e) => onReason(e.target.value)} />
       <p className="text-xs text-muted-foreground">Required. It's logged on the return.</p>
     </div>
-  ),
+  )
+};
+export const TextAreaTest: Story = {
+  ...TextArea,
+  name: "Textarea · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await userEvent.type(within(canvasElement).getByLabelText("Why is this moving back?"), "Corrected W-2");
     await expect(onReason).toHaveBeenLastCalledWith("Corrected W-2");
   },
 };
+
 
 export const Checkboxes: Story = {
   render: () => (
@@ -53,7 +59,12 @@ export const Checkboxes: Story = {
       ))}
       <div className="flex items-center gap-3"><Checkbox id="cd" disabled /><Label htmlFor="cd">Amended return (off)</Label></div>
     </fieldset>
-  ),
+  )
+};
+export const CheckboxesTest: Story = {
+  ...Checkboxes,
+  name: "Checkboxes · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     const box = c.getByLabelText("Covered California (1095-A)");
@@ -64,6 +75,7 @@ export const Checkboxes: Story = {
     await expect(box).not.toBeChecked();
   },
 };
+
 
 export const Radios: Story = {
   render: () => (
@@ -81,7 +93,7 @@ export const ChoiceCards: Story = {
   render: () => {
     const [v, setV] = useState("single");
     return (
-      <div className="grid max-w-sm gap-3">
+      <div className="w-full grid max-w-sm gap-3">
         <RadioGroup value={v} onValueChange={setV} aria-label="How are you filing this year?" className="gap-2">
           <RadioCard value="single"><span className="font-medium">Single</span><span className="text-xs text-muted-foreground">Not married on December 31</span></RadioCard>
           <RadioCard value="mfj"><span className="font-medium">Married, filing together</span><span className="text-xs text-muted-foreground">One return for both of you</span></RadioCard>
@@ -90,7 +102,12 @@ export const ChoiceCards: Story = {
         <p className="text-sm" data-testid="chosen">Chosen: {v}</p>
       </div>
     );
-  },
+  }
+};
+export const ChoiceCardsTest: Story = {
+  ...ChoiceCards,
+  name: "Radio cards (portal) · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("radio", { name: /Married, filing together/ }));
@@ -104,12 +121,13 @@ export const ChoiceCards: Story = {
   },
 };
 
+
 export const SelectMenu: Story = {
   name: "Select",
   render: () => {
     const [v, setV] = useState<string>();
     return (
-      <div className="grid max-w-xs gap-1.5">
+      <div className="w-full grid max-w-xs gap-1.5">
         <Label htmlFor="s1">Document type</Label>
         <Select value={v} onValueChange={setV}>
           <SelectTrigger id="s1" className="w-full"><SelectValue placeholder="Choose a document" /></SelectTrigger>
@@ -122,7 +140,12 @@ export const SelectMenu: Story = {
         </Select>
       </div>
     );
-  },
+  }
+};
+export const SelectMenuTest: Story = {
+  ...SelectMenu,
+  name: "Select · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const trigger = within(canvasElement).getByRole("combobox", { name: "Document type" });
     await userEvent.click(trigger);
@@ -131,6 +154,7 @@ export const SelectMenu: Story = {
   },
 };
 
+
 export const Switches: Story = {
   name: "Switch",
   render: () => (
@@ -138,10 +162,16 @@ export const Switches: Story = {
       <div className="flex items-center gap-3"><Switch id="sw1" defaultChecked /><Label htmlFor="sw1">Married filing jointly package is active</Label></div>
       <div className="flex items-center gap-3"><Switch id="sw2" /><Label htmlFor="sw2">Amended return add-on is active</Label></div>
     </div>
-  ),
+  )
+};
+export const SwitchesTest: Story = {
+  ...Switches,
+  name: "Switch · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const sw = within(canvasElement).getByRole("switch", { name: /Amended/ });
     await userEvent.click(sw);
     await expect(sw).toBeChecked();
   },
 };
+

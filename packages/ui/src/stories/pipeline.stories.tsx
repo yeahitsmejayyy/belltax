@@ -1,34 +1,90 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, fn, userEvent, within } from "storybook/test";
+import type { Stage } from "@app/schema";
+import { useState } from "react";
+import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 
-import { BoardCard, BoardColumn } from "../components/board";
+import { BoardCard, PipelineBoard, type BoardCardData } from "../components/board";
 
-// Admin 05-pipeline-pipeline-board. Invented households.
-const meta: Meta = { title: "Product/Pipeline board", parameters: { layout: "padded" } };
+// Admin 05-pipeline-pipeline-board. Drag a card to another column, or use its ⋯ menu. Invented households.
+const meta: Meta = { parameters: { fill: true }, title: "Product/Pipeline board" };
 export default meta;
+type Story = StoryObj;
 
+const START: BoardCardData[] = [
+  { id: "wren", stage: "documents", household: "Wren", filers: "Toni", filingStatus: "Single", missingDocuments: 3, daysInStage: 12 },
+  { id: "birchwood", stage: "documents", household: "Birchwood", filers: "Chris & Taylor", filingStatus: "Married filing jointly", missingDocuments: 1, daysInStage: 3 },
+  { id: "marigold", stage: "preparing", household: "Marigold", filers: "Dana & Sam", filingStatus: "Married filing jointly", unpaid: true, daysInStage: 4 },
+  { id: "kestrel", stage: "filed", household: "Kestrel", filers: "Sidney", filingStatus: "Head of household", daysInStage: 1 },
+];
+const STAGES: Stage[] = ["documents", "ready", "preparing", "review", "filed"];
+
+const onMove = fn();
 const onOpen = fn();
 
-export const Board: StoryObj = {
+function Board() {
+  const [cards, setCards] = useState(START);
+  return (
+    <PipelineBoard
+      cards={cards}
+      stages={STAGES}
+      onOpen={onOpen}
+      onMove={(id, from, to) => {
+        onMove(id, from, to);
+        // The admin asks first: forward moves check the stage gates, backward ones ask for a reason.
+        setCards((cs) => cs.map((c) => (c.id === id ? { ...c, stage: to, daysInStage: 0 } : c)));
+      }}
+    />
+  );
+}
+
+const column = (el: HTMLElement, stage: Stage) => el.querySelector(`[data-slot="board-column"][data-stage="${stage}"]`) as HTMLElement;
+
+export const Draggable: Story = {
+  render: () => <Board />
+};
+export const DraggableTest: Story = {
+  ...Draggable,
+  name: "Draggable · test",
+  tags: ["!dev"],
+  play: async ({ canvasElement, step }) => {
+    const c = within(canvasElement);
+
+    await step("stale cards stand out: over 7 days turns amber", async () => {
+      await expect(c.getByText("12 days")).toHaveClass("text-warning-foreground");
+      await expect(c.getByText("4 days")).toHaveClass("text-muted-foreground");
+    });
+
+    await step("clicking a card opens it", async () => {
+      await userEvent.click(c.getByText("Marigold"));
+      await expect(onOpen).toHaveBeenCalledWith("marigold");
+    });
+
+    await step("keyboard drag: grip, Space, → one column, Space", async () => {
+      c.getByRole("button", { name: "Drag Wren" }).focus();
+      await userEvent.keyboard(" ");
+      await userEvent.keyboard("{ArrowRight}");
+      await userEvent.keyboard(" ");
+      await expect(onMove).toHaveBeenLastCalledWith("wren", "documents", "ready");
+      await waitFor(() => expect(within(column(canvasElement, "ready")).getByText("Wren")).toBeInTheDocument());
+    });
+
+    await step("the ⋯ menu moves without dragging (WCAG 2.5.7)", async () => {
+      await userEvent.click(c.getByRole("button", { name: "Move Kestrel to…" }));
+      await userEvent.click(await screen.findByRole("menuitem", { name: "Client review" }));
+      await expect(onMove).toHaveBeenLastCalledWith("kestrel", "filed", "review");
+      await waitFor(() => expect(within(column(canvasElement, "review")).getByText("Kestrel")).toBeInTheDocument());
+      await expect(column(canvasElement, "filed")).toHaveAttribute("aria-label", "Filed: 0");
+    });
+  },
+};
+
+
+// The same card face without drag, for lists and search results.
+export const SingleCard: Story = {
+  name: "Card",
   render: () => (
-    <div className="flex gap-3 overflow-x-auto pb-2">
-      <BoardColumn stage="documents" count={2}>
-        <BoardCard household="Wren" filers="Toni" filingStatus="Single" missingDocuments={3} daysInStage={12} onOpen={() => onOpen("wren")} />
-        <BoardCard household="Birchwood" filers="Chris & Taylor" filingStatus="Married filing jointly" missingDocuments={1} daysInStage={3} />
-      </BoardColumn>
-      <BoardColumn stage="preparing" count={1}>
-        <BoardCard household="Marigold" filers="Dana & Sam" filingStatus="Married filing jointly" unpaid daysInStage={4} />
-      </BoardColumn>
-      <BoardColumn stage="filed" count={1}>
-        <BoardCard household="Kestrel" filers="Sidney" filingStatus="Head of household" daysInStage={1} />
-      </BoardColumn>
+    <div className="w-72">
+      <BoardCard household="Wren" filers="Toni" filingStatus="Single" missingDocuments={3} unpaid daysInStage={12} />
     </div>
   ),
-  play: async ({ canvasElement }) => {
-    const c = within(canvasElement);
-    await expect(c.getByText("12 days")).toHaveClass("text-warning-foreground"); // over 7 days: stale
-    await expect(c.getByText("4 days")).toHaveClass("text-muted-foreground");
-    await userEvent.click(c.getByRole("button", { name: /Wren/ }));
-    await expect(onOpen).toHaveBeenCalledWith("wren");
-  },
 };

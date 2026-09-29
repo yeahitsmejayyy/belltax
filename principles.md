@@ -1,6 +1,6 @@
 # BellTaxPrep interface principles
 
-Twelve rules for every screen in the portal, the admin and the site. Each has a number, so a design review can
+Thirteen rules for every screen in the portal, the admin and the site. Each has a number, so a design review can
 say "this breaks 5" instead of "this feels off". The values live in `packages/ui/src/tokens.css`. This page
 says why they are what they are. It becomes the first page in Storybook (ticket 11).
 
@@ -107,7 +107,23 @@ The admin shows a Demo / Live badge at all times, and demo data is invented and 
 as the last four digits, and bank numbers never show in full, in both worlds. See
 [docs/two-data-worlds.md](docs/two-data-worlds.md).
 
+## 13. Dialogs sit on the upper third
+
+A dialog that isn't full screen sits slightly above centre, on the rule of thirds: the point a third of the way
+down the dialog lines up with a third of the way down the screen (`top: 33%`, `translateY(-33%)`). It feels
+placed rather than dropped, and a tall dialog still never runs off the top. Sheets keep to their edge.
+Aligned things share an axis too: in the collapsed sidebar, every icon is centred under the shield.
+
 ---
+
+## Storybook is the reference
+
+Every component the portal, the admin and the site use lives in `packages/ui` and has stories. The stories
+are the exact reference for production: if a screen needs something a story doesn't show, the component
+and its story change first, then the screen. Each story sits dead centre in its canvas, and wide ones (tables,
+boards) fill a centred column. A story is still: its interaction test lives in a hidden twin
+(`<Name> · test`, tagged `!dev`), which CI and the sidebar's "Run tests" button run, so opening a story never
+plays an animation you didn't ask for.
 
 ## Open questions from the contrast check
 

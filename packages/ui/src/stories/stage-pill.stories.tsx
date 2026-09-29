@@ -9,7 +9,6 @@ const meta: Meta<typeof StagePill> = {
   component: StagePill,
   args: { stage: "preparing" },
   argTypes: { stage: { control: "select", options: Stage.options } },
-  parameters: { layout: "padded" },
 };
 export default meta;
 type Story = StoryObj<typeof StagePill>;

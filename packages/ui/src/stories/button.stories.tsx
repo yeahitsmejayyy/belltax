@@ -18,11 +18,17 @@ type Story = StoryObj<typeof meta>;
 
 // Rule 1: one of these per screen.
 export const Primary: Story = {
+};
+export const PrimaryTest: Story = {
+  ...Primary,
+  name: "Primary · test",
+  tags: ["!dev"],
   play: async ({ canvasElement, args }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Upload document" }));
     await expect(args.onClick).toHaveBeenCalledOnce();
   },
 };
+
 export const Outline: Story = { args: { variant: "outline", children: "Save for later" } };
 export const Secondary: Story = { args: { variant: "secondary", children: "Add someone" } };
 export const Ghost: Story = { args: { variant: "ghost", children: "Cancel" } };
@@ -31,7 +37,12 @@ export const Destructive: Story = { args: { variant: "destructive", children: "R
 export const WithIcon: Story = { args: { children: <><Upload /> Upload document</> } };
 
 export const Disabled: Story = {
-  args: { disabled: true, children: "Pay invoice" },
+  args: { disabled: true, children: "Pay invoice" }
+};
+export const DisabledTest: Story = {
+  ...Disabled,
+  name: "Disabled · test",
+  tags: ["!dev"],
   play: async ({ canvasElement, args }) => {
     const button = within(canvasElement).getByRole("button", { name: "Pay invoice" });
     await expect(button).toBeDisabled();
@@ -40,21 +51,34 @@ export const Disabled: Story = {
   },
 };
 
+
 // Rule 4: 44px on phones.
 export const Touch: Story = {
-  args: { size: "touch", children: "Sign the letter" },
+  args: { size: "touch", children: "Sign the letter" }
+};
+export const TouchTest: Story = {
+  ...Touch,
+  name: "Touch · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const button = within(canvasElement).getByRole("button", { name: "Sign the letter" });
     await expect(button.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   },
 };
+
 export const IconTouch: Story = {
-  args: { size: "icon-touch", "aria-label": "Add", children: <Plus /> },
+  args: { size: "icon-touch", "aria-label": "Add", children: <Plus /> }
+};
+export const IconTouchTest: Story = {
+  ...IconTouch,
+  name: "Icon Touch · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const { width, height } = within(canvasElement).getByRole("button", { name: "Add" }).getBoundingClientRect();
     await expect(Math.min(width, height)).toBeGreaterThanOrEqual(44);
   },
 };
+
 
 export const Sizes: Story = {
   render: (args) => (

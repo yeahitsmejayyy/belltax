@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset } from "@app/ui/components/sidebar";
 import { AppNav } from "./app-nav";
 
 export function AppLayout() {

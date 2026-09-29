@@ -17,7 +17,7 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
   )
 }
 
-function CommandDialog({ title = "Search", description = "Jump to a client, return or invoice.", children, className, ...props }: React.ComponentProps<typeof Dialog> & { title?: string; description?: string; className?: string }) {
+function CommandDialog({ title = "Search", description = "Jump to a client, return or invoice.", children, className, shouldFilter = true, ...props }: React.ComponentProps<typeof Dialog> & { title?: string; description?: string; className?: string; shouldFilter?: boolean }) {
   return (
     <Dialog {...props}>
       <DialogHeader className="sr-only">
@@ -25,7 +25,7 @@ function CommandDialog({ title = "Search", description = "Jump to a client, retu
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
       <DialogContent className={cn("overflow-hidden p-0 sm:max-w-xl", className)} showCloseButton={false}>
-        <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:size-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:size-5">
+        <Command shouldFilter={shouldFilter} loop className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:size-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:size-5">
           {children}
         </Command>
       </DialogContent>

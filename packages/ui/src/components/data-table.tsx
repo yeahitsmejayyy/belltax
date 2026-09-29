@@ -74,7 +74,8 @@ export function DataTable<T>({ columns, data, getRowId, selectable, onSelectionC
   })
 
   return (
-    <div data-slot="data-table" className={cn("rounded-lg border bg-card", className)}>
+    // overflow-hidden keeps every corner round: the sticky header, hovered and selected rows all clip to the radius.
+    <div data-slot="data-table" className={cn("overflow-hidden rounded-lg border bg-card", className)}>
       <Table aria-label={label}>
         <TableHeader className="sticky top-0 z-10 bg-card">
           {table.getHeaderGroups().map((group) => (

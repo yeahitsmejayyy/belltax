@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 
 import { Logo, ShieldLoader } from "../components/logo";
 
-const meta: Meta = { title: "Product/Brand", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Product/Brand" };
 export default meta;
 type Story = StoryObj;
 
@@ -14,16 +14,28 @@ export const Wordmark: Story = {
       <Logo subtitle="Preparer admin" />
       <Logo size="lg" />
     </div>
-  ),
+  )
+};
+export const WordmarkTest: Story = {
+  ...Wordmark,
+  name: "Wordmark · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getAllByText("BellTaxPrep")).toHaveLength(3);
   },
 };
 
+
 // "The sign-in loader pulses the shield."
 export const Loader: Story = {
-  render: () => <ShieldLoader label="Signing you in" />,
+  render: () => <ShieldLoader label="Signing you in" />
+};
+export const LoaderTest: Story = {
+  ...Loader,
+  name: "Loader · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole("status")).toHaveTextContent("Signing you in");
   },
 };
+

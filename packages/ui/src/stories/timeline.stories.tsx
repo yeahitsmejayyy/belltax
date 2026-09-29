@@ -3,14 +3,19 @@ import { expect, within } from "storybook/test";
 
 import { ActivityTimeline, StageTimeline } from "../components/timeline";
 
-const meta: Meta = { title: "Product/Timeline", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Product/Timeline" };
 export default meta;
 type Story = StoryObj;
 
 // Portal 05-home-home: where the return stands, in the client's words.
 export const ClientProgress: Story = {
   name: "Client progress",
-  render: () => <StageTimeline stage="documents" className="max-w-sm" />,
+  render: () => <StageTimeline stage="documents" className="w-full max-w-sm" />
+};
+export const ClientProgressTest: Story = {
+  ...ClientProgress,
+  name: "Client progress · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const current = within(canvasElement).getAllByRole("listitem").find((li) => li.getAttribute("aria-current") === "step");
     await expect(current).toHaveTextContent("Send your documents");
@@ -18,11 +23,12 @@ export const ClientProgress: Story = {
   },
 };
 
+
 // Admin 18-return-activity: newest first, with reasons for anything that went backward.
 export const Activity: Story = {
   render: () => (
     <ActivityTimeline
-      className="max-w-lg"
+      className="w-full max-w-lg"
       items={[
         { id: "4", at: "2026-09-23T17:04:00.000Z", actor: "Dana Marigold", text: "signed the engagement letter." },
         { id: "3", at: "2026-09-22T15:30:00.000Z", actor: "Preparer", text: "moved the return back to Documents.", reason: "A corrected 1099-NEC is on its way." },

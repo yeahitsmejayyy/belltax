@@ -6,10 +6,9 @@ import { DocumentViewer } from "../components/document-viewer";
 // Admin 15-return-detail-return-viewer. The page stands in for the PDF the app would embed.
 const onAccept = fn();
 const onReject = fn();
-const meta: Meta<typeof DocumentViewer> = {
+const meta: Meta<typeof DocumentViewer> = { parameters: { fill: true },
   title: "Product/DocumentViewer",
   component: DocumentViewer,
-  parameters: { layout: "padded" },
   args: {
     filename: "w2-harbor-freight-demo.pdf",
     status: "uploaded",
@@ -27,6 +26,11 @@ export default meta;
 type Story = StoryObj<typeof DocumentViewer>;
 
 export const Review: Story = {
+};
+export const ReviewTest: Story = {
+  ...Review,
+  name: "Review · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "Accept" }));
@@ -36,9 +40,16 @@ export const Review: Story = {
   },
 };
 
+
 export const Decided: Story = {
-  args: { status: "accepted" },
+  args: { status: "accepted" }
+};
+export const DecidedTest: Story = {
+  ...Decided,
+  name: "Decided · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).queryByRole("button", { name: "Accept" })).toBeNull();
   },
 };
+

@@ -20,6 +20,8 @@ export default defineConfig({
             // on the machine instead of downloading another.
             provider: playwright({ launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {} }),
             instances: [{ browser: "chromium" }],
+            // Most stories are desktop references (the admin); phone behaviour is tested with explicit widths.
+            viewport: { width: 1280, height: 800 },
           },
         },
       },

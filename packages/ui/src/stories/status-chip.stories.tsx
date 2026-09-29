@@ -6,7 +6,7 @@ import {
   type DocumentChipStatus, type InvoiceChipStatus, type PaymentChipStatus,
 } from "../components/status-chip";
 
-const meta: Meta = { title: "Product/StatusChip", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Product/StatusChip" };
 export default meta;
 
 const Row = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -30,7 +30,12 @@ export const All: StoryObj = {
         {(Object.keys(PAYMENT_STATUS) as PaymentChipStatus[]).map((s) => <PaymentChip key={s} status={s} />)}
       </Row>
     </div>
-  ),
+  )
+};
+export const AllTest: StoryObj = {
+  ...All,
+  name: "All · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const chips = [...canvasElement.querySelectorAll('[data-slot="status-chip"]')];
     await expect(chips).toHaveLength(Object.keys(DOCUMENT_STATUS).length + Object.keys(INVOICE_STATUS).length + Object.keys(PAYMENT_STATUS).length);
@@ -40,3 +45,4 @@ export const All: StoryObj = {
     }
   },
 };
+

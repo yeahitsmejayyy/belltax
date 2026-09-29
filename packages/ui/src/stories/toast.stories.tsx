@@ -6,18 +6,23 @@ import { Button } from "../components/button";
 import { Toaster } from "../components/sonner";
 import { ThemeProvider } from "../components/theme-provider";
 
-const meta: Meta = { title: "Product/Toast", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Product/Toast" };
 export default meta;
 
 // Rule 11: every completed action says so, top center.
 export const ActionDone: StoryObj = {
   name: "Action done",
   render: () => (
-    <ThemeProvider storageKey="btp-storybook-theme">
+    <ThemeProvider storageKey={null}>
       <Button onClick={() => toast.success("Letter sent to Dana")}>Send letter</Button>
       <Toaster />
     </ThemeProvider>
-  ),
+  )
+};
+export const ActionDoneTest: StoryObj = {
+  ...ActionDone,
+  name: "Action done · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Send letter" }));
     const t = await screen.findByText("Letter sent to Dana");
@@ -26,3 +31,4 @@ export const ActionDone: StoryObj = {
     await expect(t.closest("[data-sonner-toaster]")).toHaveAttribute("data-x-position", "center");
   },
 };
+

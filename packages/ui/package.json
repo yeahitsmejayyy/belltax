@@ -9,13 +9,15 @@
     "./components/*": "./src/components/*.tsx",
     "./contrast": "./src/contrast.ts",
     "./utils": "./src/utils.ts",
-    "./demo": "./src/demo.ts"
+    "./demo": "./src/demo.ts",
+    "./components/use-mobile": "./src/components/use-mobile.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
     "@app/schema": "workspace:*",
+    "@dnd-kit/core": "^6.3.1",
     "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
     "@radix-ui/react-alert-dialog": "^1.1.23",
@@ -38,7 +40,6 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "lucide-react": "^1.48.0",
-    "motion": "^13.4.3",
     "recharts": "^3.10.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.4.0"

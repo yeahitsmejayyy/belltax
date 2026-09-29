@@ -26,13 +26,19 @@ export const Tabs: Story = {
         renderLink={(t, children, cls) => <a href={`#${t.key}`} aria-current={t.key === "pipeline" ? "page" : undefined} className={cls}>{children}</a>}
       />
     </div>
-  ),
+  )
+};
+export const TabsTest: Story = {
+  ...Tabs,
+  name: "Bottom tabs · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getByRole("link", { name: /Pipeline/ })).toHaveAttribute("aria-current", "page");
     for (const link of c.getAllByRole("link")) await expect(link.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   },
 };
+
 
 const onSelect = fn();
 export const QuickJump: Story = {
@@ -47,7 +53,12 @@ export const QuickJump: Story = {
         ]}
       />
     </div>
-  ),
+  )
+};
+export const QuickJumpTest: Story = {
+  ...QuickJump,
+  name: "Floating action menu · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     const fab = c.getByRole("button", { name: "Quick actions" });
@@ -61,3 +72,4 @@ export const QuickJump: Story = {
     await expect(fab).toHaveFocus();
   },
 };
+

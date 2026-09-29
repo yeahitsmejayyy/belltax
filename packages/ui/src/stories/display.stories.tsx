@@ -1,18 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, screen, userEvent, within } from "storybook/test";
+import { expect, within } from "storybook/test";
 
 import { Avatar, AvatarFallback } from "../components/avatar";
 import { Badge } from "../components/badge";
-import { ModeToggle } from "../components/mode-toggle";
 import { Money } from "../components/money";
 import { Progress } from "../components/progress";
 import { Separator } from "../components/separator";
 import { Skeleton } from "../components/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/table";
-import { ThemeProvider } from "../components/theme-provider";
 import { formatDate, formatDateTime } from "../format";
 
-const meta: Meta = { title: "Primitives/Display", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Primitives/Display" };
 export default meta;
 type Story = StoryObj;
 
@@ -41,7 +39,7 @@ export const Avatars: Story = {
 export const Loading: Story = {
   name: "Skeleton",
   render: () => (
-    <div className="grid max-w-md gap-3" aria-busy="true" aria-label="Loading returns">
+    <div className="w-full grid max-w-md gap-3" aria-busy="true" aria-label="Loading returns">
       <Skeleton className="h-8 w-1/2" />
       {[0, 1, 2].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
     </div>
@@ -51,20 +49,26 @@ export const Loading: Story = {
 export const ProgressBar: Story = {
   name: "Progress",
   render: () => (
-    <div className="grid max-w-md gap-2">
+    <div className="w-full grid max-w-md gap-2">
       <span className="text-sm">TY 2026 season · day 39 of 79</span>
       <Progress value={49} aria-label="Season progress" />
     </div>
-  ),
+  )
+};
+export const ProgressBarTest: Story = {
+  ...ProgressBar,
+  name: "Progress · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole("progressbar", { name: "Season progress" })).toHaveAttribute("aria-valuenow", "49");
   },
 };
 
+
 export const Divider: Story = {
   name: "Separator",
   render: () => (
-    <div className="max-w-sm text-sm">
+    <div className="w-full max-w-sm text-sm">
       <p>Federal return</p>
       <Separator className="my-3" />
       <p>California return</p>
@@ -90,28 +94,20 @@ export const PlainTable: Story = {
 export const MoneyAndDates: Story = {
   name: "Money and dates",
   render: () => (
-    <dl className="grid max-w-sm grid-cols-2 gap-2 text-sm">
+    <dl className="w-full grid max-w-sm grid-cols-2 gap-2 text-sm">
       <dt className="text-muted-foreground">Collected</dt><dd><Money cents={277000} /></dd>
       <dt className="text-muted-foreground">Outstanding</dt><dd><Money cents={272000} /></dd>
       <dt className="text-muted-foreground">Signed</dt><dd>{formatDateTime("2026-09-23T17:04:00.000Z")}</dd>
       <dt className="text-muted-foreground">Due</dt><dd>{formatDate("2026-10-15T12:00:00.000Z")}</dd>
     </dl>
-  ),
+  )
+};
+export const MoneyAndDatesTest: Story = {
+  ...MoneyAndDates,
+  name: "Money and dates · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByText("$2,770.00")).toBeInTheDocument();
   },
 };
 
-export const ThemeSwitch: Story = {
-  name: "Mode toggle",
-  render: () => (
-    <ThemeProvider storageKey="btp-storybook-mode-toggle">
-      <ModeToggle />
-    </ThemeProvider>
-  ),
-  play: async ({ canvasElement }) => {
-    await userEvent.click(within(canvasElement).getByRole("button"));
-    await expect(await screen.findByRole("menuitem", { name: /dark/i })).toBeInTheDocument();
-    await userEvent.keyboard("{Escape}");
-  },
-};

@@ -28,12 +28,17 @@ const columns: ColumnDef<Row>[] = [
 const onSelection = fn();
 const onOpen = fn();
 
-const meta: Meta<typeof DataTable<Row>> = { title: "Primitives/DataTable", parameters: { layout: "padded" } };
+const meta: Meta<typeof DataTable<Row>> = { parameters: { fill: true }, title: "Primitives/DataTable" };
 export default meta;
 type Story = StoryObj<typeof DataTable<Row>>;
 
 export const Pipeline: Story = {
-  render: () => <DataTable label="Returns" columns={columns} data={rows} getRowId={(r) => r.id} selectable onSelectionChange={onSelection} onRowClick={(r) => onOpen(r.id)} />,
+  render: () => <DataTable label="Returns" columns={columns} data={rows} getRowId={(r) => r.id} selectable onSelectionChange={onSelection} onRowClick={(r) => onOpen(r.id)} />
+};
+export const PipelineTest: Story = {
+  ...Pipeline,
+  name: "Pipeline · test",
+  tags: ["!dev"],
   play: async ({ canvasElement, step }) => {
     const c = within(canvasElement);
     const households = () => c.getAllByRole("row").slice(1).map((r) => r.querySelector("td:nth-child(2)")?.textContent);
@@ -56,6 +61,7 @@ export const Pipeline: Story = {
     });
   },
 };
+
 
 export const Empty: Story = {
   render: () => (

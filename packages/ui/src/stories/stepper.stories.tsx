@@ -7,11 +7,11 @@ import { Field } from "../components/field";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "../components/sheet";
 import { StepFooter, Stepper } from "../components/stepper";
 
-const meta: Meta = { title: "Product/Stepper", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Product/Stepper" };
 export default meta;
 type Story = StoryObj;
 
-export const Steps: Story = { render: () => <Stepper className="max-w-sm" steps={["Your household", "Who you support", "Your income", "Review"]} current={1} /> };
+export const Steps: Story = { render: () => <Stepper className="w-full max-w-sm" steps={["Your household", "Who you support", "Your income", "Review"]} current={1} /> };
 
 // Portal 11-intake-add-someone: a multi-step sheet, one question group at a time.
 const STEPS = ["Who is it?", "How are they related?", "Review"];
@@ -35,7 +35,12 @@ function AddSomeone() {
 
 export const AddSomeoneSheet: Story = {
   name: "Multi-step sheet (portal)",
-  render: () => <AddSomeone />,
+  render: () => <AddSomeone />
+};
+export const AddSomeoneSheetTest: Story = {
+  ...AddSomeoneSheet,
+  name: "Multi-step sheet (portal) · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Add someone" }));
     const sheet = within(await screen.findByRole("dialog"));
@@ -48,3 +53,4 @@ export const AddSomeoneSheet: Story = {
     await expect(sheet.getByText("Step 2 of 3")).toBeInTheDocument();
   },
 };
+

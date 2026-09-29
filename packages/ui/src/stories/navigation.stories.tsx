@@ -8,7 +8,7 @@ import { Button } from "../components/button";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandShortcut } from "../components/command";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/tabs";
 
-const meta: Meta = { title: "Primitives/Navigation", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Primitives/Navigation" };
 export default meta;
 type Story = StoryObj;
 
@@ -16,7 +16,7 @@ type Story = StoryObj;
 export const ReturnTabs: Story = {
   name: "Tabs",
   render: () => (
-    <Tabs defaultValue="overview" className="max-w-xl">
+    <Tabs defaultValue="overview" className="w-full max-w-xl">
       <TabsList>
         {["Overview", "Intake", "Documents", "Letter", "Billing", "Activity"].map((t) => (
           <TabsTrigger key={t} value={t.toLowerCase()}>{t}</TabsTrigger>
@@ -26,7 +26,12 @@ export const ReturnTabs: Story = {
         <TabsContent key={t} value={t} className="text-sm text-muted-foreground">The {t} panel.</TabsContent>
       ))}
     </Tabs>
-  ),
+  )
+};
+export const ReturnTabsTest: Story = {
+  ...ReturnTabs,
+  name: "Tabs · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("tab", { name: "Documents" }));
@@ -35,6 +40,7 @@ export const ReturnTabs: Story = {
     await expect(c.getByRole("tab", { name: "Letter" })).toHaveAttribute("aria-selected", "true");
   },
 };
+
 
 export const Crumbs: Story = {
   name: "Breadcrumb",
@@ -94,7 +100,12 @@ function Palette() {
 
 export const CommandPalette: Story = {
   name: "Command palette (⌘K)",
-  render: () => <Palette />,
+  render: () => <Palette />
+};
+export const CommandPaletteTest: Story = {
+  ...CommandPalette,
+  name: "Command palette (⌘K) · test",
+  tags: ["!dev"],
   play: async () => {
     await userEvent.keyboard("{Meta>}k{/Meta}");
     const input = await screen.findByPlaceholderText("Search clients, returns, invoices");
@@ -104,3 +115,4 @@ export const CommandPalette: Story = {
     await expect(onJump).toHaveBeenCalledWith("household:kestrel");
   },
 };
+

@@ -4,12 +4,12 @@ import { Button } from "../components/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/card";
 import { InvoiceChip } from "../components/status-chip";
 
-const meta: Meta<typeof Card> = { title: "Primitives/Card", component: Card, parameters: { layout: "padded" } };
+const meta: Meta<typeof Card> = { title: "Primitives/Card", component: Card };
 export default meta;
 
 export const Invoice: StoryObj<typeof Card> = {
   render: () => (
-    <Card className="max-w-sm">
+    <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Invoice 2026-0014</CardTitle>
         <CardDescription>Federal and California returns, tax year 2025</CardDescription>

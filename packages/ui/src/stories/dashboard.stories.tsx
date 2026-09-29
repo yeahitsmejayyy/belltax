@@ -8,7 +8,7 @@ import { Money } from "../components/money";
 import { HealthCheckRow, StatCard } from "../components/stat-card";
 
 // Admin 03-dashboard-dashboard. Invented numbers.
-const meta: Meta = { title: "Product/Dashboard", parameters: { layout: "padded" } };
+const meta: Meta = { parameters: { fill: true }, title: "Product/Dashboard" };
 export default meta;
 type Story = StoryObj;
 
@@ -27,19 +27,25 @@ export const Kpis: Story = {
 export const HealthChecks: Story = {
   name: "Health checks",
   render: () => (
-    <div className="max-w-xl rounded-xl border bg-card px-5">
+    <div className="w-full max-w-xl rounded-xl border bg-card px-5">
       <HealthCheckRow tone="danger" title="2 failed payments · $565.00" detail="Dana & Sam Marigold, Remy Dovetail" action={<Button variant="outline" size="sm">Review</Button>} />
       <HealthCheckRow tone="warning" title="6 returns stuck over 7 days" detail="Longest: Toni Wren · 12 days in Documents" action={<Button variant="outline" size="sm">Review</Button>} />
       <HealthCheckRow tone="info" title="11 items waiting in Inbox" detail="Uploads, replies and payment updates to review." action={<Button variant="outline" size="sm">Open</Button>} />
       <HealthCheckRow tone="ok" title="No e-file rejections" detail="All 6 filed returns were accepted or are pending." />
     </div>
-  ),
+  )
+};
+export const HealthChecksTest: Story = {
+  ...HealthChecks,
+  name: "Health checks · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const rows = canvasElement.querySelectorAll("[data-slot='health-check']");
     await expect(rows).toHaveLength(4);
     for (const r of rows) await expect(r.querySelector("svg[aria-hidden='true']")).not.toBeNull(); // never colour alone
   },
 };
+
 
 const weekly = [
   { week: "Feb 2", thisYear: 0, lastYear: 1 },
@@ -56,7 +62,7 @@ const config: ChartConfig = {
 export const FilingsPerWeek: Story = {
   name: "Chart: filings per week",
   render: () => (
-    <div className="max-w-xl rounded-xl border bg-card p-5">
+    <div className="w-full max-w-xl rounded-xl border bg-card p-5">
       <ChartContainer config={config} className="h-56 w-full">
         <BarChart data={weekly} accessibilityLayer>
           <CartesianGrid vertical={false} />
@@ -68,9 +74,15 @@ export const FilingsPerWeek: Story = {
         </BarChart>
       </ChartContainer>
     </div>
-  ),
+  )
+};
+export const FilingsPerWeekTest: Story = {
+  ...FilingsPerWeek,
+  name: "Chart: filings per week · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByText("This season")).toBeInTheDocument();
     await expect(canvasElement.querySelectorAll(".recharts-bar-rectangle").length).toBeGreaterThan(0);
   },
 };
+

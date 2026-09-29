@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Textarea } from "../components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/tooltip";
 
-const meta: Meta = { title: "Primitives/Overlays", parameters: { layout: "padded" } };
+const meta: Meta = { title: "Primitives/Overlays" };
 export default meta;
 type Story = StoryObj;
 
@@ -44,10 +44,22 @@ function MoveBack() {
 
 export const DialogWithReason: Story = {
   name: "Dialog: reason required",
-  render: () => <MoveBack />,
+  render: () => <MoveBack />
+};
+export const DialogWithReasonTest: Story = {
+  ...DialogWithReason,
+  name: "Dialog: reason required · test",
+  tags: ["!dev"],
   play: async ({ canvasElement, step }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Move back to Documents" }));
     const dialog = await screen.findByRole("dialog", { name: "Move back to Documents?" });
+    await step("it sits on the upper third, not dead centre (rule 13)", async () => {
+      await waitFor(() => {
+        const r = dialog.getBoundingClientRect();
+        expect(Math.abs(r.top + r.height / 3 - innerHeight / 3)).toBeLessThan(2);
+        expect(r.top + r.height / 2).toBeLessThan(innerHeight / 2);
+      });
+    });
     await step("the action waits for a reason", async () => {
       await expect(within(dialog).getByRole("button", { name: "Move back" })).toBeDisabled();
       await userEvent.type(within(dialog).getByLabelText("Reason"), "Corrected 1099 coming");
@@ -63,6 +75,7 @@ export const DialogWithReason: Story = {
     });
   },
 };
+
 
 const onVoid = fn();
 export const Confirm: Story = {
@@ -81,7 +94,12 @@ export const Confirm: Story = {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  ),
+  )
+};
+export const ConfirmTest: Story = {
+  ...Confirm,
+  name: "AlertDialog: irreversible · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Void invoice" }));
     const dialog = await screen.findByRole("alertdialog");
@@ -89,6 +107,7 @@ export const Confirm: Story = {
     await expect(onVoid).toHaveBeenCalledOnce();
   },
 };
+
 
 // Admin 22-dialogs-and-sheets-sheet-request.
 export const SideSheet: Story = {
@@ -103,7 +122,12 @@ export const SideSheet: Story = {
         </SheetHeader>
       </SheetContent>
     </Sheet>
-  ),
+  )
+};
+export const SideSheetTest: Story = {
+  ...SideSheet,
+  name: "Sheet · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Request a document" }));
     await expect(await screen.findByRole("dialog", { name: "Request a document" })).toBeInTheDocument();
@@ -111,6 +135,7 @@ export const SideSheet: Story = {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   },
 };
+
 
 export const Menu: Story = {
   name: "Dropdown menu",
@@ -125,7 +150,12 @@ export const Menu: Story = {
         <DropdownMenuItem>Log out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  ),
+  )
+};
+export const MenuTest: Story = {
+  ...Menu,
+  name: "Dropdown menu · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     within(canvasElement).getByRole("button", { name: "Dana Marigold" }).focus();
     await userEvent.keyboard("{Enter}");
@@ -133,6 +163,7 @@ export const Menu: Story = {
     await userEvent.keyboard("{Escape}");
   },
 };
+
 
 export const PopoverAndTooltip: Story = {
   name: "Popover and tooltip",
@@ -149,7 +180,12 @@ export const PopoverAndTooltip: Story = {
         </Tooltip>
       </div>
     </TooltipProvider>
-  ),
+  )
+};
+export const PopoverAndTooltipTest: Story = {
+  ...PopoverAndTooltip,
+  name: "Popover and tooltip · test",
+  tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "What's a 1095-A?" }));
@@ -160,3 +196,4 @@ export const PopoverAndTooltip: Story = {
     await expect(await screen.findByRole("tooltip")).toHaveTextContent("Over 7 days is flagged as stale");
   },
 };
+

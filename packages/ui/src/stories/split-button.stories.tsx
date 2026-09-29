@@ -10,7 +10,6 @@ const addWithout = fn();
 const meta: Meta<typeof SplitButton> = {
   title: "Product/SplitButton",
   component: SplitButton,
-  parameters: { layout: "padded" },
   args: {
     label: <><UserPlus /> Invite client</>,
     onClick: invite,
@@ -23,7 +22,12 @@ type Story = StoryObj<typeof SplitButton>;
 
 // Reference: .assets/screens/admin/desktop/09-pipeline-invite-menu.png
 export const InviteClient: Story = {
-  name: "Invite client",
+  name: "Invite client"
+};
+export const InviteClientTest: Story = {
+  ...InviteClient,
+  name: "Invite client · test",
+  tags: ["!dev"],
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     await step("the main part runs the primary action", async () => {
@@ -47,3 +51,4 @@ export const InviteClient: Story = {
     });
   },
 };
+

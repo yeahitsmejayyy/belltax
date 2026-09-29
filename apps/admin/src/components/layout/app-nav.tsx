@@ -6,14 +6,14 @@ import {
     SidebarMenu,
     SidebarMenuItem,
     SidebarMenuButton,
-} from "@/components/ui/sidebar";
+} from "@app/ui/components/sidebar";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { KanbanSquare, LayoutDashboard } from "lucide-react";
 import type { AppNavSection } from "@/types/app-nav";
 import { clearDemoUser } from "@app/ui/demo";
 
 import { UserMenu } from "./user-menu";
-import { useSidebar } from "@/components/ui/sidebar";
+import { useSidebar } from "@app/ui/components/sidebar";
 import { useEffect, useState } from "react";
 
 
