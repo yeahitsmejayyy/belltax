@@ -55,6 +55,15 @@ export function withSecurityHeaders(res: Response, pathname: string): Response {
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
 }
 
+// The marketing site (apps/site) is hosted apart from the portal and reads the practice's public details and
+// prices from it, so pricing lives in one place. Only these public reads, only GET, never with credentials.
+const SITE_READABLE = /^\/trpc\/(?:(?:pricing|practice)\.public,?)+$/;
+function readableByAnySite(res: Response) {
+  const headers = new Headers(res.headers);
+  headers.set("Access-Control-Allow-Origin", "*");
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+}
+
 const count = (table: string) => (runtime().db.query(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
 
 export function createFetchHandler({ surface, webDist, devOrigin, log }: Options) {
@@ -108,7 +117,7 @@ export function createFetchHandler({ surface, webDist, devOrigin, log }: Options
 
     if (pathname.startsWith("/trpc")) {
       const res = await fetchRequestHandler({ endpoint: "/trpc", req, router: appRouter, createContext: (o) => createContext({ req: o.req, ip: socketIp, surface }) });
-      return cors(res, req);
+      return surface === "portal" && req.method === "GET" && SITE_READABLE.test(pathname) ? readableByAnySite(res) : cors(res, req);
     }
 
     if (pathname === "/api/documents" && req.method === "POST") return cors(await uploadDocument(req, surface, devOrigin), req);

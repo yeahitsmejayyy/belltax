@@ -94,3 +94,25 @@ describe("security headers", () => {
     expect(res.headers.get("Cache-Control")).toBe("private, no-store");
   });
 });
+
+describe("the marketing site reads public prices and practice details from the portal", () => {
+  const acao = async (surface: "admin" | "portal", path: string, init?: RequestInit) =>
+    (await surfaces[surface](new Request(`${ORIGIN}${path}`, { ...init, headers: { origin: "https://site.example.test" } }))).headers.get("Access-Control-Allow-Origin");
+
+  test("pricing.public and practice.public, alone or batched, are readable by any origin, without credentials", async () => {
+    w.use("demo");
+    for (const path of ["/trpc/pricing.public", "/trpc/practice.public", "/trpc/practice.public,pricing.public?batch=1&input=%7B%7D"]) {
+      expect({ path, acao: await acao("portal", path) }).toEqual({ path, acao: "*" });
+    }
+    const res = await surfaces.portal(new Request(`${ORIGIN}/trpc/pricing.public`, { headers: { origin: "https://site.example.test" } }));
+    expect(res.headers.get("Access-Control-Allow-Credentials")).toBeNull();
+  });
+
+  test("nothing else: not a batch that sneaks in another procedure, not the admin, not a mutation", async () => {
+    w.use("demo");
+    expect(await acao("portal", "/trpc/pricing.public,engagement.mine?batch=1&input=%7B%7D")).toBeNull();
+    expect(await acao("portal", "/trpc/engagement.mine")).toBeNull();
+    expect(await acao("admin", "/trpc/pricing.public")).toBeNull();
+    expect(await acao("portal", "/trpc/pricing.public", { method: "POST", body: "{}" })).toBeNull();
+  });
+});

@@ -57,7 +57,12 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   `@app/ui/components/<name>`, never copy them. Every component gets stories in `packages/ui/src/stories`; interaction tests go in a hidden `<Name>Test` twin
   (`tags: ["!dev"]`), never on the visible story. The admin shell is `AppSidebar` + `AppHeader` (on shadcn's `sidebar`). Search is `InlineSearch` (header field with a results dropdown) + `CommandPalette` (⌘K), both fed the same `SearchGroup[]`,
   from `search.query` (server: word-prefix SQL, no index; never searches SSN digits). Invite client / Add without invite open `InviteClientDialog` (Household → Members → Filers → Send). Story fixtures live in `packages/ui/src/stories/fixtures.tsx`.
-- `apps/site` — marketing site (skelly-site, last).
+- `apps/site` — the marketing site (ticket 14): one static page, React + Tailwind on `packages/ui`, dev on :5175. Prices and
+  the practice's details are read at load from the portal's `pricing.public` / `practice.public` (`src/lib/public.tsx`;
+  the server lets any origin GET only those two, `SITE_READABLE` in `http.ts`), never copied; a deployed site sets
+  `VITE_PORTAL_ORIGIN`. Unavailable → no prices shown, never stale ones. "How it works" is a scripted walkthrough of
+  design-system mini screens with invented data (`src/components/walkthrough/`), no server. "Get started" mails the
+  practice until self sign-up exists; reviews stay out until there are real, consented quotes (`ReviewCards` story).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
 - **The practice's details** (name, preparer, reply-to email, texting phone, city/state) live in `practice_settings`
   (one row, migration 007): `settings.practice.*` to edit, `practice.public` for the portal and site (no phone). Letters,
@@ -77,7 +82,7 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 
 ## Commands
 
-- `bun install` · `bun run dev` (server) · `bun run dev:portal` · `bun run dev:admin` · `bun run build` (both apps)
+- `bun install` · `bun run dev` (server) · `bun run dev:portal` · `bun run dev:admin` · `bun run dev:site` · `bun run build` (all three)
 - `bun run sync:types` · `bun run seed` · `bun run migrate [--status]` · `bun test` · `bun run typecheck`
 - Intake questions live in `packages/schema/src/intake/v1.ts` (the portal imports it; the server validates with it).
   After editing, run `bun run intake:doc` to regenerate `docs/intake-v1.md`; a test fails while it's stale.

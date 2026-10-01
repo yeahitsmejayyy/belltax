@@ -43,6 +43,15 @@
       "port": 5174
     },
     {
+      "name": "site",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "dev:site"
+      ],
+      "port": 5175
+    },
+    {
       "name": "storybook",
       "runtimeExecutable": "bun",
       "runtimeArgs": [
