@@ -146,9 +146,28 @@ describe("engagement.mine", () => {
     expect(mine.some((m) => m.taxYear === 2024)).toBe(true); // alice's household is returning
     expect(mine.find((m) => m.engagementId === alice.engagementId)!.via).toBe("filer");
   });
+
+  test("when each stage was reached, for the portal's timeline: opened first, then each move, ending where it is", async () => {
+    const mine = z.array(MyEngagement).parse((await call(alice.userId, "engagement.mine", undefined)).data);
+    const r = mine.find((m) => m.engagementId === alice.engagementId)!;
+    expect(r.reached[0]!.stage).toBe("invited");
+    expect(r.reached.at(-1)!.stage).toBe(r.stage);
+    expect(r.reached.map((x) => x.at)).toEqual([...r.reached.map((x) => x.at)].sort());
+  });
 });
 
 describe("intake", () => {
+  test("an answer the client empties is cleared, not kept at its old value", async () => {
+    const eng = q<{ id: string }>("SELECT id FROM engagements WHERE stage = 'intake' AND tax_year = 2025 AND id NOT IN (SELECT engagement_id FROM intake_responses WHERE submitted_at IS NOT NULL) ORDER BY id DESC LIMIT 1");
+    const owner = q<{ id: string }>(
+      "SELECT u.id FROM return_people rp JOIN users u ON u.person_id = rp.person_id WHERE rp.engagement_id = ? AND rp.role = 'primary'",
+      eng.id,
+    ).id;
+    await call(owner, "intake.save", { engagementId: eng.id, answers: { digital_assets: true } }, "mutation");
+    const view = IntakeView.parse((await call(owner, "intake.save", { engagementId: eng.id, answers: {}, clear: ["digital_assets"] }, "mutation")).data);
+    expect(view.answers).not.toHaveProperty("digital_assets");
+  });
+
   test("saves merge step by step; submitting locks it for the client, not the preparer", async () => {
     const eng = q<{ id: string }>("SELECT id FROM engagements WHERE stage = 'intake' AND tax_year = 2025 AND id NOT IN (SELECT engagement_id FROM intake_responses WHERE submitted_at IS NOT NULL) LIMIT 1");
     const owner = q<{ id: string }>(

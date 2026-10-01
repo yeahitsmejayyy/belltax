@@ -167,6 +167,10 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 via: "filer" | "grant";
                 openRequests: number;
                 balanceCents: number;
+                reached: {
+                    stage: "complete" | "documents" | "filed" | "intake" | "invited" | "preparing" | "ready" | "review";
+                    at: string;
+                }[];
             }[];
             meta: object;
         }>;
@@ -223,6 +227,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     response: string | null;
                     status: "cancelled" | "fulfilled" | "open";
                     personId: string | null;
+                    personName: string | null;
                     createdAt: string;
                     latestDocument: {
                         id: string;
@@ -427,6 +432,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 answers: {
                     [x: string]: unknown;
                 };
+                clear?: string[] | undefined;
                 submit?: boolean | undefined;
             };
             output: {
@@ -473,6 +479,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     response: string | null;
                     status: "cancelled" | "fulfilled" | "open";
                     personId: string | null;
+                    personName: string | null;
                     createdAt: string;
                     latestDocument: {
                         id: string;
@@ -527,6 +534,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 response: string | null;
                 status: "cancelled" | "fulfilled" | "open";
                 personId: string | null;
+                personName: string | null;
                 createdAt: string;
                 latestDocument: {
                     id: string;
@@ -581,6 +589,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 response: string | null;
                 status: "cancelled" | "fulfilled" | "open";
                 personId: string | null;
+                personName: string | null;
                 createdAt: string;
                 latestDocument: {
                     id: string;
@@ -1379,6 +1388,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         get: import("@trpc/server").TRPCQueryProcedure<{
             input: void;
             output: {
+                personId: string;
                 name: string;
                 email: string;
                 phone: string | null;
@@ -1400,6 +1410,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 phone?: string | null | undefined;
             };
             output: {
+                personId: string;
                 name: string;
                 email: string;
                 phone: string | null;
@@ -1424,6 +1435,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 }[];
             };
             output: {
+                personId: string;
                 name: string;
                 email: string;
                 phone: string | null;

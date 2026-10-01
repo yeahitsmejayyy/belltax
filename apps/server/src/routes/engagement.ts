@@ -109,6 +109,17 @@ export const engagementRouter = router({
           ORDER BY p.tax_year DESC, p.kind, p.household_name`,
       )
       .all(ctx.user.id);
+    const db = runtime().db;
+    const reached = (id: string) => [
+      ...db.query<{ at: string }, [string]>("SELECT created_at AS at FROM engagements WHERE id = ?").all(id).map((r) => ({ stage: "invited" as const, at: r.at })),
+      ...db
+        .query<{ stage: Stage; at: string }, [string]>(
+          `SELECT json_extract(data, '$.to') AS stage, occurred_at AS at FROM events
+            WHERE subject_type = 'engagement' AND subject_id = ? AND type = 'engagement.stage_changed' AND json_extract(data, '$.to') IS NOT NULL
+            ORDER BY occurred_at, id`,
+        )
+        .all(id),
+    ];
     return rows.map((r) => ({
       engagementId: r.engagement_id as string,
       householdName: r.household_name as string,
@@ -119,6 +130,7 @@ export const engagementRouter = router({
       via: r.via as MyEngagement["via"],
       openRequests: r.open_requests as number,
       balanceCents: r.balance_cents as number,
+      reached: reached(r.engagement_id as string),
     }));
   }),
 

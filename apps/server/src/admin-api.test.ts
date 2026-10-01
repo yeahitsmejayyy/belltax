@@ -41,7 +41,7 @@ describe("engagement.detail", () => {
     expect(d.people.filter((p) => p.role === "dependent").every((p) => p.relationship && p.monthsLivedWith === 12)).toBe(true);
     expect(d.requests.some((r) => r.latestDocument?.status === "rejected")).toBe(true);
     expect(d.documents.length).toBeGreaterThan(0);
-    expect(d.letter).toMatchObject({ status: "draft", sentAt: null });
+    expect(d.letter).toMatchObject({ status: "sent" }); // sent with the document requests, not signed yet
     expect(d.letter!.signers.every((s) => s.signedAt === null)).toBe(true);
     expect(d.invoices).toEqual([]);
     expect(d.nextStage).toBe("ready");

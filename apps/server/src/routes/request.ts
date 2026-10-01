@@ -18,6 +18,7 @@ type Row = {
   response: string | null;
   status: RequestView["status"];
   person_id: string | null;
+  person_name: string | null;
   created_at: string;
 };
 
@@ -28,8 +29,9 @@ export function listRequests(engagementId: string, user: SessionUser): RequestVi
   const { db } = runtime();
   const rows = db
     .query<Row, [string]>(
-      `SELECT id, engagement_id, kind, document_kind, title, note, response, status, person_id, created_at
-         FROM requests WHERE engagement_id = ?
+      `SELECT r.id, r.engagement_id, r.kind, r.document_kind, r.title, r.note, r.response, r.status, r.person_id, r.created_at,
+              (SELECT p.first_name FROM people p WHERE p.id = r.person_id) AS person_name
+         FROM requests r WHERE r.engagement_id = ?
         ORDER BY (status = 'open') DESC, created_at, id`,
     )
     .all(engagementId);
@@ -45,6 +47,7 @@ export function listRequests(engagementId: string, user: SessionUser): RequestVi
       response: r.response,
       status: r.status,
       personId: r.person_id,
+      personName: r.person_name,
       createdAt: r.created_at,
       latestDocument: doc ? toDocumentView(doc, user) : null,
     };

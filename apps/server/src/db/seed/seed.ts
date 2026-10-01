@@ -301,7 +301,9 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
         writeDoc(ctx, { kind: "photo_id", personKey: rp.primary }, { status: allDone ? "accepted" : "uploaded", when: between(0.4, 0.5) });
       }
 
-      // Engagement letter: drafted at documents, sent by ready, signed by every filer before preparing.
+      // Engagement letter: drafted when the documents stage starts and sent with the document requests, so a
+      // client at documents has it to sign (portal 05: "Sign your engagement letter"); signed by every filer
+      // before preparing.
       // A married couple filing separately shares one letter; every other return gets its own.
       const letterKey = `${hh}:${year}:${kind}:${rp.status === "mfs" ? "mfs" : rp.primary}`;
       let letter = letters.get(letterKey);
@@ -310,18 +312,19 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
         const nameOf = (k: string) => `${ctx.people.get(k)!.first} ${ctx.people.get(k)!.last}`;
         const filersOfPlan = (r: ReturnPlan) => [r.primary, ...(r.spouse ? [r.spouse] : [])].map(nameOf);
         const who = practice(db);
+        const dated = between(0.3, 0.35);
         const { body } = renderLetter(currentTemplate(db), {
           practiceName: who.practiceName,
           preparerName: who.preparerName,
           householdName: ctx.plan.displayName,
           taxYear: year,
           amended: kind === "amended",
-          date: between(0.3, 0.35).slice(0, 10),
+          date: dated.slice(0, 10),
           returns: letterReturns.map((r) => `${FILING_STATUS_LABEL[r.status]} — ${filersOfPlan(r).join(" & ")}`),
           filers: letterReturns.flatMap(filersOfPlan),
         });
         letter = { id: rng.id(), sha: new Bun.CryptoHasher("sha256").update(body).digest("hex"), signers: new Set(), signed: new Set(), sentAt: null };
-        const sent = allDone ? between(0.7, 0.8) : null;
+        const sent = allDone ? between(0.7, 0.8) : reached(stage, "documents") ? dated : null;
         letter.sentAt = sent;
         insert("engagement_letters", {
           id: letter.id, household_id: hh, tax_year: year, template_version: 1, body, body_sha256: letter.sha,

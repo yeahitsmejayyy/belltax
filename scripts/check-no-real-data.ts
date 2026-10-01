@@ -2,7 +2,7 @@
 // client data. Runs in CI on every push (bun run check:data locally). It can't prove data is fake;
 // it catches the likely accidents: a database, a backup, an upload, a secrets file, a scanned PDF,
 // or a Social Security number that could be real.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 export type Finding = { file: string; why: string };
@@ -45,7 +45,8 @@ if (import.meta.main) {
   const root = resolve(import.meta.dir, "..");
   const git = Bun.spawnSync(["git", "ls-files", "-z"], { cwd: root });
   if (git.exitCode !== 0) throw new Error("git ls-files failed");
-  const files = new TextDecoder().decode(git.stdout).split("\0").filter(Boolean);
+  // Tracked files deleted in the working tree (not committed yet) have nothing left to check.
+  const files = new TextDecoder().decode(git.stdout).split("\0").filter((f) => f && existsSync(resolve(root, f)));
   const findings = [
     ...checkPaths(files),
     ...files.filter((f) => TEXT.test(f) && f !== "bun.lock").flatMap((f) => checkText(f, readFileSync(resolve(root, f), "utf8"))),

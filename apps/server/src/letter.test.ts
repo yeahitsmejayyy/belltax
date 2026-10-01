@@ -158,9 +158,10 @@ describe("signing", () => {
          JOIN household_access ha ON ha.user_id = u.id
          JOIN engagements e ON e.household_id = ha.household_id AND e.tax_year = 2025`,
     );
-    // Drafts are invisible to clients; send it so there's something to (not) sign.
-    expect((await w.call(d.user_id, "letter.get", { engagementId: d.engagement_id })).data).toBeNull();
-    await w.call(P(), "letter.send", { letterId: d.letter_id }, "mutation");
+    // Make sure it's out for signature, so there's something to (not) sign.
+    if (w.get<{ status: string }>("SELECT status FROM engagement_letters WHERE id = ?", d.letter_id).status === "draft") {
+      await w.call(P(), "letter.send", { letterId: d.letter_id }, "mutation");
+    }
     const theirView = view(await w.call(d.user_id, "letter.get", { engagementId: d.engagement_id }));
     expect(theirView).toMatchObject({ status: "sent", canSign: false });
     expect((await sign(d.user_id, theirView, "Anyone")).error!.message).toMatch(/Only the people filing/);

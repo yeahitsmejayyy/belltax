@@ -54,7 +54,9 @@ export const intakeRouter = router({
           throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This return is past the questionnaire stage." });
         }
       }
-      const merged = IntakeAnswers.parse({ ...(existing ? JSON.parse(existing.answers) : {}), ...input.answers });
+      const kept: Record<string, unknown> = existing ? JSON.parse(existing.answers) : {};
+      for (const key of input.clear ?? []) delete kept[key];
+      const merged = IntakeAnswers.parse({ ...kept, ...input.answers });
       // Submitting needs every required question the client can see. Answers to questions a later
       // choice hid are kept but ignored.
       if (input.submit && !existing?.submitted_at) {
@@ -80,7 +82,7 @@ export const intakeRouter = router({
           subjectId: eng.id,
           householdId: eng.household_id,
           engagementId: eng.id,
-          data: { fields: Object.keys(input.answers).length },
+          data: { fields: Object.keys(input.answers).length, cleared: input.clear?.length ?? 0 },
         });
       })();
       return toView(read(eng.id)!);

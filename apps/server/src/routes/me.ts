@@ -43,6 +43,7 @@ function account(db: Database, user: SessionUser & { personId: string }): MyAcco
   const m = me(db, user);
   const name = [m.first_name, m.middle_name ? `${m.middle_name[0]}.` : null, m.last_name, m.suffix].filter(Boolean).join(" ");
   return {
+    personId: user.personId,
     name,
     email: m.email,
     phone: m.phone,

@@ -1,0 +1,7 @@
+/* The portal's Tailwind entry. Every colour, radius, font and motion value comes from @app/ui
+   (tokens.css, imported in main.tsx, and theme.css here). Nothing is defined locally. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@app/ui/theme.css";
+
+@source "../../../packages/ui/src";

@@ -95,6 +95,7 @@ export const INTAKE_FORM_VERSION = INTAKE_VERSION;
 export const IntakeGetInput = EngagementRef;
 export const IntakeSaveInput = EngagementRef.extend({
   answers: IntakeAnswers, // merged over what's saved, so each step can send only its own fields
+  clear: z.array(z.string().max(80)).max(200).optional(), // questions the client emptied: removed before the merge
   submit: z.boolean().optional(),
 });
 export const IntakeView = z.object({
@@ -133,6 +134,7 @@ export const RequestView = z.object({
   response: z.string().nullable(),
   status: RequestStatus,
   personId: Id.nullable(),
+  personName: z.string().nullable(), // who it's for, by first name; null = the whole household
   createdAt: Timestamp,
   latestDocument: DocumentView.nullable(), // newest upload against this request, if any
 });
@@ -158,6 +160,9 @@ export const MyEngagement = z.object({
   via: z.enum(["filer", "grant"]),
   openRequests: z.int().nonnegative(),
   balanceCents: z.int(),
+  // When the return reached each stage it has been in, earliest first: "invited" is when it was opened,
+  // the rest come from stage changes. Moves back mean a stage can appear twice; the portal shows the latest.
+  reached: z.array(z.object({ stage: Stage, at: Timestamp })),
 });
 export type MyEngagement = z.infer<typeof MyEngagement>;
 
@@ -789,6 +794,7 @@ export type SeasonReport = z.infer<typeof SeasonReport>;
 export const ReminderPref = z.object({ kind: ReminderKind, email: z.boolean(), text: z.boolean() });
 export type ReminderPref = z.infer<typeof ReminderPref>;
 export const MyAccount = z.object({
+  personId: Id, // so the portal can say "you" instead of a name
   name: z.string(), // legal name, from the person; only the preparer changes it
   email: z.string(),
   phone: z.string().nullable(),
