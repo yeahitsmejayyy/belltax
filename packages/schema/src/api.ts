@@ -5,6 +5,7 @@ import {
   EfileJurisdiction,
   EfileStatus,
   EngagementKind,
+  ReminderKind,
   FilingStatus,
   InvoiceStatus,
   LetterStatus,
@@ -445,6 +446,21 @@ export const EngagementSetPeopleInput = z.object({
     .default([]),
 });
 
+// Invite client / Add client without invite (admin 24/25-dialogs-and-sheets-dlg-invite), in one step: the
+// household, its people, this year's return(s) with filing status and filers, and for an invite, the primary's
+// login. All or nothing (ticket 13). Married filing separately makes one return per filer.
+export const HouseholdOnboardInput = z.object({
+  mode: z.enum(["invite", "add"]),
+  taxYear: TaxYear,
+  surname: Name,
+  email: z.email().nullable().optional(), // required to invite
+  phone: z.string().trim().max(20).nullable().optional(),
+  members: z.array(z.object({ first: Name, role: ReturnRole })).min(1).max(12),
+  filing: z.enum(["single", "mfj", "mfs", "hoh"]),
+  filers: z.array(z.int().nonnegative()).min(1).max(2), // indexes into members
+});
+export const HouseholdOnboardResult = z.object({ householdId: Id, engagementIds: z.array(Id), invited: z.boolean() });
+
 export const LoginCreateInput = z.object({
   personId: Id,
   email: z.email(),
@@ -767,3 +783,40 @@ export const SeasonReport = z.object({
   failed: z.array(SeasonItemBase.extend({ error: z.string() })),
 });
 export type SeasonReport = z.infer<typeof SeasonReport>;
+
+// ── The client's own settings and receipts (ticket 42, migration 009) ──
+// requests: documents and questions waiting on them; letter: a letter to sign; invoice: a payment due.
+export const ReminderPref = z.object({ kind: ReminderKind, email: z.boolean(), text: z.boolean() });
+export type ReminderPref = z.infer<typeof ReminderPref>;
+export const MyAccount = z.object({
+  name: z.string(), // legal name, from the person; only the preparer changes it
+  email: z.string(),
+  phone: z.string().nullable(),
+  reminders: z.array(ReminderPref), // every kind, defaults filled in
+  signIn: z.object({ method: z.enum(["demo", "password"]), activatedAt: Timestamp.nullable() }),
+});
+export type MyAccount = z.infer<typeof MyAccount>;
+export const MyContactInput = z.object({
+  email: z.string().trim().email("Enter a valid email, like m@example.com."),
+  phone: optional(20).refine((v) => v == null || digits10(v), "Enter a 10-digit US number, or leave it blank."),
+});
+export const MyRemindersInput = z.object({
+  reminders: z.array(ReminderPref).refine((r) => new Set(r.map((x) => x.kind)).size === r.length, "Each reminder once."),
+});
+
+export const Receipt = z.object({
+  invoiceId: Id,
+  invoiceNumber: z.string(),
+  receiptNumber: z.string(), // R-<invoice number>: one receipt per invoice, showing every payment on it
+  taxYear: TaxYear,
+  settlement: z.enum(["paid", "partial"]),
+  practice: PublicPractice,
+  billedTo: z.string(), // the return's filers
+  lines: z.array(z.object({ description: z.string(), quantity: z.int().positive(), amountCents: z.int().positive() })),
+  included: z.array(z.string()),
+  totalCents: z.int().nonnegative(),
+  paidCents: z.int().positive(),
+  balanceCents: z.int(),
+  payments: z.array(z.object({ id: Id, amountCents: z.int().positive(), paidAt: Timestamp, method: z.enum(["card", "cash", "check", "zelle", "other"]), processedBy: z.enum(["stripe", "preparer"]) })), // newest first
+});
+export type Receipt = z.infer<typeof Receipt>;

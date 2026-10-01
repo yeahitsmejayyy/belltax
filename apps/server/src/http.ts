@@ -35,9 +35,14 @@ const CSP = [
   "frame-ancestors 'none'",
 ].join("; ");
 
+// A document's file is shown inside the app's own viewer (admin 15-return-viewer), so it may be framed by
+// the same origin, and by nothing else.
+const FILE = /^\/api\/documents\/[^/]+\/file$/;
+const FILE_CSP = CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'");
+
 export function withSecurityHeaders(res: Response, pathname: string): Response {
   const headers = new Headers(res.headers);
-  headers.set("Content-Security-Policy", CSP);
+  headers.set("Content-Security-Policy", FILE.test(pathname) ? FILE_CSP : CSP);
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "no-referrer");
   headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");

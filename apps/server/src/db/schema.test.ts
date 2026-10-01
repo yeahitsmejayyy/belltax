@@ -5,6 +5,7 @@ import {
   EfileJurisdiction,
   EfileStatus,
   PackageFilingStatus,
+  ReminderKind,
   ActorKind,
   DocumentCategory,
   DocumentStatus,
@@ -101,6 +102,7 @@ describe("zod ↔ SQL drift", () => {
       "price_addons.applies_when": AddonTrigger.options,
       "efile_submissions.jurisdiction": EfileJurisdiction.options,
       "efile_submissions.status": EfileStatus.options,
+      "reminder_preferences.kind": ReminderKind.options,
     };
     const found: Record<string, string[]> = {};
     const rows = db.query<{ name: string; sql: string }, []>("SELECT name, sql FROM sqlite_master WHERE type = 'table'").all();

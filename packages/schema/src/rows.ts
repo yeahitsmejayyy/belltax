@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   EfileJurisdiction,
+  ReminderKind,
   EfileStatus,
   ActorKind,
   DocumentCategory,
@@ -276,6 +277,15 @@ export const EfileSubmissionRow = z.object({
   rejection_note: text.nullable(),
 });
 
+// A client's reminder choice for one kind of reminder (migration 009); no row means email on, text off.
+export const ReminderPreferenceRow = z.object({
+  user_id: Id,
+  kind: ReminderKind,
+  by_email: z.union([z.literal(0), z.literal(1)]),
+  by_text: z.union([z.literal(0), z.literal(1)]),
+  updated_at: Timestamp,
+});
+
 // The practice's own details, one row (migration 007).
 export const PracticeSettingsRow = z.object({
   id: z.literal(1),
@@ -361,6 +371,7 @@ export const tables = {
   price_addons: PriceAddonRow,
   practice_settings: PracticeSettingsRow,
   efile_submissions: EfileSubmissionRow,
+  reminder_preferences: ReminderPreferenceRow,
 } as const;
 
 export type TableName = keyof typeof tables;

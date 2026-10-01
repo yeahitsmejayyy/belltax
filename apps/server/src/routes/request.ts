@@ -53,6 +53,16 @@ export function listRequests(engagementId: string, user: SessionUser): RequestVi
 
 // What the preparer is asking this return's client for: documents to upload and questions to answer.
 export const requestRouter = router({
+  // The document types a request can ask for (admin 22-dialogs-and-sheets-sheet-request), active ones only.
+  documentKinds: preparerProcedure
+    .output(z.array(z.object({ code: z.string(), formName: z.string(), label: z.string(), category: z.string() })))
+    .query(() =>
+      runtime()
+        .db.query<{ code: string; form_name: string; label: string; category: string }, []>("SELECT code, form_name, label, category FROM document_kinds WHERE active = 1 ORDER BY category, label")
+        .all()
+        .map((k) => ({ code: k.code, formName: k.form_name, label: k.label, category: k.category })),
+    ),
+
   list: authedProcedure
     .input(RequestListInput)
     .output(z.array(RequestView))

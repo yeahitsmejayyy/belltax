@@ -8,10 +8,13 @@ import { acknowledgeProcedure, activityRouter, inboxRouter } from "./routes/inbo
 import { intakeRouter } from "./routes/intake";
 import { invoiceRouter, paymentRouter } from "./routes/invoice";
 import { letterRouter } from "./routes/letter";
+import { meRouter } from "./routes/me";
+import { receiptProcedure } from "./routes/receipt";
 import { requestRouter } from "./routes/request";
 import { publicPracticeRouter } from "./routes/practice";
 import { publicPricingRouter } from "./routes/pricing";
 import { searchRouter } from "./routes/search";
+import { onboardProcedure } from "./routes/onboard";
 import { seasonRouter } from "./routes/season";
 import { settingsRouter } from "./routes/settings";
 import { createExpectedProcedure, returningRouter, sourceRouter } from "./routes/source";
@@ -26,9 +29,10 @@ export const appRouter = router({
   source: sourceRouter,
   document: documentRouter,
   letter: letterRouter,
-  invoice: invoiceRouter,
+  invoice: mergeRouters(invoiceRouter, router({ receipt: receiptProcedure })),
   payment: paymentRouter,
-  household: householdRouter,
+  me: meRouter,
+  household: mergeRouters(householdRouter, router({ onboard: onboardProcedure })),
   person: personRouter,
   login: loginRouter,
   access: accessRouter,

@@ -418,6 +418,14 @@ export function seedDemo(db: Database, opts: SeedOptions): SeedSummary {
         ctx.users.set(key, userId);
         if (key === plan.returns[0]!.primary) {
           summary.logins.push({ role: "client", email, label: `${plan.displayName} · ${spec.archetype} · ${spec.stages.join(" + ")}` });
+          // Returning clients have set up texts for the letter and the invoice (portal Settings, ticket 42).
+          // 555-01xx is the fictional range.
+          if (spec.returning) {
+            db.run("UPDATE people SET phone = ? WHERE id = ?", [`(555) 555-01${String(summary.logins.length).padStart(2, "0")}`, p.id]);
+            for (const kind of ["requests", "letter", "invoice"]) {
+              insert("reminder_preferences", { user_id: userId, kind, by_email: 1, by_text: kind === "requests" ? 0 : 1, updated_at: at(390) });
+            }
+          }
         }
       }
       // Grants: the household's primary filer can see the whole household (dependents' paperwork included).

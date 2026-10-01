@@ -81,4 +81,8 @@ export type ActorKind = z.infer<typeof ActorKind>;
 export const EfileJurisdiction = z.enum(["federal", "state"]);
 export type EfileJurisdiction = z.infer<typeof EfileJurisdiction>;
 export const EfileStatus = z.enum(["submitted", "accepted", "rejected"]);
+
+// Reminder preferences (migration 009): requests (documents and questions), a letter to sign, a payment due.
+export const ReminderKind = z.enum(["requests", "letter", "invoice"]);
+export type ReminderKind = z.infer<typeof ReminderKind>;
 export type EfileStatus = z.infer<typeof EfileStatus>;

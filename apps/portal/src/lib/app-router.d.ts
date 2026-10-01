@@ -504,6 +504,16 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             meta: object;
         }>;
     }> & import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        documentKinds: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                code: string;
+                formName: string;
+                label: string;
+                category: string;
+            }[];
+            meta: object;
+        }>;
         list: import("@trpc/server").TRPCQueryProcedure<{
             input: {
                 engagementId: string;
@@ -1000,6 +1010,45 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         errorShape: import("@trpc/server").TRPCDefaultErrorShape;
         transformer: false;
     }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        receipt: import("@trpc/server").TRPCQueryProcedure<{
+            input: {
+                invoiceId: string;
+            };
+            output: {
+                invoiceId: string;
+                invoiceNumber: string;
+                receiptNumber: string;
+                taxYear: number;
+                settlement: "paid" | "partial";
+                practice: {
+                    practiceName: string;
+                    preparerName: string;
+                    preparerCredential: string | null;
+                    replyToEmail: string;
+                    city: string | null;
+                    state: string | null;
+                };
+                billedTo: string;
+                lines: {
+                    description: string;
+                    quantity: number;
+                    amountCents: number;
+                }[];
+                included: string[];
+                totalCents: number;
+                paidCents: number;
+                balanceCents: number;
+                payments: {
+                    id: string;
+                    amountCents: number;
+                    paidAt: string;
+                    method: "card" | "cash" | "check" | "other" | "zelle";
+                    processedBy: "preparer" | "stripe";
+                }[];
+            };
+            meta: object;
+        }>;
+    }> & import("@trpc/server").TRPCDecorateCreateRouterOptions<{
         all: import("@trpc/server").TRPCQueryProcedure<{
             input: {
                 taxYear?: number | undefined;
@@ -1310,6 +1359,87 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             meta: object;
         }>;
     }>>;
+    me: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        get: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                name: string;
+                email: string;
+                phone: string | null;
+                reminders: {
+                    kind: "invoice" | "letter" | "requests";
+                    email: boolean;
+                    text: boolean;
+                }[];
+                signIn: {
+                    method: "demo" | "password";
+                    activatedAt: string | null;
+                };
+            };
+            meta: object;
+        }>;
+        updateContact: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                email: string;
+                phone?: string | null | undefined;
+            };
+            output: {
+                name: string;
+                email: string;
+                phone: string | null;
+                reminders: {
+                    kind: "invoice" | "letter" | "requests";
+                    email: boolean;
+                    text: boolean;
+                }[];
+                signIn: {
+                    method: "demo" | "password";
+                    activatedAt: string | null;
+                };
+            };
+            meta: object;
+        }>;
+        setReminders: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                reminders: {
+                    kind: "invoice" | "letter" | "requests";
+                    email: boolean;
+                    text: boolean;
+                }[];
+            };
+            output: {
+                name: string;
+                email: string;
+                phone: string | null;
+                reminders: {
+                    kind: "invoice" | "letter" | "requests";
+                    email: boolean;
+                    text: boolean;
+                }[];
+                signIn: {
+                    method: "demo" | "password";
+                    activatedAt: string | null;
+                };
+            };
+            meta: object;
+        }>;
+    }>>;
     household: import("@trpc/server").TRPCBuiltRouter<{
         ctx: {
             user: {
@@ -1327,6 +1457,28 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         errorShape: import("@trpc/server").TRPCDefaultErrorShape;
         transformer: false;
     }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        onboard: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                mode: "add" | "invite";
+                taxYear: number;
+                surname: string;
+                email?: string | null | undefined;
+                phone?: string | null | undefined;
+                members: {
+                    first: string;
+                    role: "dependent" | "primary" | "spouse";
+                }[];
+                filing: "hoh" | "mfj" | "mfs" | "single";
+                filers: number[];
+            };
+            output: {
+                householdId: string;
+                engagementIds: string[];
+                invited: boolean;
+            };
+            meta: object;
+        }>;
+    }> & import("@trpc/server").TRPCDecorateCreateRouterOptions<{
         create: import("@trpc/server").TRPCMutationProcedure<{
             input: {
                 displayName: string;

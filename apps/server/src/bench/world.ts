@@ -12,7 +12,7 @@ const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g;
 
 // Insert order that satisfies the foreign keys and triggers.
 const TABLES = [
-  "households", "people", "users", "household_access", "engagement_letters", "engagements", "return_people",
+  "households", "people", "users", "reminder_preferences", "household_access", "engagement_letters", "engagements", "return_people",
   "intake_responses", "sources", "source_owners", "return_sources", "requests", "documents", "signatures",
   "invoices", "invoice_lines", "invoice_included", "payments", "efile_submissions", "events",
 ] as const;

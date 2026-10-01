@@ -78,7 +78,7 @@ export function listInvoices(engagementId: string, user: SessionUser): InvoiceSu
 
 type InvoiceRef = { id: string; engagement_id: string; status: "draft" | "issued" | "void" };
 
-function invoiceFor(user: SessionUser, invoiceId: string): InvoiceRef & { eng: EngagementRef } {
+export function invoiceFor(user: SessionUser, invoiceId: string): InvoiceRef & { eng: EngagementRef } {
   const inv = runtime().db.query<InvoiceRef, [string]>("SELECT id, engagement_id, status FROM invoices WHERE id = ?").get(invoiceId);
   if (!inv) throw new TRPCError({ code: "NOT_FOUND", message: "Invoice not found." });
   const eng = engagementFor(user, inv.engagement_id);

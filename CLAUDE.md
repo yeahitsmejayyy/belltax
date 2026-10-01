@@ -33,6 +33,11 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - `apps/portal` — the client portal: React 19 + Vite, mobile-first, plain HTML until the design lands (ticket 12).
   Dev on :5173, proxied to the portal listener (:3000).
 - `apps/admin` — the preparer admin: React 19 + Vite from skelly-admin (ticket 13). Dev on :5174, proxied to :3001.
+  Screens are `src/pages/*` (lazy-loaded per route; the return is `pages/return/`, one file per tab) inside
+  `src/shell/shell.tsx` (sidebar, header, phone bottom tabs + More button). Shared hooks: `usePageTitle`
+  (`shell/header-slots`), `useTaxYear` (`lib/tax-year`), `useInvite` (`shell/invite`), `useStageMove`
+  (`components/stage-move`, every stage change goes through its dialog). Filters and tabs live in the URL (nuqs).
+  Page roots are `grid grid-cols-1` so wide content scrolls inside its box, never the page, on phones.
   Both talk to the same backend; access is decided server-side, never by which app is calling.
   Frontends type against a **committed copy** of the contract (`src/lib/app-router.d.ts`), never server source.
   After changing any procedure run `bun run sync:types`; `contract.test.ts` fails while a copy is stale.
@@ -54,6 +59,11 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - **E-file status** is recorded by hand from ProSeries (`efile_submissions`, migration 008; `src/efile/efile.ts`): moving to
   Filed submits federal and state, `engagement.recordEfile` answers or resubmits, Complete needs both accepted. One row per
   attempt, answered once, never deleted.
+- **A client's own settings** are `me.*` (`src/routes/me.ts`): their email (login + person, unique across logins) and
+  phone, and reminder choices (`reminder_preferences`, migration 009; no row = email on, text off; texts need a phone).
+  Clients only, their own person only; each change is an event on the household. **Receipts** are `invoice.receipt`
+  (`src/routes/receipt.ts`): data for the portal to render and print, one per issued invoice with money on it, numbered
+  `R-<invoice number>`, same access as the invoice (NOT_FOUND otherwise), logged as `receipt.viewed`.
 - **Pricing** is packages (one per filing status) + add-ons (`price_packages`, `price_addons`, migration 006), edited via
   `settings.pricing.*`; `pricing.public` feeds the marketing site. `src/money/pricing.ts` turns a return's facts (filing
   status, sources, intake answers) into a suggested invoice. An add-on with no price is "Included": named on the invoice

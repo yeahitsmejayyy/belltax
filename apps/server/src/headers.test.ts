@@ -61,7 +61,8 @@ describe("security headers", () => {
           const h = (name: string) => res.headers.get(name);
           const csp = h("Content-Security-Policy") ?? "";
           expect({ label, csp: csp.length > 0 }).toEqual({ label, csp: true });
-          for (const directive of ["default-src 'self'", "script-src 'self'", "frame-ancestors 'none'", "object-src 'none'", "base-uri 'none'"]) {
+          const frame = label === "rest download" ? "frame-ancestors 'self'" : "frame-ancestors 'none'"; // the viewer frames files
+          for (const directive of ["default-src 'self'", "script-src 'self'", frame, "object-src 'none'", "base-uri 'none'"]) {
             expect({ label, directive, has: csp.includes(directive) }).toEqual({ label, directive, has: true });
           }
           expect(csp).not.toMatch(/script-src[^;]*unsafe-inline/);

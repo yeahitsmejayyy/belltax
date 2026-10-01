@@ -10,7 +10,8 @@
     "./contrast": "./src/contrast.ts",
     "./utils": "./src/utils.ts",
     "./demo": "./src/demo.ts",
-    "./components/use-mobile": "./src/components/use-mobile.ts"
+    "./components/use-mobile": "./src/components/use-mobile.ts",
+    "./format": "./src/format.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p ."

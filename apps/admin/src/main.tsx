@@ -22,11 +22,11 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="dark" storageKey="btp-admin-theme">
+        <ThemeProvider defaultTheme="system" storageKey="btp-admin-theme">
           <BrowserRouter>
             <NuqsAdapter>
               <App />
-              <Toaster richColors={false} position="top-center" />
+              <Toaster />
             </NuqsAdapter>
           </BrowserRouter>
         </ThemeProvider>

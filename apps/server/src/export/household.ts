@@ -35,6 +35,7 @@ export const HOUSEHOLD_SCOPE: Record<string, string> = {
   households: "id = ?1",
   people: `id IN (${P})`,
   users: `person_id IN (${P})`,
+  reminder_preferences: `user_id IN (SELECT id FROM users WHERE person_id IN (${P}))`,
   household_access: "household_id = ?1",
   engagement_letters: "household_id = ?1",
   signatures: "letter_id IN (SELECT id FROM engagement_letters WHERE household_id = ?1)",
@@ -69,6 +70,7 @@ const ORDER: Record<string, string> = {
   efile_submissions: "submitted_at, id",
   invoice_included: "invoice_id, price_code",
   signatures: "signed_at, id",
+  reminder_preferences: "user_id, kind",
 };
 
 export function householdRows(db: Database, householdId: string): Record<string, Row[]> {
@@ -96,6 +98,7 @@ export type ExportRecord = {
   household: Row;
   people: Row[];
   logins: Row[];
+  reminders: Row[]; // each login's reminder choices
   access: Row[];
   sources: (Row & { owners: string[] })[];
   letters: (Row & { signatures: Row[] })[];
@@ -123,6 +126,7 @@ export function buildRecord(rows: Record<string, Row[]>, meta: { exportedAt: str
     household: rows.households![0]!,
     people: rows.people!,
     logins: rows.users!,
+    reminders: rows.reminder_preferences!,
     access: rows.household_access!,
     sources: rows.sources!.map((s) => ({ ...s, owners: by("source_owners", "source_id", s.id).map((o) => o.person_id as string) })),
     letters: rows.engagement_letters!.map((l) => ({ ...l, signatures: by("signatures", "letter_id", l.id) })),
@@ -149,6 +153,7 @@ export function flattenRecord(r: ExportRecord): Record<string, Row[]> {
     households: [r.household],
     people: r.people,
     users: r.logins,
+    reminder_preferences: r.reminders,
     household_access: r.access,
     engagement_letters: r.letters.map((l) => strip(l, "signatures")),
     signatures: r.letters.flatMap((l) => l.signatures),

@@ -28,6 +28,7 @@
       "name": "@app/admin",
       "version": "0.0.0",
       "dependencies": {
+        "@app/schema": "workspace:*",
         "@app/ui": "workspace:*",
         "@radix-ui/react-avatar": "^1.1.11",
         "@radix-ui/react-dialog": "^1.1.15",
@@ -50,6 +51,7 @@
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
         "react-router-dom": "^7.12.0",
+        "recharts": "^3.10.1",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.4.0",
         "tailwindcss": "^4.1.18",

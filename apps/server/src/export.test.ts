@@ -28,6 +28,7 @@ const KEYS: Record<string, string[]> = {
   source_owners: ["source_id", "person_id"],
   return_sources: ["engagement_id", "source_id"],
   invoice_included: ["invoice_id", "price_code"],
+  reminder_preferences: ["user_id", "kind"],
 };
 const keyOf = (table: string, r: Row) => (KEYS[table] ?? ["id"]).map((k) => r[k]).join("|");
 // A database row as the export should show it: no credential, JSON columns parsed.
