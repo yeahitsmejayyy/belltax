@@ -1,3 +1,4 @@
+import { Stage } from "@app/schema";
 import { SearchX, UserPlus, Workflow } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
@@ -112,9 +113,16 @@ export default function Pipeline() {
           stages={filters.stage ? [filters.stage] : undefined}
           staleAfterDays={filters.staleDays ?? STALE_DAYS}
           onOpen={open}
+          // Forward one stage at a time, or back to any earlier stage (the server's rules), so other columns fade.
+          canMove={(card, to) => {
+            const d = Stage.options.indexOf(to) - Stage.options.indexOf(card.stage);
+            return d === 1 || d < 0;
+          }}
           onMove={(id, from, to) => {
             const row = shown.find((r) => r.engagementId === id);
-            if (row) move.request({ engagementId: id, name: householdTitle(row), from, to });
+            if (!row) return Promise.resolve(false);
+            const m = { engagementId: id, name: householdTitle(row), from, to };
+            return Stage.options.indexOf(to) > Stage.options.indexOf(from) ? move.advanceNow(m) : move.request(m);
           }}
           className="-mx-4 px-4 md:mx-0 md:px-0"
         />

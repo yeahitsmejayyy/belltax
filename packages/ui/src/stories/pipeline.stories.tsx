@@ -5,7 +5,8 @@ import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 
 import { BoardCard, PipelineBoard, type BoardCardData } from "../components/board";
 
-// Admin 05-pipeline-pipeline-board. Drag a card to another column, or use its ⋯ menu. Invented households.
+// Admin 05-pipeline-pipeline-board. Grab a card anywhere and drop it on another column, or use its ⋯ menu.
+// Here a card may go forward one stage or back to any earlier one, as in the admin. Invented households.
 const meta: Meta = { parameters: { fill: true }, title: "Product/Pipeline board" };
 export default meta;
 type Story = StoryObj;
@@ -28,6 +29,10 @@ function Board() {
       cards={cards}
       stages={STAGES}
       onOpen={onOpen}
+      canMove={(card, to) => {
+        const d = STAGES.indexOf(to) - STAGES.indexOf(card.stage);
+        return d === 1 || d < 0;
+      }}
       onMove={(id, from, to) => {
         onMove(id, from, to);
         // The admin asks first: forward moves check the stage gates, backward ones ask for a reason.
@@ -59,8 +64,8 @@ export const DraggableTest: Story = {
       await expect(onOpen).toHaveBeenCalledWith("marigold");
     });
 
-    await step("keyboard drag: grip, Space, → one column, Space", async () => {
-      c.getByRole("button", { name: "Drag Wren" }).focus();
+    await step("keyboard drag: focus the card, Space, → one column, Space", async () => {
+      c.getByRole("button", { name: "Wren, Documents" }).focus();
       await userEvent.keyboard(" ");
       await userEvent.keyboard("{ArrowRight}");
       await userEvent.keyboard(" ");
@@ -70,6 +75,8 @@ export const DraggableTest: Story = {
 
     await step("the ⋯ menu moves without dragging (WCAG 2.5.7)", async () => {
       await userEvent.click(c.getByRole("button", { name: "Move Kestrel to…" }));
+      // Only where it may go: forward one stage, or back.
+      await expect(screen.queryByRole("menuitem", { name: "Filed" })).toBeNull();
       await userEvent.click(await screen.findByRole("menuitem", { name: "Client review" }));
       await expect(onMove).toHaveBeenLastCalledWith("kestrel", "filed", "review");
       await waitFor(() => expect(within(column(canvasElement, "review")).getByText("Kestrel")).toBeInTheDocument());
