@@ -1,5 +1,5 @@
 import { Camera, Check, ChevronRight, Clock, Moon, Upload } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 
 import { Card } from "@app/ui/components/card";
 import { BellMark, Wordmark } from "@app/ui/components/logo";
@@ -149,35 +149,63 @@ export function PhoneLetterSigned() {
   );
 }
 
-// The desktop portal home (marketing 04): what the client sees, step 3 of 8.
+// Lays a mockup out at one fixed width and scales it to fit its column, like a screenshot: the layout never
+// reflows into a squeeze, whatever the column's width. Height follows the scale, so nothing shifts around it.
+function ScaledFrame({ width, children }: { width: number; children: React.ReactNode }) {
+  const outer = React.useRef<HTMLDivElement>(null);
+  const inner = React.useRef<HTMLDivElement>(null);
+  const [fit, setFit] = React.useState({ scale: 1, height: 0 });
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      if (!outer.current || !inner.current) return;
+      const scale = Math.min(1, outer.current.clientWidth / width);
+      setFit({ scale, height: inner.current.offsetHeight * scale });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (outer.current) ro.observe(outer.current);
+    if (inner.current) ro.observe(inner.current);
+    return () => ro.disconnect();
+  }, [width]);
+  return (
+    <div ref={outer} style={{ height: fit.height || undefined }} className="relative w-full">
+      <div ref={inner} style={{ width, transform: `scale(${fit.scale})`, transformOrigin: "top left" }} className="absolute top-0 left-0">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// The desktop portal home (marketing 04): what the client sees, step 3 of 8. Always the desktop layout, scaled.
 export function DesktopHome({ preparer, preparerFirst, year }: { preparer: string; preparerFirst: string; year: number }) {
   return (
+    <ScaledFrame width={760}>
     <div className="overflow-hidden rounded-2xl border bg-background text-left shadow-2xl">
       <div className="flex h-11 items-center gap-2 border-b px-4">
         <BellMark className="size-5" />
         <Wordmark className="h-3.5" />
-        <span className="hidden h-5 items-center gap-1 rounded-full bg-mode-demo px-2 text-[11px] font-medium text-mode-demo-foreground sm:inline-flex">
+        <span className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-mode-demo px-2 text-[11px] font-medium whitespace-nowrap text-mode-demo-foreground">
           <span className="size-1 rounded-full bg-current" />
           Demo · sample data
         </span>
-        <span className="ml-auto hidden items-center gap-1 text-xs text-muted-foreground lg:flex">
+        <span className="ml-auto flex items-center gap-1 text-xs whitespace-nowrap text-muted-foreground">
           <span className="rounded-md bg-muted px-2 py-1 font-medium text-foreground">Home</span>
           <span className="px-2 py-1">Questions</span>
           <span className="px-2 py-1">Documents</span>
           <span className="px-2 py-1">Letter</span>
           <span className="px-2 py-1">Invoice</span>
         </span>
-        <Moon className="ml-auto size-4 text-muted-foreground lg:ml-2" />
-        <span className="flex size-7 items-center justify-center rounded-full bg-brand-subtle text-[11px] font-semibold text-brand-subtle-foreground">JE</span>
+        <Moon className="ml-2 size-4 shrink-0 text-muted-foreground" />
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-subtle text-[11px] font-semibold text-brand-subtle-foreground">JE</span>
       </div>
-      <div className="grid gap-4 p-4 sm:p-6">
+      <div className="grid gap-4 p-6">
         <div className="grid gap-1">
           <span className="text-lg font-semibold tracking-tight">Hi, Jordan</span>
           <span className="text-xs text-muted-foreground">
             Your {year} tax return · prepared by {preparer}
           </span>
         </div>
-        <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-2 items-start gap-4">
           <div className="grid gap-4">
             <NeedsYou preparerFirst={preparerFirst} />
             <Card className="flex-row items-center gap-3 rounded-xl px-4 py-3 shadow-none">
@@ -188,10 +216,10 @@ export function DesktopHome({ preparer, preparerFirst, year }: { preparer: strin
                   <StatusChip tone="neutral" icon={Clock} label="Due before filing" className="h-5 px-2 text-[11px]" />
                 </span>
               </span>
-              <span className="flex h-8 items-center rounded-md border px-3 text-xs font-medium">View invoice</span>
+              <span className="flex h-8 shrink-0 items-center rounded-md border px-3 text-xs font-medium whitespace-nowrap">View invoice</span>
             </Card>
           </div>
-          <Card className="hidden gap-4 rounded-xl px-4 py-4 shadow-none sm:flex">
+          <Card className="flex gap-4 rounded-xl px-4 py-4 shadow-none">
             <div className="grid gap-1">
               <span className="text-sm font-semibold">Where your return stands</span>
               <span className="text-xs text-muted-foreground">Step 3 of 8 · Documents</span>
@@ -201,5 +229,6 @@ export function DesktopHome({ preparer, preparerFirst, year }: { preparer: strin
         </div>
       </div>
     </div>
+    </ScaledFrame>
   );
 }
