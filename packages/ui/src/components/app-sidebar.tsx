@@ -5,7 +5,7 @@ import type * as React from "react";
 import { cn } from "../utils";
 import { Avatar, AvatarFallback } from "./avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./dropdown-menu";
-import { Logo, ShieldMark } from "./logo";
+import { Logo, BellMark } from "./logo";
 import { ModeBadge } from "./mode-badge";
 import { ModeToggle } from "./mode-toggle";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
@@ -57,13 +57,13 @@ const initials = (name: string) =>
     .slice(0, 2)
     .join("");
 
-export function AppSidebar({ items, active, renderLink, taxYears, taxYear, onTaxYearChange, user, mode, onSettings, onLogout, subtitle = "Preparer admin" }: AppSidebarProps) {
+export function AppSidebar({ items, active, renderLink, taxYears, taxYear, onTaxYearChange, user, mode, onSettings, onLogout, subtitle }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" data-slot="app-sidebar">
       <SidebarHeader className="gap-3 p-3">
         <div className="flex h-10 items-center px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           <Logo subtitle={subtitle} className="group-data-[collapsible=icon]:hidden" />
-          <ShieldMark className="hidden h-7 group-data-[collapsible=icon]:block" />
+          <BellMark className="hidden size-7 group-data-[collapsible=icon]:block" />
         </div>
         {taxYears && taxYear !== undefined ? (
           <Select value={String(taxYear)} onValueChange={(v) => onTaxYearChange?.(Number(v))}>

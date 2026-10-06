@@ -306,7 +306,7 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
               <div className="grid gap-1.5">
                 <span className="text-sm font-medium">The email they'll get</span>
                 <p className="rounded-lg bg-muted p-4 text-sm leading-relaxed">
-                  Hi {draft.members[0]?.first.trim() || "there"}, {preparerName} invited you to set up your BellTaxPrep account. You'll answer a few questions, upload your tax documents, and see where your return stands, all in one place.
+                  Hi {draft.members[0]?.first.trim() || "there"}, {preparerName} invited you to set up your belltax. account. You'll answer a few questions, upload your tax documents, and see where your return stands, all in one place.
                 </p>
               </div>
             ) : null}

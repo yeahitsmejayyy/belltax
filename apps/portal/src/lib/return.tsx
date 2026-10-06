@@ -38,6 +38,6 @@ export const useReturn = () => React.useContext(Ctx);
 // The browser tab's title for a page.
 export function usePageTitle(title: string) {
   React.useEffect(() => {
-    document.title = `${title} · BellTaxPrep`;
+    document.title = `${title} · belltax.`;
   }, [title]);
 }

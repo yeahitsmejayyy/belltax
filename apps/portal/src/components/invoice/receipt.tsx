@@ -4,7 +4,7 @@ import type * as React from "react";
 import { Banner } from "@app/ui/components/banner";
 import { Button } from "@app/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@app/ui/components/dialog";
-import { ShieldMark } from "@app/ui/components/logo";
+import { BellMark } from "@app/ui/components/logo";
 import { Money } from "@app/ui/components/money";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@app/ui/components/sheet";
 import { Skeleton } from "@app/ui/components/skeleton";
@@ -41,7 +41,7 @@ export function ReceiptDocument({ r }: { r: Receipt }) {
     <article aria-label={`Receipt ${r.receiptNumber}`} className="grid gap-6 rounded-xl border bg-card p-6 text-card-foreground shadow-sm print:border-0 print:p-0 print:shadow-none">
       <header className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <ShieldMark className="h-10" />
+          <BellMark className="size-10" />
           <div className="grid">
             <span className="text-lg font-bold tracking-tight">{p.practiceName}</span>
             <span className="text-sm text-muted-foreground">

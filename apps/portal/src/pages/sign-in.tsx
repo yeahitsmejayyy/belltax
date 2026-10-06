@@ -6,7 +6,7 @@ import { Button } from "@app/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@app/ui/components/dialog";
 import { Input } from "@app/ui/components/input";
 import { Label } from "@app/ui/components/label";
-import { Logo, ShieldLoader } from "@app/ui/components/logo";
+import { Logo, MarkLoader } from "@app/ui/components/logo";
 import { ModeBadge } from "@app/ui/components/mode-badge";
 import { setDemoUser } from "@app/ui/demo";
 
@@ -51,7 +51,7 @@ export default function SignIn() {
             Signing in with a password arrives with your invite.
           </p>
         </form>
-        {users.isLoading ? <ShieldLoader label="Loading" className="py-4" /> : null}
+        {users.isLoading ? <MarkLoader label="Loading" className="py-4" /> : null}
         {demo ? (
           <>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">

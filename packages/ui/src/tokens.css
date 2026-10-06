@@ -1,23 +1,31 @@
 /*
- * BellTaxPrep design tokens, shared by apps/portal, apps/admin and apps/site.
+ * belltax. design tokens, shared by apps/portal, apps/admin and apps/site.
  *
  * Plain CSS custom properties: they work with or without Tailwind. theme.css maps them into Tailwind v4
  * utilities (bg-success-subtle, text-brand-subtle-foreground, rounded-lg, ease-standard…).
  *
- * Source: the Claude Design handoff (.assets/tokens/tokens.css, .assets/README.md and the prototypes in
- * .assets/source/), layered on stock shadcn/ui Neutral (Skelly). The rules behind the numbers are in
- * principles.md at the repo root. Change a value here and every app follows.
+ * Source: the belltax. design handoff (October 2026: tokens/tokens.css and README), layered on stock shadcn/ui
+ * Neutral. Charcoal and chartreuse: light mode is charcoal primary with deep-chartreuse accents, dark mode is
+ * charcoal surfaces with a chartreuse primary. Status colours are separate from the brand and unchanged. The
+ * rules behind the numbers are in principles.md at the repo root. Change a value here and every app follows.
+ *
+ * Fonts are self-hosted (the apps' CSP allows no font CDNs): Space Grotesk for body and UI, Bricolage Grotesque
+ * for headings and the wordmark.
  */
 
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/bricolage-grotesque";
 @import "@fontsource-variable/geist-mono";
 
 :root {
   color-scheme: light;
 
   /* ── Type ───────────────────────────────────────────────────────────── */
-  --font-geist: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-geist-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+  --font-body: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-code: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+  --heading-tracking: -0.04em;
+  --wordmark-tracking: -0.06em;
 
   /* ── Radius: base 12px; sm 8 · md 10 · lg 12 · xl 16 · full ─────────── */
   --radius: 0.75rem;
@@ -36,28 +44,38 @@
   /* ── Sizing ─────────────────────────────────────────────────────────── */
   --touch-target: 44px; /* minimum hit area on phones */
 
-  /* ── Colour: shadcn Neutral base ───────────────────────────────────── */
-  --background: oklch(0.985 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* ── Brand ─────────────────────────────────────────────────────────────
+   * charcoal, chartreuse, and deep chartreuse for chartreuse text on white. The wordmark's period (--wm-dot)
+   * and the mark's period (--dot) are the accent: deep chartreuse / chartreuse on light, the reverse on dark. */
+  --charcoal: oklch(0.22 0 0);
+  --chartreuse: oklch(0.9 0.18 120);
+  --chartreuse-deep: oklch(0.52 0.13 125);
+  --paper: oklch(0.985 0 0);
+  --dot: var(--chartreuse);
+  --wm-dot: var(--chartreuse-deep);
+
+  /* ── Colour: shadcn Neutral, charcoal ink ──────────────────────────── */
+  --background: var(--paper);
+  --foreground: var(--charcoal);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: var(--charcoal);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: var(--charcoal);
   --secondary: oklch(0.94 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  --secondary-foreground: var(--charcoal);
   --muted: oklch(0.94 0 0);
   --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --accent: oklch(0.95 0 0);
+  --accent-foreground: var(--charcoal);
   --border: oklch(0.88 0 0);
   --input: oklch(0.88 0 0);
 
-  /* ── Brand: #3B82F6 in both themes ─────────────────────────────────── */
-  --primary: oklch(0.623 0.214 259.8);
-  --primary-foreground: oklch(0.985 0 0);
-  --ring: oklch(0.623 0.214 259.8);
-  --brand-subtle: oklch(0.955 0.03 259.8);
-  --brand-subtle-foreground: oklch(0.48 0.19 259.8);
+  /* ── Primary: charcoal with white text; the ring and the subtle tints are chartreuse ── */
+  --primary: var(--charcoal);
+  --primary-foreground: oklch(0.98 0 0);
+  --ring: var(--chartreuse-deep);
+  --brand-subtle: oklch(0.95 0.08 120);
+  --brand-subtle-foreground: oklch(0.38 0.1 125);
 
   /* ── Status: solid (icons, bars), subtle (chip fill), foreground (chip text) ── */
   --success: oklch(0.55 0.13 150);
@@ -78,8 +96,8 @@
   --mode-demo-bg: oklch(0.95 0.07 88);
   --mode-demo-fg: oklch(0.42 0.09 65);
 
-  /* ── Charts: brand first, then the status hues ─────────────────────── */
-  --chart-1: oklch(0.623 0.214 259.8);
+  /* ── Charts: brand first (deep chartreuse, charcoal), then the status hues ── */
+  --chart-1: var(--chartreuse-deep);
   --chart-2: oklch(0.55 0.13 150);
   --chart-3: oklch(0.72 0.15 70);
   --chart-4: oklch(0.56 0.12 250);
@@ -87,38 +105,41 @@
 
   /* ── Sidebar (admin) ───────────────────────────────────────────────── */
   --sidebar: oklch(0.97 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.623 0.214 259.8);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-foreground: var(--charcoal);
+  --sidebar-primary: var(--charcoal);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
   --sidebar-accent: oklch(0.94 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-accent-foreground: var(--charcoal);
   --sidebar-border: oklch(0.88 0 0);
-  --sidebar-ring: oklch(0.623 0.214 259.8);
+  --sidebar-ring: var(--chartreuse-deep);
 }
 
 .dark {
   color-scheme: dark;
 
-  --background: oklch(0.135 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.18 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.18 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.245 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.245 0 0);
-  --muted-foreground: oklch(0.63 0 0);
-  --accent: oklch(0.245 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --border: oklch(0.27 0 0);
-  --input: oklch(0.27 0 0);
+  --dot: var(--charcoal);
+  --wm-dot: var(--chartreuse);
 
-  --primary: oklch(0.623 0.214 259.8);
-  --primary-foreground: oklch(0.985 0 0);
-  --ring: oklch(0.623 0.214 259.8);
-  --brand-subtle: oklch(0.27 0.07 259.8);
-  --brand-subtle-foreground: oklch(0.84 0.09 259.8);
+  --background: oklch(0.2 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.245 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.245 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.27 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.27 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.3 0 0);
+  --accent-foreground: oklch(0.98 0 0);
+  --border: oklch(0.32 0 0);
+  --input: oklch(0.32 0 0);
+
+  --primary: var(--chartreuse);
+  --primary-foreground: var(--charcoal);
+  --ring: var(--chartreuse);
+  --brand-subtle: oklch(0.32 0.06 120);
+  --brand-subtle-foreground: var(--chartreuse);
 
   --success: oklch(0.72 0.14 150);
   --success-subtle: oklch(0.28 0.05 150);
@@ -136,20 +157,20 @@
   --mode-demo-bg: oklch(0.33 0.06 80);
   --mode-demo-fg: oklch(0.9 0.1 88);
 
-  --chart-1: oklch(0.623 0.214 259.8);
+  --chart-1: var(--chartreuse);
   --chart-2: oklch(0.72 0.14 150);
   --chart-3: oklch(0.8 0.14 80);
   --chart-4: oklch(0.72 0.11 250);
   --chart-5: oklch(0.556 0 0);
 
-  --sidebar: oklch(0.18 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.623 0.214 259.8);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.245 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.27 0 0);
-  --sidebar-ring: oklch(0.623 0.214 259.8);
+  --sidebar: var(--charcoal);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: var(--chartreuse);
+  --sidebar-primary-foreground: var(--charcoal);
+  --sidebar-accent: oklch(0.3 0 0);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.32 0 0);
+  --sidebar-ring: var(--chartreuse);
 }
 
 /* Motion off means off: transitions and animations finish at once (principles.md, rule 7). */

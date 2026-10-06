@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 
-import { ShieldMark } from "@app/ui/components/logo";
+import { BellMark } from "@app/ui/components/logo";
 
 import { upperFirst, useStartHref } from "@/components/marketing/practice";
 import { useNames } from "@/lib/public";
@@ -13,7 +13,7 @@ export function Cta() {
   return (
     <section id="cta" aria-labelledby="cta-title" className="scroll-mt-16 px-4 pt-10 pb-24 md:px-6">
       <div className="mx-auto flex max-w-[1100px] flex-col items-center gap-4.5 rounded-3xl bg-primary px-5 py-11 text-center text-primary-foreground md:px-6 md:py-16">
-        <ShieldMark className="h-14" />
+        <BellMark className="size-14" />
         <h2 id="cta-title" className="max-w-160 text-[1.75rem] leading-[1.15] font-semibold tracking-tight text-balance md:text-4xl">
           Hand off your taxes this year
         </h2>

@@ -18,10 +18,10 @@ export function BottomTabs({ tabs, active, renderLink, className }: { tabs: Bott
               {renderLink(
                 t,
                 <>
-                  <span className="relative">
+                  <span className={cn("relative flex h-7 w-14 items-center justify-center rounded-full transition-colors", on && "bg-brand-subtle")}>
                     <t.icon aria-hidden="true" className="size-5" />
                     {t.badge ? (
-                      <span className="absolute -top-1.5 -right-2.5 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] leading-4 font-semibold text-primary-foreground tabular-nums">
+                      <span className="absolute -top-1.5 right-1.5 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] leading-4 font-semibold text-primary-foreground tabular-nums">
                         {t.badge}
                       </span>
                     ) : null}
@@ -30,7 +30,7 @@ export function BottomTabs({ tabs, active, renderLink, className }: { tabs: Bott
                 </>,
                 cn(
                   "flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
-                  on ? "text-primary" : "text-muted-foreground",
+                  on ? "font-semibold text-foreground" : "text-muted-foreground",
                 ),
               )}
             </li>

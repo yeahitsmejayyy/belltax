@@ -167,7 +167,7 @@ export const ExpandedTest: Story = {
   },
 };
 
-// Collapsed, the icons, the settings cog and the avatar all sit on the shield's axis (principles.md rule 13).
+// Collapsed, the icons, the settings cog and the avatar all sit on the b. mark's axis (principles.md rule 13).
 export const CollapsedTest: Story = {
   name: "Collapsed to icons · test",
   tags: ["!dev"],
@@ -176,10 +176,10 @@ export const CollapsedTest: Story = {
     const visible = (el: Element) => el.getBoundingClientRect().width > 0;
     const cx = (el: Element) => { const r = el.getBoundingClientRect(); return r.left + r.width / 2; };
     await waitFor(() => {
-      const shield = [...canvasElement.querySelectorAll('[data-sidebar="header"] svg[viewBox="3 1 18 22"]')].find(visible)!;
+      const mark = [...canvasElement.querySelectorAll('[data-sidebar="header"] svg[viewBox="0 0 128 128"]')].find(visible)!;
       const buttons = [...canvasElement.querySelectorAll('[data-sidebar="menu-button"]')].filter(visible);
       expect(buttons).toHaveLength(8); // six nav items, Settings, the user
-      for (const b of buttons) expect(Math.abs(cx(b) - cx(shield))).toBeLessThan(1);
+      for (const b of buttons) expect(Math.abs(cx(b) - cx(mark))).toBeLessThan(1);
     });
   },
 };

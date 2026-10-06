@@ -9,7 +9,7 @@ obvious and hard to get wrong.
 
 ## 1. One primary action per screen
 
-Exactly one filled, brand-blue button per screen: the thing this screen is for (Upload, Sign, Pay, Invite
+Exactly one filled primary button per screen (charcoal in light mode, chartreuse in dark): the thing this screen is for (Upload, Sign, Pay, Invite
 client). Everything else is outline, ghost or a link. If two actions both seem primary, the screen is doing
 two jobs. Split it.
 
@@ -20,10 +20,11 @@ Every gap, padding and margin is a multiple of 4px (Tailwind's `--spacing: 0.25r
 Page gutters are 16px on phones, 24px on tablets and 32px on desktop. Related things sit closer together than
 unrelated things. That's the whole layout system.
 
-## 3. Type scale: Geist, six sizes
+## 3. Type scale: Space Grotesk and Bricolage Grotesque, six sizes
 
-Geist for everything and Geist Mono for numbers that get read aloud (invoice numbers, amounts in tables, codes).
-Both are self-hosted. The security policy only allows fonts from our own origin.
+Space Grotesk for body and UI, Bricolage Grotesque for headings (700–800, tracking −0.04em), and Geist Mono for
+numbers that get read aloud (invoice numbers, amounts in tables, codes). All self-hosted. The security policy
+only allows fonts from our own origin.
 
 | Role | Size / line height | Weight |
 | --- | --- | --- |
@@ -34,7 +35,9 @@ Both are self-hosted. The security policy only allows fonts from our own origin.
 | Page title | 20–24 / 28–32 | 600, tracking −0.025em |
 | Display (portal hero numbers, marketing) | 26–44 | 600–700, tracking −0.025em |
 
-Four weights only: 400, 500, 600, 700. The wordmark is **BellTaxPrep**, one word, Geist 700.
+Body weights: 400, 500, 700. The brand is **belltax.**: lowercase, Bricolage Grotesque 800, tracking −0.06em, and the
+period is the accent (deep chartreuse on light, chartreuse on dark). The mark is **b.** on a rounded square (radius
+25%). Both are outlined paths (`packages/ui/src/brand`), never live text. Tagline: *Taxes Made Easy*.
 
 ## 4. Phones: 44px targets, 16px text
 
@@ -46,7 +49,7 @@ Controls on phones are 44–48px tall.
 
 Body text, including placeholder text we rely on and the text inside chips, meets **4.5:1** against what it sits
 on, in both themes. Large text (24px+, or 19px+ at 600), icons, focus rings and the edges of controls meet
-**3:1**. `packages/ui/src/tokens.test.ts` checks every token pair; see "Open questions" for the two the design
+**3:1**. `packages/ui/src/tokens.test.ts` checks every token pair; see "Open questions" for the one the design
 doesn't meet yet.
 
 ## 6. Status is never colour alone
@@ -75,7 +78,7 @@ The same pill geometry is used for document, invoice and payment status (`StageP
 | `--motion-ease-enter` | cubic-bezier(0, 0, 0.2, 1) | things arriving |
 | `--motion-ease-emphasized` | cubic-bezier(0.2, 0, 0, 1) | pages and sheets settling |
 
-No spring, no overshoot, nothing that loops except a loader (the shield pulses at 1.4s). With reduced motion
+No spring, no overshoot, nothing that loops except a loader (the b. mark pulses at 1.4s). With reduced motion
 turned on, everything finishes instantly (tokens.css enforces it).
 
 ## 8. Radius: 12px base
@@ -112,7 +115,7 @@ as the last four digits, and bank numbers never show in full, in both worlds. Se
 A dialog that isn't full screen sits slightly above centre, on the rule of thirds: the point a third of the way
 down the dialog lines up with a third of the way down the screen (`top: 33%`, `translateY(-33%)`). It feels
 placed rather than dropped, and a tall dialog still never runs off the top. Sheets keep to their edge.
-Aligned things share an axis too: in the collapsed sidebar, every icon is centred under the shield.
+Aligned things share an axis too: in the collapsed sidebar, every icon is centred under the b. mark.
 
 ---
 
@@ -130,14 +133,9 @@ plays an animation you didn't ask for.
 These come from the design handoff's own tokens. They're in `tokens.css` exactly as designed and listed here for a
 decision. `tokens.test.ts` holds them at their current values, so they can't get worse unnoticed.
 
-1. **White text on brand blue: 3.60 : 1 (needs 4.5).** Primary buttons in both themes, and brand-blue text links
-   on the light background (3.60) and on cards (3.76). #3B82F6 is a mid blue, so white on it only passes as
-   large text. Options:
-   - **(a) Recommended:** keep #3B82F6 as the brand colour (logo, focus ring, charts, the subtle tints) but fill
-     buttons and colour links with a deeper step, `oklch(0.546 0.215 262.9)` (#2563EB, Tailwind blue-600).
-     White on it measures 4.95 : 1; as a link it measures 5.17 : 1 on cards and 4.95 : 1 on the page background. It's the deeper stop of the dark-surface logo's own gradient.
-   - (b) Keep the design as is and accept the shortfall for button labels, which are 14px and weight 500 (not
-     large text).
+1. **Resolved by the belltax. palette (October 2026).** White on the old #3B82F6 was 3.60 : 1. The new primary is
+   charcoal with white text in light mode (16.3 : 1) and chartreuse with charcoal text in dark mode (13.3 : 1);
+   the deep-chartreuse focus ring is 5.1 : 1 on the page.
 2. **The warning icon on cards: 2.55 : 1 (needs 3).** The amber `--warning` in light mode, used for the health
    check triangles. Options: draw warning icons with `--warning-foreground` (7.37 : 1 on a card), or darken `--warning` to about `oklch(0.64 0.15 65)` (3.49 : 1). Dark mode passes as is.
 

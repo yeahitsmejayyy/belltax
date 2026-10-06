@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { contrast } from "./contrast";
 
 // principles.md rule 5, enforced on the tokens themselves: every text pair meets 4.5:1 and every
-// icon/UI pair 3:1, in both themes. Two pairs from the design handoff don't yet; they're listed in
+// icon/UI pair 3:1, in both themes. One pair from the design handoff doesn't yet; they're listed in
 // principles.md ("Open questions") and pinned here at their current value so they can't quietly get worse.
 
 const css = readFileSync(join(import.meta.dir, "tokens.css"), "utf8");
@@ -37,11 +37,8 @@ const UI: [string, string][] = [
 ];
 
 // Open questions in principles.md: [theme, fg, bg] → the ratio it measures today.
+// The belltax. palette (charcoal / chartreuse) closed the brand-blue ones; the amber warning icon remains.
 const KNOWN: Record<string, number> = {
-  "light primary-foreground/primary": 3.6,
-  "dark primary-foreground/primary": 3.6,
-  "light primary/background": 3.6,
-  "light primary/card": 3.76,
   "light warning/card": 2.55,
 };
 
@@ -70,8 +67,9 @@ describe("token contrast (principles.md rule 5)", () => {
   });
 });
 
-test("the brand primary is #3B82F6 in both themes, as designed", () => {
-  expect(resolve(light, "primary")).toBe("oklch(0.623 0.214 259.8)");
-  expect(resolve(dark, "primary")).toBe("oklch(0.623 0.214 259.8)");
+test("the belltax. brand: charcoal primary in light, chartreuse in dark, as designed", () => {
+  expect(resolve(light, "primary")).toBe("oklch(0.22 0 0)");
+  expect(resolve(dark, "primary")).toBe("oklch(0.9 0.18 120)");
+  expect(resolve(light, "ring")).toBe("oklch(0.52 0.13 125)");
   expect(light.radius).toBe("0.75rem");
 });

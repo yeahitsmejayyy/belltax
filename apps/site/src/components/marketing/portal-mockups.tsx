@@ -2,7 +2,7 @@ import { Camera, Check, ChevronRight, Clock, Moon, Upload } from "lucide-react";
 import type * as React from "react";
 
 import { Card } from "@app/ui/components/card";
-import { ShieldMark } from "@app/ui/components/logo";
+import { BellMark } from "@app/ui/components/logo";
 import { Money } from "@app/ui/components/money";
 import { Progress } from "@app/ui/components/progress";
 import { DocumentChip, StatusChip, type DocumentChipStatus } from "@app/ui/components/status-chip";
@@ -22,7 +22,7 @@ const TODO: { title: string; status: DocumentChipStatus | "unsigned" }[] = [
 function PortalBar({ compact }: { compact?: boolean }) {
   return (
     <div className={cn("flex items-center gap-2 border-b bg-background", compact ? "h-11 px-3" : "h-12 px-4")}>
-      <ShieldMark className="h-5" />
+      <BellMark className="size-5" />
       <span className="text-[13px] font-bold tracking-tight">BellTaxPrep</span>
       <span className="inline-flex h-5 items-center gap-1 rounded-full bg-mode-demo px-2 text-[11px] font-medium text-mode-demo-foreground">
         <span className="size-1 rounded-full bg-current" />
@@ -154,7 +154,7 @@ export function DesktopHome({ preparer, preparerFirst, year }: { preparer: strin
   return (
     <div className="overflow-hidden rounded-2xl border bg-background text-left shadow-2xl">
       <div className="flex h-11 items-center gap-2 border-b px-4">
-        <ShieldMark className="h-5" />
+        <BellMark className="size-5" />
         <span className="text-[13px] font-bold tracking-tight">BellTaxPrep</span>
         <span className="hidden h-5 items-center gap-1 rounded-full bg-mode-demo px-2 text-[11px] font-medium text-mode-demo-foreground sm:inline-flex">
           <span className="size-1 rounded-full bg-current" />

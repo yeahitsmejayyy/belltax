@@ -1,7 +1,7 @@
 import { ArrowRight, Check, Play } from "lucide-react";
 
 import { Button } from "@app/ui/components/button";
-import { ShieldMark } from "@app/ui/components/logo";
+import { BellMark } from "@app/ui/components/logo";
 
 import { Float } from "@/components/marketing/float";
 import { PhoneDocuments, PhoneFrame, PhoneHome, PhoneLetterSigned } from "@/components/marketing/portal-mockups";
@@ -22,7 +22,7 @@ export function Hero() {
   return (
     <section id="hero" aria-labelledby="hero-title" className="scroll-mt-16 overflow-hidden px-4 pt-11 md:px-6 md:pt-18">
       <div className="mx-auto flex max-w-[1100px] flex-col items-center gap-7 text-center">
-        <ShieldMark className="h-18" />
+        <BellMark className="size-18" />
         <div className="flex max-w-180 flex-col items-center gap-3.5">
           <p className="text-sm font-medium text-pretty text-muted-foreground">
             {where} · Now booking for the {year} tax&nbsp;year

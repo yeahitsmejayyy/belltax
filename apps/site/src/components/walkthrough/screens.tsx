@@ -3,7 +3,7 @@ import { Button } from "@app/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/ui/components/card";
 import { Checkbox } from "@app/ui/components/checkbox";
 import { Input } from "@app/ui/components/input";
-import { Logo, ShieldMark } from "@app/ui/components/logo";
+import { Logo, BellMark } from "@app/ui/components/logo";
 import { Money } from "@app/ui/components/money";
 import { Progress } from "@app/ui/components/progress";
 import { StagePill } from "@app/ui/components/stage-pill";
@@ -64,7 +64,7 @@ export function ScreenStage({ children }: { children: React.ReactNode }) {
 function Invite({ names }: { names: Names }) {
   return (
     <div className="grid gap-6 px-6 pt-24">
-      <ShieldMark className="h-12 justify-self-start" />
+      <BellMark className="size-12 justify-self-start" />
       <div className="grid gap-2">
         <p className="text-sm text-muted-foreground">Invitation from {names.practice}</p>
         <h1 className="text-3xl font-semibold tracking-tight">{cap(names.preparer)} invited you to set up your account</h1>

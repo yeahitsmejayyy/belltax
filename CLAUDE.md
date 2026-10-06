@@ -48,8 +48,10 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   Frontends type against a **committed copy** of the contract (`src/lib/app-router.d.ts`), never server source.
   After changing any procedure run `bun run sync:types`; `contract.test.ts` fails while a copy is stale.
   Demo identity is a per-app cookie (`btp_demo_portal` / `btp_demo_admin`): browsers share cookies across ports.
-- `packages/ui` — the design system both apps share. `tokens.css` holds every value (colour light/dark, Geist
-  self-hosted, radius, motion). `theme.css` maps them to Tailwind v4 utilities. There are also brand marks, `cn`, and the demo
+- `packages/ui` — the design system both apps share. `tokens.css` holds every value (the belltax. palette, charcoal and
+  chartreuse, light/dark; Space Grotesk body and Bricolage Grotesque headings, self-hosted; radius, motion). The brand
+  is the outlined b. mark and belltax. wordmark (`BellMark`, `Wordmark`, `Logo` in `components/logo.tsx`; SVGs and favicons
+  from `src/brand/`). `theme.css` maps them to Tailwind v4 utilities. There are also brand marks, `cn`, and the demo
   identity helpers. The rules behind the values: `principles.md` (root); `tokens.test.ts` enforces its contrast rule.
   Design references: `.assets/` (gitignored), starting with its README and manifest. Shared components live in
   `packages/ui/src/components` (shadcn primitives plus the product pieces: StagePill, StatusChip, DataTable, Chart, Logo,

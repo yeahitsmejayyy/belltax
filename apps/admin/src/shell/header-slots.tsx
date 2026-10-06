@@ -20,6 +20,6 @@ export function usePageTitle(title: string, parent?: { label: string; to: string
   const pt = parent?.to;
   React.useEffect(() => {
     set({ title, parent: pl && pt ? { label: pl, to: pt } : undefined });
-    document.title = `${title} · BellTaxPrep admin`;
+    document.title = `${title} · belltax. admin`;
   }, [set, title, pl, pt]);
 }

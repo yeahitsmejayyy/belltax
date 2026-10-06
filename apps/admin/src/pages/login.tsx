@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "@app/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/ui/components/card";
-import { Logo, ShieldLoader } from "@app/ui/components/logo";
+import { Logo, MarkLoader } from "@app/ui/components/logo";
 import { ModeBadge } from "@app/ui/components/mode-badge";
 import { setDemoUser } from "@app/ui/demo";
 
@@ -24,7 +24,7 @@ export default function Login() {
           <CardDescription>Email and password arrive with sign-in. For the demo, choose who to be.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          {users.isLoading ? <ShieldLoader label="Loading" className="py-6" /> : null}
+          {users.isLoading ? <MarkLoader label="Loading" className="py-6" /> : null}
           {users.error ? <p className="text-sm text-muted-foreground">Sign-in arrives with auth. There's no demo sign-in in live mode.</p> : null}
           {preparers.map((u) => (
             <Button

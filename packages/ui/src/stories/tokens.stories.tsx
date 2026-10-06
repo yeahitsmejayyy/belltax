@@ -106,7 +106,7 @@ export const RadiusAndMotion: StoryObj = {
         ))}
       </div>
       <div className="flex flex-wrap justify-center gap-4">
-        {["animate-page", "animate-slide", "animate-shield-pulse"].map((a) => (
+        {["animate-page", "animate-slide", "animate-mark-pulse"].map((a) => (
           <div key={a} className={`flex h-16 w-44 items-center justify-center rounded-lg bg-brand-subtle font-mono text-xs text-brand-subtle-foreground ${a}`}>
             {a}
           </div>

@@ -12,8 +12,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-geist);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
+  --font-mono: var(--font-code);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -46,6 +47,11 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  --color-chartreuse: var(--chartreuse);
+  --color-chartreuse-deep: var(--chartreuse-deep);
+  --color-charcoal: var(--charcoal);
+  --color-dot: var(--dot);
+  --color-wm-dot: var(--wm-dot);
   --color-brand-subtle: var(--brand-subtle);
   --color-brand-subtle-foreground: var(--brand-subtle-foreground);
   --color-success: var(--success);
@@ -78,11 +84,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* The prototypes' entrance motions: pages rise, lists slide, sheets come up, the shield pulses. */
+  /* The prototypes' entrance motions: pages rise, lists slide, sheets come up, the b. mark pulses. */
   --animate-page: btp-page var(--motion-base) var(--motion-ease-emphasized) both;
   --animate-slide: btp-slide 320ms var(--motion-ease-emphasized) both;
   --animate-sheet: btp-sheet var(--motion-slow) var(--motion-ease-emphasized) both;
-  --animate-shield-pulse: btp-pulse 1400ms var(--motion-ease-standard) infinite;
+  --animate-mark-pulse: btp-pulse 1400ms var(--motion-ease-standard) infinite;
 
   @keyframes btp-page {
     from { opacity: 0; transform: translateY(6px); }
@@ -111,7 +117,11 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: "cv11", "ss01";
+  }
+  /* Headings: Bricolage Grotesque, tight (the handoff's -0.04em). */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: var(--heading-tracking);
   }
   /* Rule 9: no widows or orphans. */
   h1, h2, h3, h4, h5, h6 {

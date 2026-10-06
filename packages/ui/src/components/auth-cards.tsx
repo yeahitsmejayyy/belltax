@@ -6,7 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import { Banner } from "./banner";
 import { Button } from "./button";
 import { Input } from "./input";
-import { ShieldMark } from "./logo";
+import { BellMark } from "./logo";
 
 // The portal's way in (portal 01-access-invite, 02-access-setpw, 04-access-expired). Presentational: props in,
 // callbacks out. The routes and sessions arrive with real sign-in (ticket 05).
@@ -33,7 +33,7 @@ export function InviteWelcome({
 }) {
   return (
     <section data-slot="invite-welcome" aria-labelledby="invite-title" className={cn("grid w-full max-w-sm gap-6", className)}>
-      <ShieldMark className="h-12 justify-self-start" />
+      <BellMark className="size-12 justify-self-start" />
       <div className="grid gap-2">
         <p className="text-sm text-muted-foreground">Invitation from {practiceName}</p>
         <h1 id="invite-title" className="text-3xl font-semibold tracking-tight text-balance">
