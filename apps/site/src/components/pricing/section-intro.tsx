@@ -6,7 +6,7 @@ export function SectionIntro({ id, eyebrow, title, children }: { id: string; eye
   return (
     <div className="mx-auto grid max-w-2xl justify-items-center gap-3 text-center">
       <span className="text-sm font-semibold text-brand-subtle-foreground">{eyebrow}</span>
-      <h2 id={id} className="text-[28px] leading-tight font-semibold tracking-tight text-balance md:text-4xl">{title}</h2>
+      <h2 id={id} className="text-[28px] leading-tight font-bold text-balance md:text-4xl">{title}</h2>
       {children ? <p className="text-[17px] leading-relaxed text-pretty text-muted-foreground">{children}</p> : null}
     </div>
   );

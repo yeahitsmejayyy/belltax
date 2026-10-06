@@ -36,7 +36,7 @@ export function useNames() {
   const { practice } = usePublic();
   const preparer = practice?.preparerName ?? "your preparer";
   return {
-    practice: practice?.practiceName ?? "BellTaxPrep",
+    practice: practice?.practiceName ?? "belltax.",
     preparer,
     preparerFirst: practice ? preparer.split(/\s+/)[0]! : "your preparer",
     city: practice?.city ?? null,

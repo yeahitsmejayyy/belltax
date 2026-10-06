@@ -2,7 +2,7 @@ import { ArrowRight, CircleQuestionMark, House, ListChecks, Lock, Menu, ReceiptT
 
 import { Button } from "@app/ui/components/button";
 import { FloatingActionMenu } from "@app/ui/components/floating-action-menu";
-import { Logo } from "@app/ui/components/logo";
+import { Wordmark } from "@app/ui/components/logo";
 import { ModeToggle } from "@app/ui/components/mode-toggle";
 
 import { useStartHref } from "@/components/marketing/practice";
@@ -25,8 +25,8 @@ export function Header() {
     <>
       <header className="sticky top-0 z-30 border-b bg-background">
         <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-2 px-4 md:gap-4 md:px-6">
-          <a href="#main" aria-label="BellTaxPrep, back to top" className="flex min-h-11 shrink-0 items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-            <Logo />
+          <a href="#main" aria-label="belltax., back to top" className="flex min-h-11 shrink-0 items-center rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+            <Wordmark className="h-6" />
           </a>
           <nav aria-label="Sections" className="hidden flex-1 justify-center gap-1 md:flex">
             {NAV.map((n) => (

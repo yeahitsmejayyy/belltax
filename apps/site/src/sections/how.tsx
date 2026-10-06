@@ -27,7 +27,7 @@ export function How() {
       <div className="mx-auto grid max-w-6xl gap-10">
         <div className="mx-auto grid max-w-xl justify-items-center gap-3 text-center">
           <p className="text-sm font-semibold text-primary">How it works</p>
-          <h2 id="how-title" className="text-[28px] leading-tight font-semibold tracking-tight md:text-4xl">
+          <h2 id="how-title" className="text-[28px] leading-tight font-bold md:text-4xl">
             Five steps, all from your&nbsp;phone
           </h2>
           <p className="text-[17px] leading-relaxed text-muted-foreground">This is the portal, with sample data. Watch it play, or pick a&nbsp;step.</p>

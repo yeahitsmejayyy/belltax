@@ -17,7 +17,7 @@ export function SectionHeading({ id, eyebrow, title, lead, className }: { id: st
   return (
     <div className={cn("grid max-w-160 gap-3", className)}>
       <p className="text-sm font-semibold text-brand-subtle-foreground">{eyebrow}</p>
-      <h2 id={`${id}-title`} className="text-[1.75rem] leading-[1.15] font-semibold tracking-tight text-balance md:text-4xl">
+      <h2 id={`${id}-title`} className="text-[1.75rem] leading-[1.15] font-bold text-balance md:text-4xl">
         {title}
       </h2>
       {lead ? <p className="text-[1.0625rem] leading-relaxed text-pretty text-muted-foreground">{lead}</p> : null}

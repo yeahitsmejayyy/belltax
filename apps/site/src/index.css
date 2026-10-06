@@ -15,3 +15,8 @@ html {
     scroll-behavior: smooth;
   }
 }
+
+/* Buttons on the marketing site are pills (handoff README). Unlayered, so it outranks the component's radius. */
+[data-slot="button"] {
+  border-radius: 9999px;
+}

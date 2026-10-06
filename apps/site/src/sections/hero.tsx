@@ -1,7 +1,6 @@
 import { ArrowRight, Check, Play } from "lucide-react";
 
 import { Button } from "@app/ui/components/button";
-import { BellMark } from "@app/ui/components/logo";
 
 import { Float } from "@/components/marketing/float";
 import { PhoneDocuments, PhoneFrame, PhoneHome, PhoneLetterSigned } from "@/components/marketing/portal-mockups";
@@ -22,13 +21,12 @@ export function Hero() {
   return (
     <section id="hero" aria-labelledby="hero-title" className="scroll-mt-16 overflow-hidden px-4 pt-11 md:px-6 md:pt-18">
       <div className="mx-auto flex max-w-[1100px] flex-col items-center gap-7 text-center">
-        <BellMark className="size-18" />
         <div className="flex max-w-180 flex-col items-center gap-3.5">
           <p className="text-sm font-medium text-pretty text-muted-foreground">
             {where} · Now booking for the {year} tax&nbsp;year
           </p>
-          <h1 id="hero-title" className="text-[2.375rem] leading-[1.08] font-semibold tracking-[-0.03em] text-balance md:text-6xl">
-            Taxes, done right.
+          <h1 id="hero-title" className="text-[2.75rem] leading-[1.02] font-extrabold text-balance md:text-7xl">
+            Taxes Made Easy.
           </h1>
           <p className="max-w-140 text-[1.0625rem] leading-relaxed text-pretty text-muted-foreground md:text-lg">
             Federal and {region ?? "state"} returns, prepared and e-filed by {preparer}. Share your documents from your phone and follow every&nbsp;step.

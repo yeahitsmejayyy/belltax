@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 
-import { BellMark } from "@app/ui/components/logo";
+import { Wordmark } from "@app/ui/components/logo";
 
 import { upperFirst, useStartHref } from "@/components/marketing/practice";
 import { useNames } from "@/lib/public";
@@ -12,9 +12,10 @@ export function Cta() {
   const start = useStartHref();
   return (
     <section id="cta" aria-labelledby="cta-title" className="scroll-mt-16 px-4 pt-10 pb-24 md:px-6">
-      <div className="mx-auto flex max-w-[1100px] flex-col items-center gap-4.5 rounded-3xl bg-primary px-5 py-11 text-center text-primary-foreground md:px-6 md:py-16">
-        <BellMark className="size-14" />
-        <h2 id="cta-title" className="max-w-160 text-[1.75rem] leading-[1.15] font-semibold tracking-tight text-balance md:text-4xl">
+      {/* Always the charcoal band with a chartreuse button (marketing 11): the dark tokens, in either theme. */}
+      <div className="dark mx-auto flex max-w-[1100px] flex-col items-center gap-4.5 rounded-3xl bg-charcoal px-5 py-11 text-center text-foreground md:px-6 md:py-16">
+        <Wordmark className="h-10" />
+        <h2 id="cta-title" className="max-w-160 text-[1.75rem] leading-[1.15] font-bold text-balance md:text-4xl">
           Hand off your taxes this year
         </h2>
         <p className="max-w-130 text-[1.0625rem] leading-relaxed font-medium text-pretty">
@@ -22,7 +23,7 @@ export function Cta() {
         </p>
         <a
           href={start}
-          className="inline-flex h-12 items-center gap-2 rounded-md bg-primary-foreground px-6 text-base font-semibold text-foreground transition-colors duration-150 ease-standard hover:bg-primary-foreground/90 focus-visible:ring-[3px] focus-visible:ring-primary-foreground/60 focus-visible:outline-none dark:text-background"
+          className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground transition-colors duration-150 ease-standard hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none"
         >
           Get started <ArrowRight aria-hidden="true" className="size-4" />
         </a>

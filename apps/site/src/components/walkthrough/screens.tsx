@@ -67,7 +67,7 @@ function Invite({ names }: { names: Names }) {
       <BellMark className="size-12 justify-self-start" />
       <div className="grid gap-2">
         <p className="text-sm text-muted-foreground">Invitation from {names.practice}</p>
-        <h1 className="text-3xl font-semibold tracking-tight">{cap(names.preparer)} invited you to set up your account</h1>
+        <h1 className="text-3xl font-bold">{cap(names.preparer)} invited you to set up your account</h1>
         <p className="text-muted-foreground">This is where you'll answer a few questions, upload your tax documents, and see where your return stands.</p>
       </div>
       <div className="grid gap-4 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
@@ -93,7 +93,7 @@ function Password({ filled, pending }: { filled: boolean; pending: boolean }) {
   return (
     <div className="grid gap-6 px-6 pt-24">
       <div className="grid gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Create a password</h1>
+        <h1 className="text-3xl font-bold">Create a password</h1>
         <p className="text-muted-foreground">
           You'll use it with <span className="text-foreground">{CLIENT.email}</span> to sign in.
         </p>
@@ -179,7 +179,7 @@ function Shell({ tab, badges, toast, children }: { tab: Tab; badges: Partial<Rec
   );
 }
 
-const PageTitle = ({ children }: { children: React.ReactNode }) => <h1 className="text-3xl font-semibold tracking-tight">{children}</h1>;
+const PageTitle = ({ children }: { children: React.ReactNode }) => <h1 className="text-3xl font-bold">{children}</h1>;
 
 function Home({ names }: { names: Names }) {
   return (

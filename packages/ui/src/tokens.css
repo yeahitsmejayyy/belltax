@@ -45,14 +45,17 @@
   --touch-target: 44px; /* minimum hit area on phones */
 
   /* ── Brand ─────────────────────────────────────────────────────────────
-   * charcoal, chartreuse, and deep chartreuse for chartreuse text on white. The wordmark's period (--wm-dot)
-   * and the mark's period (--dot) are the accent: deep chartreuse / chartreuse on light, the reverse on dark. */
+   * charcoal, chartreuse, and deep chartreuse for chartreuse text on white. The two periods (the mark's --dot and
+   * the wordmark's --wm-dot) are one green in light mode, lime: readable on the white page (3.1 : 1) and on the
+   * charcoal tile (5.4 : 1), where chartreuse vanishes on white and deep chartreuse goes dull on the tile.
+   * Dark mode: charcoal on the chartreuse tile, chartreuse after the wordmark. */
   --charcoal: oklch(0.22 0 0);
   --chartreuse: oklch(0.9 0.18 120);
   --chartreuse-deep: oklch(0.52 0.13 125);
+  --lime: oklch(0.64 0.18 122);
   --paper: oklch(0.985 0 0);
-  --dot: var(--chartreuse);
-  --wm-dot: var(--chartreuse-deep);
+  --dot: var(--lime);
+  --wm-dot: var(--lime);
 
   /* ── Colour: shadcn Neutral, charcoal ink ──────────────────────────── */
   --background: var(--paper);

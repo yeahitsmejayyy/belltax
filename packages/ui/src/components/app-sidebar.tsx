@@ -42,10 +42,13 @@ type AppSidebarProps = {
   subtitle?: string;
 };
 
+// Each tone keeps its own text colour on hover and on the active page too: the sidebar's badge otherwise switches to
+// the accent foreground there (white in dark mode), which on the chartreuse badge measured about 1.3 : 1.
 const COUNT_TONE: Record<NonNullable<NavItem["countTone"]>, string> = {
-  neutral: "bg-sidebar-accent text-muted-foreground",
-  brand: "bg-primary text-primary-foreground",
-  danger: "bg-destructive text-white",
+  neutral: "bg-sidebar-accent text-muted-foreground peer-hover/menu-button:text-muted-foreground peer-data-[active=true]/menu-button:text-muted-foreground",
+  brand: "bg-primary text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground",
+  // Dark mode's red is lighter, so its count is charcoal there (white measured 2.89 : 1; charcoal 5.99 : 1).
+  danger: "bg-destructive text-white peer-hover/menu-button:text-white peer-data-[active=true]/menu-button:text-white dark:text-charcoal dark:peer-hover/menu-button:text-charcoal dark:peer-data-[active=true]/menu-button:text-charcoal",
 };
 
 const initials = (name: string) =>

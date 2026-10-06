@@ -6,8 +6,8 @@ import { cn } from "../utils";
 // The belltax. brand (handoff, October 2026): the "b." mark on a rounded square (radius 25%) and the lowercase
 // "belltax." wordmark in Bricolage Grotesque 800 at -0.06em. The period is the accent. Outlined paths (brand/glyphs.ts),
 // so they need no font to load; colours come from the tokens and follow the theme:
-//   mark, light: charcoal tile, white b, chartreuse dot · dark: chartreuse tile, charcoal b.
-//   wordmark, light: charcoal, deep-chartreuse dot · dark: white, chartreuse dot.
+//   mark, light: charcoal tile, white b, lime dot · dark: chartreuse tile, charcoal b.
+//   wordmark, light: charcoal, lime dot · dark: white, chartreuse dot. One green for both periods in light (--dot, --wm-dot).
 
 const MARK_SIZE = 0.92; // the handoff sets the b. at 92 on a 128 tile
 const markShift = `translate(${64 - (MARK.box.x + MARK.box.w / 2) * MARK_SIZE} 94) scale(${MARK_SIZE})`;
@@ -19,7 +19,7 @@ export function BellMark({ className, title, ...props }: React.ComponentProps<"s
       <rect width="128" height="128" rx="32" className="fill-charcoal dark:fill-chartreuse" />
       <g transform={markShift}>
         <path d={MARK.letters} className="fill-white dark:fill-charcoal" />
-        <path d={MARK.dot} className="fill-chartreuse dark:fill-charcoal" />
+        <path d={MARK.dot} className="fill-dot" />
       </g>
     </svg>
   );
@@ -39,8 +39,8 @@ export function Wordmark({ className, title, ...props }: React.ComponentProps<"s
 
 // The lockup: mark + wordmark, with an optional line underneath ("Preparer admin").
 export function Logo({ subtitle, className, size = "md" }: { subtitle?: string; className?: string; size?: "sm" | "md" | "lg" }) {
-  const mark = { sm: "size-7", md: "size-9", lg: "size-12" }[size];
-  const word = { sm: "h-5", md: "h-6", lg: "h-8" }[size];
+  const mark = { sm: "size-6", md: "size-9", lg: "size-12" }[size];
+  const word = { sm: "h-4", md: "h-5", lg: "h-8" }[size];
   return (
     <span data-slot="logo" className={cn("inline-flex items-center gap-2", className)}>
       <BellMark className={cn(mark, "rounded-[25%]")} />
