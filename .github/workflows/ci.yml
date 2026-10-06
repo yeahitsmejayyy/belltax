@@ -47,7 +47,7 @@ jobs:
       - name: Test
         run: bun test
 
-      - name: Build portal and admin
+      - name: Build portal, admin and site
         run: bun run build
 
       # The design system: every story renders in Chromium, its play function runs, and axe checks it

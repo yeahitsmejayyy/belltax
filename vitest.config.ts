@@ -6,6 +6,9 @@ import { defineConfig } from "vitest/config";
 // Storybook interaction tests (bun run test:storybook): every story renders in real Chromium and its
 // play function runs. Kept apart from `bun test`, which runs the server and schema suites.
 export default defineConfig({
+  // Pre-bundle what Vite would otherwise discover mid-run on a cold start (as on CI): it reloads the page under the
+  // tests and whole files fail with "failed to find the current suite". Vitest names the culprits when it happens.
+  optimizeDeps: { include: ["react/jsx-dev-runtime"] },
   test: {
     projects: [
       {
