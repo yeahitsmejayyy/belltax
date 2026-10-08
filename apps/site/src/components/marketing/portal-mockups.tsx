@@ -53,12 +53,12 @@ function TodoList({ rows = TODO }: { rows?: typeof TODO }) {
   );
 }
 
-function NeedsYou({ preparerFirst, rows }: { preparerFirst: string; rows?: typeof TODO }) {
+function NeedsYou({ rows }: { rows?: typeof TODO }) {
   return (
     <Card className="gap-3 rounded-xl px-4 py-4 shadow-none">
       <div className="grid gap-1">
         <span className="text-sm font-semibold">{(rows ?? TODO).length} things need you</span>
-        <span className="text-xs text-muted-foreground">Start with the first one. {preparerFirst} is notified as each is done.</span>
+        <span className="text-xs text-muted-foreground">Start with the first one. Your tax agent is notified as each is done.</span>
       </div>
       <TodoList rows={rows} />
     </Card>
@@ -77,7 +77,7 @@ export function PhoneFrame({ className, children }: { className?: string; childr
   );
 }
 
-export function PhoneHome({ preparer, preparerFirst, year }: { preparer: string; preparerFirst: string; year: number }) {
+export function PhoneHome({ agent, year }: { agent: string; year: number }) {
   return (
     <>
       <PortalBar />
@@ -85,10 +85,10 @@ export function PhoneHome({ preparer, preparerFirst, year }: { preparer: string;
         <div className="grid gap-1">
           <span className="text-xl font-semibold tracking-tight">Hi, Jordan</span>
           <span className="text-xs text-muted-foreground">
-            Your {year} tax return · prepared by {preparer}
+            Your {year} tax return · prepared by {agent}
           </span>
         </div>
-        <NeedsYou preparerFirst={preparerFirst} />
+        <NeedsYou />
       </div>
     </>
   );
@@ -177,7 +177,7 @@ function ScaledFrame({ width, children }: { width: number; children: React.React
 }
 
 // The desktop portal home (marketing 04): what the client sees, step 3 of 8. Always the desktop layout, scaled.
-export function DesktopHome({ preparer, preparerFirst, year }: { preparer: string; preparerFirst: string; year: number }) {
+export function DesktopHome({ agent, year }: { agent: string; year: number }) {
   return (
     <ScaledFrame width={760}>
     <div className="overflow-hidden rounded-2xl border bg-background text-left shadow-2xl">
@@ -202,15 +202,15 @@ export function DesktopHome({ preparer, preparerFirst, year }: { preparer: strin
         <div className="grid gap-1">
           <span className="text-lg font-semibold tracking-tight">Hi, Jordan</span>
           <span className="text-xs text-muted-foreground">
-            Your {year} tax return · prepared by {preparer}
+            Your {year} tax return · prepared by {agent}
           </span>
         </div>
         <div className="grid grid-cols-2 items-start gap-4">
           <div className="grid gap-4">
-            <NeedsYou preparerFirst={preparerFirst} />
+            <NeedsYou />
             <Card className="flex-row items-center gap-3 rounded-xl px-4 py-3 shadow-none">
               <span className="grid flex-1 gap-1">
-                <span className="text-[11px] text-muted-foreground">Invoice from {preparerFirst}</span>
+                <span className="text-[11px] text-muted-foreground">Invoice from your tax agent</span>
                 <span className="flex flex-wrap items-center gap-2">
                   <Money cents={28500} className="text-sm font-semibold" />
                   <StatusChip tone="neutral" icon={Clock} label="Due before filing" className="h-5 px-2 text-[11px]" />

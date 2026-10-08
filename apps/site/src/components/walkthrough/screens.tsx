@@ -35,9 +35,7 @@ import type { View } from "./script";
 // The portal screens the phone plays (portal mobile 01-02, 05, 13, 14, 17, 19), drawn at 390 × 844 from the
 // shared components with invented data. Static: the script sets the state, nothing here is interactive.
 
-type Names = { practice: string; preparer: string; preparerFirst: string };
-
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+type Names = { brand: string; agent: string; Agent: string };
 
 export function PhoneScreen({ view, names }: { view: View; names: Names }) {
   switch (view.screen) {
@@ -66,8 +64,8 @@ function Invite({ names }: { names: Names }) {
     <div className="grid gap-6 px-6 pt-24">
       <BellMark className="size-12 justify-self-start" />
       <div className="grid gap-2">
-        <p className="text-sm text-muted-foreground">Invitation from {names.practice}</p>
-        <h1 className="text-3xl font-bold">{cap(names.preparer)} invited you to set up your account</h1>
+        <p className="text-sm text-muted-foreground">Invitation from {names.brand}</p>
+        <h1 className="text-3xl font-bold">{names.Agent} invited you to set up your account</h1>
         <p className="text-muted-foreground">This is where you'll answer a few questions, upload your tax documents, and see where your return stands.</p>
       </div>
       <div className="grid gap-4 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
@@ -81,7 +79,7 @@ function Invite({ names }: { names: Names }) {
       </div>
       <p className="flex items-start gap-2 text-sm text-muted-foreground">
         <ShieldCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-        Your documents are encrypted and only {names.preparerFirst} can see them. This invite link works once and expires in 7 days.
+        Your documents are encrypted and only {names.agent} can see them. This invite link works once and expires in 7 days.
       </p>
     </div>
   );
@@ -188,7 +186,7 @@ function Home({ names }: { names: Names }) {
         <div className="grid gap-2">
           <PageTitle>Hi, {CLIENT.first}</PageTitle>
           <p className="text-muted-foreground">
-            Your {CLIENT.taxYear} tax return · prepared by {names.preparer}
+            Your {CLIENT.taxYear} tax return · prepared by {names.agent}
           </p>
           <div className="flex items-center gap-3">
             <StagePill stage="documents" />
@@ -199,7 +197,7 @@ function Home({ names }: { names: Names }) {
         <Card className="gap-4 py-5">
           <CardHeader className="px-5">
             <CardTitle className="text-lg">{NEEDS.length} things need you</CardTitle>
-            <CardDescription>Start with the first one. {cap(names.preparerFirst)} is notified as each is done.</CardDescription>
+            <CardDescription>Start with the first one. {names.Agent} is notified as each is done.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 px-5">
             <ul className="divide-y rounded-lg border">
@@ -227,7 +225,7 @@ function Documents({ upload, names }: { upload: "idle" | "uploading" | "done"; n
   const accepted = 1;
   const needed = upload === "done" ? 2 : 3;
   return (
-    <Shell tab="documents" badges={{ documents: needed, letter: 1 }} toast={upload === "done" ? `Uploaded. ${cap(names.preparerFirst)} will check it.` : undefined}>
+    <Shell tab="documents" badges={{ documents: needed, letter: 1 }} toast={upload === "done" ? `Uploaded. ${names.Agent} will check it.` : undefined}>
       <div className="grid gap-5">
         <div className="grid gap-2">
           <PageTitle>Documents</PageTitle>
@@ -255,7 +253,7 @@ function Documents({ upload, names }: { upload: "idle" | "uploading" | "done"; n
           )}
         </div>
         <div className="grid gap-3">
-          <h2 className="text-sm text-muted-foreground">{cap(names.preparerFirst)} asked for</h2>
+          <h2 className="text-sm text-muted-foreground">{names.Agent} asked for</h2>
           <ul className="divide-y rounded-xl border bg-card">
             {REQUESTS.map((r, i) => (
               <li key={r.title} className="flex items-start gap-3 p-4">
@@ -282,12 +280,12 @@ function Letter({ signed, names }: { signed: boolean; names: Names }) {
       <div className="grid gap-5">
         <div className="grid gap-2">
           <PageTitle>Engagement letter</PageTitle>
-          <p className="text-muted-foreground">This explains what {names.preparerFirst} will do for you and what it costs. Read it, then sign below.</p>
+          <p className="text-muted-foreground">This explains what {names.agent} will do for you and what it costs. Read it, then sign below.</p>
         </div>
         <div className="grid h-52 content-start gap-3 overflow-hidden rounded-xl border bg-card p-5 text-sm">
           <h2 className="text-base font-semibold">Tax year {CLIENT.taxYear} engagement letter</h2>
           <p className="text-muted-foreground">
-            Between {names.preparer} ({names.practice}) and {CLIENT.full}.
+            Between {names.brand} and {CLIENT.full}.
           </p>
           <h3 className="font-semibold">What I'll do</h3>
           <p>Prepare your {CLIENT.taxYear} federal and California income tax returns from the information and documents you give me, and e-file them once you approve.</p>
@@ -367,7 +365,7 @@ function Invoice({ paid, saved, names }: { paid: "no" | "processing" | "yes"; sa
               </Button>
               <p className="flex items-start gap-2 text-sm text-muted-foreground">
                 <Lock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-                You'll pay on Stripe's secure checkout page. {names.practice} never sees your card number.
+                You'll pay on Stripe's secure checkout page. {names.brand} never sees your card number.
               </p>
             </>
           )}

@@ -1,18 +1,17 @@
 import { Check } from "lucide-react";
 
 import { DesktopHome } from "@/components/marketing/portal-mockups";
-import { bookingYear, upperFirst } from "@/components/marketing/practice";
+import { bookingYear } from "@/components/marketing/practice";
 import { Section, SectionHeading } from "@/components/marketing/section";
 import { useNames } from "@/lib/public";
 
-// The solution (marketing 04): one preparer, one portal. The screenshot is the portal home drawn in HTML
+// The solution (marketing 04): your personal tax agent, one portal. The screenshot is the portal home drawn in HTML
 // with invented data, read out as a single image.
 
 export function Solution() {
-  const { practice, preparer, preparerFirst } = useNames();
-  const who = upperFirst(preparerFirst);
+  const { brand, agent, Agent } = useNames();
   const points = [
-    { title: "A real preparer, every time", body: `${who} prepares your return personally. No hand-offs, no call center.` },
+    { title: "A real tax agent, every time", body: `${Agent} prepares your return from start to finish. No hand-offs, no call center.` },
     { title: "Status you can see", body: "Your portal shows each stage, from intake to filed, and anything waiting on you." },
     { title: "The price before the work", body: "Flat pricing by filing status. Your invoice is in the portal before anything is filed." },
   ];
@@ -24,8 +23,8 @@ export function Solution() {
           <SectionHeading
             id="solution"
             eyebrow="The solution"
-            title={<>One preparer who knows your return, and one place to see&nbsp;it</>}
-            lead={<>{practice} is a one-person practice. {who} prepares every return, and your private portal shows you exactly where yours&nbsp;stands.</>}
+            title={<>Your personal tax agent, and one place to see&nbsp;it&nbsp;all</>}
+            lead={<>{brand} pairs you with a personal tax agent who prepares your return, and your private portal shows you exactly where it&nbsp;stands. All from your&nbsp;phone.</>}
           />
           <ul className="mt-2 grid gap-3.5">
             {points.map((p) => (
@@ -42,7 +41,7 @@ export function Solution() {
           </ul>
         </div>
         <figure role="img" aria-label="A sample client portal home: four things the client still needs to do, an invoice, and the return at step 3 of 8, Documents.">
-          <DesktopHome preparer={preparer} preparerFirst={preparerFirst} year={bookingYear() - 1} />
+          <DesktopHome agent={agent} year={bookingYear() - 1} />
         </figure>
       </div>
     </Section>

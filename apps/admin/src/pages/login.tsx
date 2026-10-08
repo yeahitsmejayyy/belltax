@@ -25,7 +25,16 @@ export default function Login() {
         </CardHeader>
         <CardContent className="grid gap-3">
           {users.isLoading ? <MarkLoader label="Loading" className="py-6" /> : null}
-          {users.error ? <p className="text-sm text-muted-foreground">Sign-in arrives with auth. There's no demo sign-in in live mode.</p> : null}
+          {/* NOT_FOUND is the server saying "live mode, no demo"; anything else means it isn't answering at all. */}
+          {users.error?.data?.code === "NOT_FOUND" ? <p className="text-sm text-muted-foreground">Sign-in arrives with auth. There's no demo sign-in in live mode.</p> : null}
+          {users.error && users.error.data?.code !== "NOT_FOUND" ? (
+            <div className="grid gap-3 text-center">
+              <p className="text-sm text-muted-foreground">Can't reach the server. Is it running (<code className="font-mono text-xs">bun run dev</code>)?</p>
+              <Button variant="outline" size="touch" onClick={() => users.refetch()}>
+                Try again
+              </Button>
+            </div>
+          ) : null}
           {preparers.map((u) => (
             <Button
               key={u.id}

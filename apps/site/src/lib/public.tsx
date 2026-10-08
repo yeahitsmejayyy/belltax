@@ -31,14 +31,19 @@ export function PublicProvider({ children }: { children: React.ReactNode }) {
 
 export const usePublic = () => React.useContext(Ctx);
 
-// Names the copy uses, with neutral fallbacks while loading or if the portal can't be reached.
+// What the copy calls things. The site speaks as the brand and pairs every client with "your tax agent": it never
+// names the preparer or presents the practice as one person (PJ, October 2026). Only where to reach the practice
+// (city, state, reply-to email) comes from the portal.
+export const BRAND = "belltax.";
+export const AGENT = "your tax agent";
+export const Agent = "Your tax agent";
+
 export function useNames() {
   const { practice } = usePublic();
-  const preparer = practice?.preparerName ?? "your preparer";
   return {
-    practice: practice?.practiceName ?? "belltax.",
-    preparer,
-    preparerFirst: practice ? preparer.split(/\s+/)[0]! : "your preparer",
+    brand: BRAND,
+    agent: AGENT,
+    Agent,
     city: practice?.city ?? null,
     state: practice?.state ?? null,
     email: practice?.replyToEmail ?? null,

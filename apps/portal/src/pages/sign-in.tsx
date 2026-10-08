@@ -52,6 +52,15 @@ export default function SignIn() {
           </p>
         </form>
         {users.isLoading ? <MarkLoader label="Loading" className="py-4" /> : null}
+        {/* NOT_FOUND means live mode (no demo); anything else means the server isn't answering. */}
+        {users.error && users.error.data?.code !== "NOT_FOUND" ? (
+          <div className="grid gap-3 text-center">
+            <p className="text-sm text-muted-foreground">Can't reach the server right now. Try again in a moment.</p>
+            <Button variant="outline" size="touch" onClick={() => users.refetch()}>
+              Try again
+            </Button>
+          </div>
+        ) : null}
         {demo ? (
           <>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">

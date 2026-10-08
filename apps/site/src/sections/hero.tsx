@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Play } from "lucide-react";
+import { ArrowRight, Check, Play, ShieldCheck } from "lucide-react";
 
 import { Button } from "@app/ui/components/button";
 
@@ -11,7 +11,7 @@ import { useNames } from "@/lib/public";
 // drifting below. The screens are decoration (invented data), hidden from assistive tech.
 
 export function Hero() {
-  const { preparer, preparerFirst, city, state } = useNames();
+  const { agent, city, state } = useNames();
   const start = useStartHref();
   const year = bookingYear();
   const region = stateName(state);
@@ -29,16 +29,16 @@ export function Hero() {
             Taxes Made Easy.
           </h1>
           <p className="max-w-140 text-[1.0625rem] leading-relaxed text-pretty text-muted-foreground md:text-lg">
-            Federal and {region ?? "state"} returns, prepared and e-filed by {preparer}. Share your documents from your phone and follow every&nbsp;step.
+            Federal and {region ?? "state"} returns, prepared and e-filed by your personal tax agent. Share your documents, sign and pay, all from your phone, and follow every&nbsp;step.
           </p>
         </div>
-        <div className="flex w-full flex-col justify-center gap-2.5 sm:w-auto sm:flex-row">
-          <Button asChild className="h-12 px-5.5 text-base">
+        <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
+          <Button asChild className="h-12 px-8 text-base has-[>svg]:px-8">
             <a href={start}>
               Get started <ArrowRight aria-hidden="true" />
             </a>
           </Button>
-          <Button asChild variant="outline" className="h-12 px-5 text-base">
+          <Button asChild variant="outline" className="h-12 px-8 text-base has-[>svg]:px-8">
             <a href="#how">
               <Play aria-hidden="true" /> See how it works
             </a>
@@ -52,10 +52,20 @@ export function Hero() {
             </li>
           ))}
         </ul>
+        {/* The credential, stated the way California states it: CTEC-registered (not "licensed"), bonded, with a PTIN. */}
+        {region === "California" ? (
+          <p className="-mt-3 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <ShieldCheck aria-hidden="true" className="size-3.5 text-brand-subtle-foreground" />
+            CTEC-registered · Bonded · IRS PTIN
+          </p>
+        ) : null}
         <div
           aria-hidden="true"
           inert
-          className="mt-6 flex h-[400px] w-full max-w-240 items-start justify-center gap-3 mask-b-from-75% select-none sm:h-[480px] md:gap-7"
+          // The mask only paints inside this box, so it carries room on every side (negative margins keep the layout
+          // where it was): the phones float up and cast their shadows without ever touching an edge, then fade out
+          // at the bottom.
+          className="-mx-10 mt-0 box-content flex h-[400px] w-full max-w-240 items-start justify-center gap-3 px-10 pt-10 mask-b-from-70% select-none sm:h-[480px] md:gap-7"
         >
           <Float delay={0} className="mt-24 hidden w-[220px] shrink-0 lg:block">
             <PhoneFrame>
@@ -64,7 +74,7 @@ export function Hero() {
           </Float>
           <Float delay={1200} className="w-[260px] shrink-0 sm:w-[270px]">
             <PhoneFrame>
-              <PhoneHome preparer={preparer} preparerFirst={preparerFirst} year={year - 1} />
+              <PhoneHome agent={agent} year={year - 1} />
             </PhoneFrame>
           </Float>
           <Float delay={2400} className="mt-24 hidden w-[220px] shrink-0 lg:block">

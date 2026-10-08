@@ -24,7 +24,7 @@ const amount = (cents: number) => formatCents(cents).replace(/\.00$/, "");
 
 export function Pricing() {
   const { pricing, status } = usePublic();
-  const { email, preparerFirst } = useNames();
+  const { email, Agent } = useNames();
   const pkg = (s: Package["filingStatus"]) => pricing?.packages.find((p) => p.filingStatus === s);
   const priceOf = (p: Package | undefined): PriceState =>
     status === "loading" ? { status: "loading" } : p ? { status: "ready", amount: amount(p.unitAmountCents) } : { status: "unavailable" };
@@ -65,7 +65,7 @@ export function Pricing() {
           })}
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2">
           <div className="grid content-start gap-3.5 rounded-xl border bg-card p-6 text-card-foreground">
             <h3 className="text-base font-semibold text-balance">Add-ons, only if they apply</h3>
             {status === "ready" && pricing ? (
@@ -102,7 +102,7 @@ export function Pricing() {
               ) : (
                 <>Each spouse files their own return, priced per return.</>
               )}{" "}
-              {preparerFirst.charAt(0).toUpperCase() + preparerFirst.slice(1)} will tell you in plain words whether filing
+              {Agent} will tell you in plain words whether filing
               jointly or separately works out better for your household before you decide.
             </p>
           </div>

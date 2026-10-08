@@ -64,7 +64,8 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   the server lets any origin GET only those two, `SITE_READABLE` in `http.ts`), never copied; a deployed site sets
   `VITE_PORTAL_ORIGIN`. Unavailable → no prices shown, never stale ones. "How it works" is a scripted walkthrough of
   design-system mini screens with invented data (`src/components/walkthrough/`), no server. "Get started" mails the
-  practice until self sign-up exists; reviews stay out until there are real, consented quotes (`ReviewCards` story).
+  practice until self sign-up exists. The copy speaks as the brand and pairs clients with "your tax agent" (`useNames()`):
+  it never names the preparer or presents the practice as one person; reviews stay out until there are real, consented quotes (`ReviewCards` story).
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
 - **The practice's details** (name, preparer, reply-to email, texting phone, city/state) live in `practice_settings`
   (one row, migration 007): `settings.practice.*` to edit, `practice.public` for the portal and site (no phone). Letters,

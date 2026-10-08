@@ -15,7 +15,7 @@ import { useNames } from "@/lib/public";
 
 export function How() {
   const names = useNames();
-  const steps = React.useMemo(() => buildSteps(names.preparerFirst), [names.preparerFirst]);
+  const steps = React.useMemo(() => buildSteps(names.agent), [names.agent]);
   const sectionRef = React.useRef<HTMLElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
   const w = useWalkthrough(steps, sectionRef);

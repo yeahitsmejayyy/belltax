@@ -2,13 +2,11 @@ import { ArrowRight } from "lucide-react";
 
 import { Wordmark } from "@app/ui/components/logo";
 
-import { upperFirst, useStartHref } from "@/components/marketing/practice";
-import { useNames } from "@/lib/public";
+import { useStartHref } from "@/components/marketing/practice";
 
 // The closing call to action (marketing 11): the brand band with one white button.
 
 export function Cta() {
-  const { preparerFirst } = useNames();
   const start = useStartHref();
   return (
     <section id="cta" aria-labelledby="cta-title" className="scroll-mt-16 px-4 pt-10 pb-24 md:px-6">
@@ -19,11 +17,11 @@ export function Cta() {
           Hand off your taxes this year
         </h2>
         <p className="max-w-130 text-[1.0625rem] leading-relaxed font-medium text-pretty">
-          Start with a few questions. {upperFirst(preparerFirst)} will reach out within one business day with your invite to the&nbsp;portal.
+          Start with a few questions. Your personal tax agent will reach out within one business day with your invite to the&nbsp;portal.
         </p>
         <a
           href={start}
-          className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-base font-semibold text-primary-foreground transition-colors duration-150 ease-standard hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none"
+          className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-8 text-base font-semibold text-primary-foreground transition-colors duration-150 ease-standard hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/60 focus-visible:outline-none"
         >
           Get started <ArrowRight aria-hidden="true" className="size-4" />
         </a>

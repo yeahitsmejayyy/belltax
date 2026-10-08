@@ -19,11 +19,11 @@ export const TAP_MS = 700;
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export function buildSteps(preparerFirst: string): Step[] {
+export function buildSteps(agent: string): Step[] {
   return [
     {
       title: "Accept your invite",
-      body: `${cap(preparerFirst)} sends you a private link. Set a password and you’re in.`,
+      body: `${cap(agent)} sends you a private link. Set a password and you’re in.`,
       shows: "The phone opens the invite, taps Set up my account, fills in a password and taps Create account.",
       beats: [
         { view: { screen: "invite" }, ms: 1300, tap: "setup" },
