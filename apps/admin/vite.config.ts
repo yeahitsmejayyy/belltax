@@ -2,6 +2,7 @@ import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { shareMeta } from "../../scripts/vite-share-meta";
 
 // The preparer admin. In dev, Vite proxies the API to the server's admin listener (ADMIN_PORT, 3001),
 // so the browser sees one origin and the demo identity cookie just works. Built output is served by
@@ -14,7 +15,7 @@ const base = process.env.ADMIN_BASE ?? "/";
 
 export default defineConfig({
   base,
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), shareMeta()],
   resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
   server: { port: 5174, strictPort: true, proxy: { "/trpc": ADMIN, "/api": ADMIN, "/health": ADMIN } },
 });

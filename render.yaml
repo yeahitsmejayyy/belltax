@@ -11,3 +11,6 @@ services:
     envVars:
       - key: DEMO_RESET_HOURS
         value: "6"
+      # The public address, for link previews (scripts/vite-share-meta.ts). Passed to the Docker build as a build arg.
+      - key: PUBLIC_ORIGIN
+        value: https://belltax-demo.onrender.com

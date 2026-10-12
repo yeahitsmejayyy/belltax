@@ -6,9 +6,9 @@ Ticket 15. See [`two-data-worlds.md`](two-data-worlds.md) for the line this sits
 
 | Piece | Where | URL |
 |---|---|---|
-| Portal | Render, Docker web service (`render.yaml`, `Dockerfile`) | `https://<service>.onrender.com/` |
-| Admin | The same service, mounted at `/admin/` | `https://<service>.onrender.com/admin/` |
-| Site | Vercel, static (`vercel.json`) | `https://<project>.vercel.app/` |
+| Portal | Render, Docker web service (`render.yaml`, `Dockerfile`), free plan | https://belltax-demo.onrender.com/ |
+| Admin | The same service, mounted at `/admin/` | https://belltax-demo.onrender.com/admin/ |
+| Site | Vercel, static (`vercel.json`) | https://belltaxprep.vercel.app/ |
 | Storybook | Chromatic (`.github/workflows/chromatic.yml`) | the Chromatic project's permalink |
 
 ## How the admin is exposed
@@ -53,6 +53,13 @@ PJ does these: each needs an account sign-in.
    The next push to `main` becomes the baseline; pull requests then get a "UI Tests" check.
 
 Render's free plan sleeps after a quiet spell, so the first visit can take a minute; each wake is a fresh seed.
+
+## Link previews
+
+Each app's `index.html` carries Open Graph and Twitter card tags with its own share image (`public/og.png`,
+drawn by `bun scripts/share-cards.ts`). Absolute URLs are filled in at build time by `scripts/vite-share-meta.ts`
+from `PUBLIC_ORIGIN` (set in `render.yaml`) or Vercel's own production URL. Check a link with any preview
+debugger (e.g. opengraph.xyz) after a deploy.
 
 ## Running the image locally
 

@@ -6,6 +6,9 @@ FROM oven/bun:1.3.14 AS build
 WORKDIR /app
 COPY . .
 RUN bun install --frozen-lockfile
+# Link previews need the public address: PUBLIC_ORIGIN if set, else Render's own RENDER_EXTERNAL_URL.
+ARG PUBLIC_ORIGIN
+ARG RENDER_EXTERNAL_URL
 RUN bun --filter @app/portal build && ADMIN_BASE=/admin/ bun --filter @app/admin build
 
 # Run: the server's source, the two builds, production dependencies only.
