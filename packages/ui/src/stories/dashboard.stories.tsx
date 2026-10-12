@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
-import { expect, within } from "storybook/test";
+import { expect, within, waitFor } from "storybook/test";
 
 import { Button } from "../components/button";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "../components/chart";
@@ -81,8 +81,9 @@ export const FilingsPerWeekTest: Story = {
   name: "Chart: filings per week · test",
   tags: ["!dev"],
   play: async ({ canvasElement }) => {
-    await expect(within(canvasElement).getByText("This season")).toBeInTheDocument();
-    await expect(canvasElement.querySelectorAll(".recharts-bar-rectangle").length).toBeGreaterThan(0);
+    // Recharts draws after it measures its box, which can take a frame or two on a slower runner (Chromatic): wait.
+    await expect(await within(canvasElement).findByText("This season", {}, { timeout: 5000 })).toBeInTheDocument();
+    await waitFor(() => expect(canvasElement.querySelectorAll(".recharts-bar-rectangle").length).toBeGreaterThan(0), { timeout: 5000 });
   },
 };
 
