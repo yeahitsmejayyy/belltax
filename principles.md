@@ -1,4 +1,4 @@
-# BellTaxPrep interface principles
+# Bell Tax interface principles
 
 Thirteen rules for every screen in the portal, the admin and the site. Each has a number, so a design review can
 say "this breaks 5" instead of "this feels off". The values live in `packages/ui/src/tokens.css`. This page

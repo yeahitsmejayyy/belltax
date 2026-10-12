@@ -64,6 +64,22 @@ function readableByAnySite(res: Response) {
   return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
 }
 
+// The hosted public demo has one public port, so the admin is mounted under /admin/ on it, with the prefix
+// stripped and the request handed to the admin's own handler (admin surface, admin cookie, admin build).
+// Demo mode only: in live mode the mount answers 404, and index.ts never mounts it outside DEMO_PUBLIC.
+export const ADMIN_MOUNT = "/admin";
+type Handler = (req: Request, socketIp?: string) => Promise<Response>;
+export function withAdminMounted(portal: Handler, admin: Handler): Handler {
+  return async (req, socketIp) => {
+    const url = new URL(req.url);
+    if (url.pathname !== ADMIN_MOUNT && !url.pathname.startsWith(`${ADMIN_MOUNT}/`)) return portal(req, socketIp);
+    if (runtime().mode !== "demo") return withSecurityHeaders(new Response("Not found", { status: 404 }), url.pathname);
+    if (url.pathname === ADMIN_MOUNT) return withSecurityHeaders(new Response(null, { status: 308, headers: { Location: `${ADMIN_MOUNT}/` } }), url.pathname);
+    url.pathname = url.pathname.slice(ADMIN_MOUNT.length);
+    return admin(new Request(url.href, req), socketIp);
+  };
+}
+
 const count = (table: string) => (runtime().db.query(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
 
 export function createFetchHandler({ surface, webDist, devOrigin, log }: Options) {

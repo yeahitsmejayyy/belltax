@@ -8,7 +8,7 @@ import { Money } from "../components/money";
 import { HealthCheckRow, StatCard } from "../components/stat-card";
 
 // Admin 03-dashboard-dashboard. Invented numbers.
-const meta: Meta = { parameters: { fill: true }, title: "Product/Dashboard" };
+const meta: Meta = { parameters: { fill: true }, title: "Admin/Dashboard" };
 export default meta;
 type Story = StoryObj;
 

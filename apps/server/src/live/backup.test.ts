@@ -18,7 +18,7 @@ const backupDir = join(tmp, "backups");
 let db: Database;
 
 beforeAll(async () => {
-  ({ db } = await bootDatabase({ mode: "demo", port: 0, adminPort: 1, dataDir }, { anchor: new Date("2026-09-23T17:00:00.000Z") }));
+  ({ db } = await bootDatabase({ mode: "demo", port: 0, adminPort: 1, dataDir, publicDemo: null }, { anchor: new Date("2026-09-23T17:00:00.000Z") }));
 });
 afterAll(() => {
   db.close();
@@ -90,7 +90,7 @@ describe("verify and restore", () => {
     expect(migrationStatus(restored).pending).toEqual([]);
     restored.close();
     // It starts as a live instance: already migrated, never seeded.
-    const booted = await bootDatabase({ mode: "live", port: 0, adminPort: 1, dataDir: target });
+    const booted = await bootDatabase({ mode: "live", port: 0, adminPort: 1, dataDir: target, publicDemo: null });
     expect(booted.seeded).toBeNull();
     booted.db.close();
     expect(JSON.parse(readFileSync(join(target, "restored-from.json"), "utf8")).file).toBe(file);
@@ -118,7 +118,7 @@ describe("rotation", () => {
 });
 
 describe("hardening", () => {
-  const live = (dir: string): Config => ({ mode: "live", port: 3000, adminPort: 1, dataDir: dir });
+  const live = (dir: string): Config => ({ mode: "live", port: 3000, adminPort: 1, dataDir: dir, publicDemo: null });
 
   test("the server only ever binds to 127.0.0.1", () => {
     expect(BIND_HOST).toBe("127.0.0.1");

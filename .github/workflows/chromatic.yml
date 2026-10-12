@@ -1,0 +1,60 @@
+name: Chromatic
+
+# Visual regression for the design system (packages/ui and the site's sections in Storybook): every story is
+# snapshotted, and a pull request's changes wait for review in Chromatic. Pushes to main become the baseline.
+# Needs the CHROMATIC_PROJECT_TOKEN repository secret; without it the job says so and passes.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: chromatic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Chromatic compares against ancestor builds
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Cache Bun packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: No token yet
+        if: env.CHROMATIC_PROJECT_TOKEN == ''
+        run: echo "::notice::CHROMATIC_PROJECT_TOKEN isn't set, so visual tests are skipped. See docs/demo-deploy.md."
+
+      - name: Install
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        run: bun install --frozen-lockfile
+
+      - name: Build Storybook
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        run: bun run storybook:build
+
+      - name: Publish to Chromatic
+        if: env.CHROMATIC_PROJECT_TOKEN != ''
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ env.CHROMATIC_PROJECT_TOKEN }}
+          storybookBuildDir: storybook-static
+          exitZeroOnChanges: true # the job passes; Chromatic's own "UI Tests" check holds the PR until changes are accepted
+          autoAcceptChanges: main

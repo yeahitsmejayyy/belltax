@@ -8,7 +8,9 @@ import { latestBackup } from "./backup";
 // Failures stop a live boot; warnings are printed. See docs/live-runbook.md.
 
 export const BIND_HOST = "127.0.0.1"; // never a public interface; the tunnel reaches the portal from outside
-export const serverOptions = (config: Config) => ({ hostname: BIND_HOST, port: config.port });
+// The hosted public demo is the one exception: invented data only, in a container whose platform routes to it.
+export const PUBLIC_DEMO_HOST = "0.0.0.0";
+export const serverOptions = (config: Config) => ({ hostname: config.mode === "demo" && config.publicDemo ? PUBLIC_DEMO_HOST : BIND_HOST, port: config.port });
 export const adminServerOptions = (config: Config) => ({ hostname: BIND_HOST, port: config.adminPort });
 
 export type Check = { name: string; status: "ok" | "warn" | "fail"; detail: string };

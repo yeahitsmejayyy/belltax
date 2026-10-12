@@ -16,7 +16,7 @@ import { SAMPLE, searchGroups } from "./fixtures";
 // trigger, a divider, the page title, search (⌘K), the theme toggle and Invite client. ⌘B collapses the
 // sidebar to icons; on a phone it's a sheet. Counts: plain totals (Pipeline), waiting on you (Inbox),
 // problems (Invoices).
-const meta: Meta = { title: "Product/App shell", parameters: { shell: true } };
+const meta: Meta = { title: "Admin/App shell", parameters: { shell: true } };
 export default meta;
 type Story = StoryObj;
 
@@ -44,7 +44,7 @@ function Shell({ defaultOpen = true, loading = false }: { defaultOpen?: boolean;
           taxYears={[2026, 2025, 2024]}
           taxYear={year}
           onTaxYearChange={setYear}
-          user={{ name: "Patrick J. Bell", email: "pj@belltaxprep.example" }}
+          user={{ name: "Patrick J. Bell", email: "pj@belltax.example" }}
           mode="demo"
           onSettings={() => setActive("settings")}
           onLogout={() => {}}

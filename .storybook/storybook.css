@@ -2,4 +2,7 @@
 @import "tw-animate-css";
 @import "../packages/ui/src/theme.css";
 
+@import "../apps/site/src/site.css";
+
 @source "../packages/ui/src";
+@source "../apps/site/src";

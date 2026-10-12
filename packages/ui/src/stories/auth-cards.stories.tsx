@@ -7,7 +7,7 @@ import { Button } from "../components/button";
 
 // Portal 01-access-invite, 02-access-setpw, 04-access-expired: the way in, before real sign-in (ticket 05) wires
 // them to routes. Invented people only.
-const meta: Meta = { title: "Product/Auth" };
+const meta: Meta = { title: "Admin/Auth" };
 export default meta;
 type Story = StoryObj;
 
@@ -17,7 +17,7 @@ const accepted = fn();
 const signIn = fn();
 export const Invite: Story = {
   name: "Invite",
-  render: () => <InviteWelcome preparerName="Patrick J. Bell" practiceName="BellTaxPrep" email={EMAIL} onAccept={accepted} onSignIn={signIn} />,
+  render: () => <InviteWelcome preparerName="Patrick J. Bell" practiceName="Bell Tax" email={EMAIL} onAccept={accepted} onSignIn={signIn} />,
 };
 export const InviteTest: Story = {
   ...Invite,

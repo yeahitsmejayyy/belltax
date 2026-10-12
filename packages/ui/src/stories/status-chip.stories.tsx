@@ -6,7 +6,7 @@ import {
   type DocumentChipStatus, type InvoiceChipStatus, type PaymentChipStatus,
 } from "../components/status-chip";
 
-const meta: Meta = { title: "Product/StatusChip" };
+const meta: Meta = { title: "Admin/StatusChip" };
 export default meta;
 
 const Row = ({ title, children }: { title: string; children: React.ReactNode }) => (

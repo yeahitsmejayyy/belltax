@@ -1,0 +1,13 @@
+# The hosted public demo on Render (docs/demo-deploy.md): one Docker web service, invented data only.
+# Render sets PORT; the image pins RUN_MODE=demo and DEMO_PUBLIC=1. Never add live settings here.
+services:
+  - type: web
+    name: belltax-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DEMO_RESET_HOURS
+        value: "6"

@@ -8,7 +8,7 @@ const invite = fn();
 const addWithout = fn();
 
 const meta: Meta<typeof SplitButton> = {
-  title: "Product/SplitButton",
+  title: "Admin/SplitButton",
   component: SplitButton,
   args: {
     label: <><UserPlus /> Invite client</>,

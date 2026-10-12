@@ -7,7 +7,7 @@ import { BoardCard, PipelineBoard, type BoardCardData } from "../components/boar
 
 // Admin 05-pipeline-pipeline-board. Grab a card anywhere and drop it on another column, or use its ⋯ menu.
 // Here a card may go forward one stage or back to any earlier one, as in the admin. Invented households.
-const meta: Meta = { parameters: { fill: true }, title: "Product/Pipeline board" };
+const meta: Meta = { parameters: { fill: true }, title: "Admin/Pipeline board" };
 export default meta;
 type Story = StoryObj;
 

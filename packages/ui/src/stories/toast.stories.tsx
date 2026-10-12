@@ -6,7 +6,7 @@ import { Button } from "../components/button";
 import { Toaster } from "../components/sonner";
 import { ThemeProvider } from "../components/theme-provider";
 
-const meta: Meta = { title: "Product/Toast" };
+const meta: Meta = { title: "Admin/Toast" };
 export default meta;
 
 // Rule 11: every completed action says so, top center.

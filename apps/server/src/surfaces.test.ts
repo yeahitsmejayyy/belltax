@@ -74,11 +74,18 @@ describe("the admin listener", () => {
 });
 
 describe("configuration and the tunnel check", () => {
-  const config: Config = { mode: "live", port: 3000, adminPort: 3001, dataDir: "/tmp/btp-surfaces-not-used" };
+  const config: Config = { mode: "live", port: 3000, adminPort: 3001, dataDir: "/tmp/btp-surfaces-not-used", publicDemo: null };
 
   test("both listeners bind to 127.0.0.1, on different ports", () => {
     expect(serverOptions(config)).toEqual({ hostname: "127.0.0.1", port: 3000 });
     expect(adminServerOptions(config)).toEqual({ hostname: "127.0.0.1", port: 3001 });
+  });
+
+  test("only the hosted public demo binds a public interface, and live never does", () => {
+    const demo: Config = { ...config, mode: "demo", publicDemo: { resetHours: 6 } };
+    expect(serverOptions(demo).hostname).toBe("0.0.0.0");
+    expect(adminServerOptions(demo).hostname).toBe("127.0.0.1");
+    expect(serverOptions({ ...config, publicDemo: { resetHours: 6 } }).hostname).toBe("127.0.0.1");
   });
 
   test("the tunnel must forward the portal, never the admin", () => {

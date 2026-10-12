@@ -6,7 +6,7 @@ import { BellMark, Logo, MarkLoader, Wordmark as WordmarkSvg } from "../componen
 // The belltax. brand: the b. mark (charcoal tile in light, chartreuse in dark) and the belltax. wordmark, whose period
 // is the accent. Toggle Light / Dark in the toolbar to see both.
 
-const meta: Meta = { title: "Product/Brand" };
+const meta: Meta = { title: "Admin/Brand" };
 export default meta;
 type Story = StoryObj;
 

@@ -8,7 +8,7 @@ import { CommandPalette, InlineSearch } from "../components/command-search";
 import { searchGroups } from "./fixtures";
 
 // Two ways into the same results: type in the header field and pick from the dropdown, or ⌘K for the palette.
-const meta: Meta = { title: "Product/Search" };
+const meta: Meta = { title: "Admin/Search" };
 export default meta;
 type Story = StoryObj;
 

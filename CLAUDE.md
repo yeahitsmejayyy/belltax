@@ -56,7 +56,7 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   Design references: `.assets/` (gitignored), starting with its README and manifest. Shared components live in
   `packages/ui/src/components` (shadcn primitives plus the product pieces: StagePill, StatusChip, DataTable, Chart, Logo,
   Banner, EmptyState, FileDropzone, Stepper, StatCard, Board, Timeline, DocumentViewer, BottomTabs; money/dates in `format.ts`); apps import
-  `@app/ui/components/<name>`, never copy them. Every component gets stories in `packages/ui/src/stories`; interaction tests go in a hidden `<Name>Test` twin
+  `@app/ui/components/<name>`, never copy them. Every component gets stories in `packages/ui/src/stories` (Storybook sections: Principles, Tokens, Primitives, Admin, Site); interaction tests go in a hidden `<Name>Test` twin
   (`tags: ["!dev"]`), never on the visible story. The admin shell is `AppSidebar` + `AppHeader` (on shadcn's `sidebar`). Search is `InlineSearch` (header field with a results dropdown) + `CommandPalette` (⌘K), both fed the same `SearchGroup[]`,
   from `search.query` (server: word-prefix SQL, no index; never searches SSN digits). Invite client / Add without invite open `InviteClientDialog` (Household → Members → Filers → Send). Story fixtures live in `packages/ui/src/stories/fixtures.tsx`.
 - `apps/site` — the marketing site (ticket 14): one static page, React + Tailwind on `packages/ui`, dev on :5175. Prices and
@@ -65,7 +65,8 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   `VITE_PORTAL_ORIGIN`. Unavailable → no prices shown, never stale ones. "How it works" is a scripted walkthrough of
   design-system mini screens with invented data (`src/components/walkthrough/`), no server. "Get started" mails the
   practice until self sign-up exists. The copy speaks as the brand and pairs clients with "your tax agent" (`useNames()`):
-  it never names the preparer or presents the practice as one person; reviews stay out until there are real, consented quotes (`ReviewCards` story).
+  it never names the preparer or presents the practice as one person; reviews stay out until there are real, consented quotes (`ReviewCards` story). Its sections are in Storybook under Site (`apps/site/src/stories`), rendered
+  from the real components with invented data via `PublicFixture`; site-only CSS is `src/site.css`, scoped to `.site-root`.
 - `packages/schema` — shared zod schemas. Product name lives in `src/product.ts` (one-line rename).
 - **The practice's details** (name, preparer, reply-to email, texting phone, city/state) live in `practice_settings`
   (one row, migration 007): `settings.practice.*` to edit, `practice.public` for the portal and site (no phone). Letters,
@@ -91,6 +92,10 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   After editing, run `bun run intake:doc` to regenerate `docs/intake-v1.md`; a test fails while it's stale.
 - `bun run storybook` (:6006) · `bun run storybook:build` · `bun run test:storybook` (stories + play functions in
   Chromium via Vitest 4; set `CHROMIUM_PATH` to use a Chromium already on the machine).
+- **Hosted demo** (ticket 15, `docs/demo-deploy.md`): `Dockerfile` + `render.yaml` (portal, admin at `/admin/` on the same
+  port via `withAdminMounted`, only with `DEMO_PUBLIC=1`, which live refuses), `vercel.json` (site), Chromatic in
+  `.github/workflows/chromatic.yml` (needs the `CHROMATIC_PROJECT_TOKEN` secret). Public demo: uploads off, re-seeded every
+  `DEMO_RESET_HOURS`. Admin URLs go through `at()` (`apps/admin/src/lib/base.ts`) so the `ADMIN_BASE=/admin/` build works.
 - `bun run check:data` — fails if anything tracked looks like real data (databases, backups, uploads, `.env`,
   PDFs/HEIC, or an SSN not starting with 9). CI (`.github/workflows/ci.yml`) runs it on every push, then
   typecheck, tests and both app builds. The same four commands locally mean CI will pass.

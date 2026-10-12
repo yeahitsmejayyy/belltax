@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 
 import { ModeBadge } from "../components/mode-badge";
 
-const meta: Meta<typeof ModeBadge> = { title: "Product/ModeBadge", component: ModeBadge };
+const meta: Meta<typeof ModeBadge> = { title: "Admin/ModeBadge", component: ModeBadge };
 export default meta;
 type Story = StoryObj<typeof ModeBadge>;
 

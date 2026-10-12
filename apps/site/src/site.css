@@ -1,0 +1,7 @@
+/* The marketing site's own rules, shared with Storybook (.storybook/storybook.css). Scoped to .site-root, the site's
+   root element, so they never leak into the design system's other stories. */
+
+/* Buttons on the marketing site are pills (handoff README). Unlayered, so it outranks the component's radius. */
+.site-root [data-slot="button"] {
+  border-radius: 9999px;
+}

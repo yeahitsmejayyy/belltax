@@ -7,7 +7,7 @@ import { Field } from "../components/field";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "../components/sheet";
 import { StepFooter, Stepper } from "../components/stepper";
 
-const meta: Meta = { title: "Product/Stepper" };
+const meta: Meta = { title: "Admin/Stepper" };
 export default meta;
 type Story = StoryObj;
 

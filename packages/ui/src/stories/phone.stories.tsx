@@ -6,7 +6,7 @@ import { BottomTabs } from "../components/bottom-tabs";
 import { FloatingActionMenu } from "../components/floating-action-menu";
 
 // Phone navigation (admin 34-37, marketing 14). Both hide at md and up; view these at a phone width.
-const meta: Meta = { title: "Product/Phone navigation", parameters: { layout: "fullscreen", viewport: { defaultViewport: "mobile1" } } };
+const meta: Meta = { title: "Admin/Phone navigation", parameters: { layout: "fullscreen", viewport: { defaultViewport: "mobile1" } } };
 export default meta;
 type Story = StoryObj;
 

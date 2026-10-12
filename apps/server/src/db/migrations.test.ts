@@ -177,7 +177,7 @@ ${views.map((v) => `${sqlOf("view", v)};`).join("\n")}
 });
 
 describe("boot", () => {
-  const live = (dataDir: string): Config => ({ mode: "live", port: 0, adminPort: 1, dataDir });
+  const live = (dataDir: string): Config => ({ mode: "live", port: 0, adminPort: 1, dataDir, publicDemo: null });
 
   test("live refuses to start behind the code, and starts once migrated", async () => {
     const dir = tempDir();
@@ -201,7 +201,7 @@ describe("boot", () => {
 
   test("demo still wipes, migrates from scratch and seeds", async () => {
     const dir = join(tempDir(), "demo");
-    const booted = await bootDatabase({ mode: "demo", port: 0, adminPort: 1, dataDir: dir }, { anchor: new Date("2026-09-23T17:00:00.000Z") });
+    const booted = await bootDatabase({ mode: "demo", port: 0, adminPort: 1, dataDir: dir, publicDemo: null }, { anchor: new Date("2026-09-23T17:00:00.000Z") });
     expect(migrationStatus(booted.db).pending).toEqual([]);
     expect(booted.seeded!.households).toBe(25);
     booted.db.close();

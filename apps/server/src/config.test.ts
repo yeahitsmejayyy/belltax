@@ -5,7 +5,7 @@ const repo = "/work/belltaxprep";
 
 describe("loadConfig", () => {
   test("defaults to demo with in-repo data dir", () => {
-    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo" });
+    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null });
   });
 
   test("rejects an unknown mode", () => {
@@ -32,12 +32,25 @@ describe("loadConfig", () => {
 
   test("live accepts a sibling dir that only shares a name prefix", () => {
     const cfg = loadConfig({ RUN_MODE: "live", LIVE_DATA_DIR: "/work/belltaxprep-live" }, repo);
-    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live" });
+    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null });
   });
 
   test("the admin gets its own port, never the portal's", () => {
     expect(loadConfig({ PORT: "4000" }, repo).adminPort).toBe(4001);
     expect(loadConfig({ PORT: "4000", ADMIN_PORT: "4100" }, repo).adminPort).toBe(4100);
     expect(() => loadConfig({ PORT: "4000", ADMIN_PORT: "4000" }, repo)).toThrow("must differ");
+  });
+
+  test("the public demo is opt-in, demo only, and resets on a timer", () => {
+    expect(loadConfig({ DEMO_PUBLIC: "1" }, repo).publicDemo).toEqual({ resetHours: 6 });
+    expect(loadConfig({ DEMO_PUBLIC: "1", DEMO_RESET_HOURS: "2" }, repo).publicDemo).toEqual({ resetHours: 2 });
+    expect(loadConfig({ DEMO_PUBLIC: "0" }, repo).publicDemo).toBeNull();
+    expect(() => loadConfig({ DEMO_PUBLIC: "1", DEMO_RESET_HOURS: "0" }, repo)).toThrow("DEMO_RESET_HOURS");
+  });
+
+  test("live can never run as the public demo", () => {
+    for (const flag of ["1", "true", "yes"]) {
+      expect(() => loadConfig({ RUN_MODE: "live", LIVE_DATA_DIR: "/srv/btp", DEMO_PUBLIC: flag }, repo)).toThrow("never be set with RUN_MODE=live");
+    }
   });
 });

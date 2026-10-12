@@ -9,6 +9,7 @@ import { Label } from "@app/ui/components/label";
 import { Textarea } from "@app/ui/components/textarea";
 import { formatDateTime } from "@app/ui/format";
 
+import { at } from "@/lib/base";
 import { trpc } from "@/lib/trpc";
 
 import { errorText, whoFor, type Detail, type Doc } from "./shared";
@@ -105,7 +106,7 @@ export function useDocumentReview() {
 const size = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 function FileView({ doc }: { doc: Doc }) {
-  const src = `/api/documents/${doc.id}/file`;
+  const src = at(`/api/documents/${doc.id}/file`);
   if (doc.mimeType === "application/pdf") return <iframe title={doc.filename} src={src} className="h-[70vh] w-full rounded-md border bg-card" />;
   if (doc.mimeType.startsWith("image/") && doc.mimeType !== "image/heic") return <img src={src} alt={`${doc.kindLabel}: ${doc.filename}`} className="max-h-[70vh] max-w-full rounded-md border object-contain" />;
   return (

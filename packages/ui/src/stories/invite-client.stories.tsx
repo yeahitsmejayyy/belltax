@@ -9,7 +9,7 @@ import { SAMPLE } from "./fixtures";
 
 // Admin 24/25-dialogs-and-sheets-dlg-invite: Invite client, or Add client without invite, from the header's
 // split button. Invented people only.
-const meta: Meta = { title: "Product/InviteClientDialog" };
+const meta: Meta = { title: "Admin/InviteClientDialog" };
 export default meta;
 type Story = StoryObj;
 

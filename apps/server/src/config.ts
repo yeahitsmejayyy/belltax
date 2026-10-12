@@ -8,6 +8,9 @@ export type Config = {
   port: number; // the portal listener: the only one a tunnel may forward
   adminPort: number; // the admin listener: this machine only, never forwarded
   dataDir: string;
+  // The hosted public demo (docs/demo-deploy.md): invented data on a public interface, the admin mounted at
+  // /admin/ on the one listener, uploads off, re-seeded every resetHours. Demo mode only, never live.
+  publicDemo: { resetHours: number } | null;
 };
 
 type Env = Record<string, string | undefined>;
@@ -35,8 +38,19 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
   }
   if (adminPort === port) throw new Error("ADMIN_PORT must differ from PORT: the admin never shares the portal's listener");
 
+  const wantsPublic = env.DEMO_PUBLIC !== undefined && env.DEMO_PUBLIC !== "" && env.DEMO_PUBLIC !== "0";
+  if (wantsPublic && mode !== "demo") {
+    throw new Error("DEMO_PUBLIC is for the hosted demo only: it can never be set with RUN_MODE=live");
+  }
+
   if (mode === "demo") {
-    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo") };
+    let publicDemo: Config["publicDemo"] = null;
+    if (wantsPublic) {
+      const resetHours = Number(env.DEMO_RESET_HOURS ?? 6);
+      if (!Number.isFinite(resetHours) || resetHours <= 0) throw new Error(`DEMO_RESET_HOURS must be a positive number, got "${env.DEMO_RESET_HOURS}"`);
+      publicDemo = { resetHours };
+    }
+    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo"), publicDemo };
   }
 
   // Live mode never guesses where real data goes.
@@ -46,5 +60,5 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
   if (isInside(repoRoot, dir)) {
     throw new Error(`LIVE_DATA_DIR must be outside the repo (${repoRoot}), got "${dir}"`);
   }
-  return { mode, port, adminPort, dataDir: resolve(dir) };
+  return { mode, port, adminPort, dataDir: resolve(dir), publicDemo: null };
 }

@@ -15,7 +15,9 @@ so the line is drawn once and never crossed.
 - Demo data lives in `data/demo/` (gitignored) and is re-seeded from a deterministic script.
 - Live mode refuses to start unless `LIVE_DATA_DIR` is an absolute path **outside the repo**.
 - `.gitignore` covers databases, `data/`, `uploads/`, `live-data/` and every `.env*` except `.env.example`.
-- The server binds to `127.0.0.1`; the live instance never opens a public port.
+- The server binds to `127.0.0.1`; the live instance never opens a public port. The one exception is the
+  hosted public demo (`DEMO_PUBLIC=1`, [`demo-deploy.md`](demo-deploy.md)): demo mode only, refused at boot with
+  `RUN_MODE=live`, uploads off, re-seeded on a timer, built from an image that copies no data.
 - The UI always shows which mode it is in.
 
 ## Rules for people and agents

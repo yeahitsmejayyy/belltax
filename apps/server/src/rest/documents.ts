@@ -51,7 +51,11 @@ const fromTrpc = (e: unknown) => {
   throw e;
 };
 
+export const PUBLIC_DEMO_UPLOADS_OFF = "Uploads are off in the public demo, so nothing real can be sent here. The documents already on each return show how it works.";
+
 export async function uploadDocument(req: Request, surface: Surface, devOrigin?: string): Promise<Response> {
+  // The hosted demo is open to anyone: refuse before reading a byte, so a real W-2 never reaches it.
+  if (runtime().publicDemo) return fail(403, PUBLIC_DEMO_UPLOADS_OFF);
   const user = guard(req, surface, devOrigin);
   if (user instanceof Response) return user;
   const { db, storage } = runtime();

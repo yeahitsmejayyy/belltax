@@ -31,6 +31,11 @@ export function PublicProvider({ children }: { children: React.ReactNode }) {
 
 export const usePublic = () => React.useContext(Ctx);
 
+// Fixed data instead of the portal, for Storybook: any state (ready, loading, unavailable) with invented details.
+export function PublicFixture({ value, children }: { value: Public; children: React.ReactNode }) {
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
 // What the copy calls things. The site speaks as the brand and pairs every client with "your tax agent": it never
 // names the preparer or presents the practice as one person (PJ, October 2026). Only where to reach the practice
 // (city, state, reply-to email) comes from the portal.

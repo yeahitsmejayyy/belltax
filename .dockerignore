@@ -1,0 +1,24 @@
+# Two data worlds: nothing that could hold real data goes into the demo image (docs/two-data-worlds.md).
+data
+live-data
+uploads
+backups
+exports
+.env*
+**/*.db
+**/*.db-*
+**/*.sqlite
+**/*.sqlite-*
+**/*.pdf
+**/*.heic
+.assets
+.docs
+.claude
+.git
+.github
+node_modules
+**/node_modules
+**/dist
+storybook-static
+coverage
+.DS_Store

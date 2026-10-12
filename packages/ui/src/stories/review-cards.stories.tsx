@@ -4,7 +4,7 @@ import { expect } from "storybook/test";
 import { ReviewCards, type ReviewQuote } from "../components/review-cards";
 
 const meta: Meta = {
-  title: "Marketing/Review cards",
+  title: "Site/Review cards",
   parameters: {
     docs: {
       description: {

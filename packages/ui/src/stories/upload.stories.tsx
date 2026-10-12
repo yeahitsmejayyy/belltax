@@ -7,7 +7,7 @@ import { FileDropzone, UploadList, useUploads, type Uploader } from "../componen
 // progress, Uploaded (or what went wrong, with a retry). The upload here is simulated; the app's real
 // uploader posts to /api/documents.
 
-const meta: Meta = { title: "Product/FileDropzone" };
+const meta: Meta = { title: "Admin/FileDropzone" };
 export default meta;
 type Story = StoryObj;
 

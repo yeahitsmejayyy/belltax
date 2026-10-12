@@ -8,7 +8,7 @@ import { EmptyState } from "../components/empty-state";
 import { PageHeader, SectionHeader } from "../components/page-header";
 import { SplitButton } from "../components/split-button";
 
-const meta: Meta = { title: "Product/Layout" };
+const meta: Meta = { title: "Admin/Layout" };
 export default meta;
 type Story = StoryObj;
 

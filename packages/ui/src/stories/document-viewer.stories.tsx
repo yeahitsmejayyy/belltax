@@ -7,7 +7,7 @@ import { DocumentViewer } from "../components/document-viewer";
 const onAccept = fn();
 const onReject = fn();
 const meta: Meta<typeof DocumentViewer> = { parameters: { fill: true },
-  title: "Product/DocumentViewer",
+  title: "Admin/DocumentViewer",
   component: DocumentViewer,
   args: {
     filename: "w2-harbor-freight-demo.pdf",

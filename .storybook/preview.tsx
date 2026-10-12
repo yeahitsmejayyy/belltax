@@ -14,6 +14,8 @@ const withTheme: Decorator = (Story, context) => {
     document.documentElement.classList.add(theme);
   }, [theme]);
   const fill = context.parameters.fill === true;
+  // Marketing-site sections render as on the page: full width, from the top, with the site's own rules.
+  if (context.parameters.site === true) return <div className="site-root min-h-screen bg-background text-foreground"><Story /></div>;
   // App shells (the sidebar) own the whole canvas.
   if (context.parameters.shell === true) return <div className="h-screen bg-background text-foreground"><Story /></div>;
   return (
@@ -40,7 +42,7 @@ const preview: Preview = {
     // Accessibility checks run on every story. "todo" reports without failing while the two contrast
     // questions in principles.md are open; switch to "error" once they're settled.
     a11y: { test: "todo" },
-    options: { storySort: { order: ["Principles", "Tokens", "Primitives", "Product"] } },
+    options: { storySort: { order: ["Principles", "Tokens", "Primitives", "Admin", "Site"] } },
   },
 };
 export default preview;

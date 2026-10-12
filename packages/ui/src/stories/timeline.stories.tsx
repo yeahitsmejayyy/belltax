@@ -3,7 +3,7 @@ import { expect, within } from "storybook/test";
 
 import { ActivityTimeline, StageTimeline } from "../components/timeline";
 
-const meta: Meta = { title: "Product/Timeline" };
+const meta: Meta = { title: "Admin/Timeline" };
 export default meta;
 type Story = StoryObj;
 

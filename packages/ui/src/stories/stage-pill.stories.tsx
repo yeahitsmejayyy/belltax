@@ -5,7 +5,7 @@ import { expect, within } from "storybook/test";
 import { STAGE_META, StagePill, WAITING_LABEL, WAITING_TONE } from "../components/stage-pill";
 
 const meta: Meta<typeof StagePill> = {
-  title: "Product/StagePill",
+  title: "Admin/StagePill",
   component: StagePill,
   args: { stage: "preparing" },
   argTypes: { stage: { control: "select", options: Stage.options } },
