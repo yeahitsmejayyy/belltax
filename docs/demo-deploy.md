@@ -33,7 +33,8 @@ Tested in `apps/server/src/public-demo.test.ts`.
   databases, PDFs and phone photos, `.assets`, `.docs` and git history. A test checks the list.
 - **Every boot is a fresh world.** Demo mode wipes `data/demo/` and seeds it; the container's disk isn't kept.
 - **Uploads are off.** `POST /api/documents` answers 403 before reading the body, so a visitor can't send a
-  real W-2 even by mistake. The seeded documents still open in both apps.
+  real W-2 even by mistake. Instead, "Use a sample document" asks the server to draw an invented PDF
+  (`POST /api/documents/sample`, JSON only, at most 25 per return) that goes through the same steps as an upload.
 - **Typed answers don't last.** The world re-seeds every `DEMO_RESET_HOURS` (6 by default) as well as on
   every boot, and the UI says "Demo · sample data" throughout.
 - **The repo is checked.** `bun run check:data` runs in CI on every push.

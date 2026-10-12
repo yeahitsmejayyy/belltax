@@ -7,6 +7,7 @@ import { runtime } from "../db/client";
 import { appendEvent, recordView } from "../events";
 import { resolveUser, type SessionUser, type Surface } from "../identity";
 import { DOCUMENT_COLUMNS, toDocumentView, type DocumentRow } from "../routes/document";
+import { demoPdf } from "../db/seed/pdf";
 
 // The REST escape hatch: file bytes don't belong in tRPC. Same identity, same access checks, same events.
 
@@ -51,14 +52,13 @@ const fromTrpc = (e: unknown) => {
   throw e;
 };
 
-export const PUBLIC_DEMO_UPLOADS_OFF = "Uploads are off in the public demo, so nothing real can be sent here. The documents already on each return show how it works.";
+export const PUBLIC_DEMO_UPLOADS_OFF = "Uploads are off in the public demo, so nothing real can be sent here. Use a sample document instead.";
 
 export async function uploadDocument(req: Request, surface: Surface, devOrigin?: string): Promise<Response> {
   // The hosted demo is open to anyone: refuse before reading a byte, so a real W-2 never reaches it.
   if (runtime().publicDemo) return fail(403, PUBLIC_DEMO_UPLOADS_OFF);
   const user = guard(req, surface, devOrigin);
   if (user instanceof Response) return user;
-  const { db, storage } = runtime();
 
   let form: Awaited<ReturnType<Request["formData"]>>;
   try {
@@ -73,18 +73,27 @@ export async function uploadDocument(req: Request, surface: Surface, devOrigin?:
   if (file.size === 0) return fail(400, "The file is empty.");
   if (file.size > UPLOAD_MAX_BYTES) return fail(413, "Files can be up to 15 MB.");
 
+  return storeDocument(user, fields.data, new Uint8Array(await file.arrayBuffer()), file.name);
+}
+
+type UploadFields = z.infer<typeof Fields>;
+
+// Checks the target (return, request, kind, person), then writes the bytes and the row and logs the event. Shared by a
+// real upload and the public demo's sample document, so both take exactly the same path from here on.
+async function storeDocument(user: SessionUser, fields: UploadFields, bytes: Uint8Array, filename: string): Promise<Response> {
+  const { db, storage } = runtime();
   try {
-    const eng = engagementFor(user, fields.data.engagementId);
-    let kind = fields.data.kind;
-    let personId = fields.data.personId ?? null;
+    const eng = engagementFor(user, fields.engagementId);
+    let kind = fields.kind;
+    let personId = fields.personId ?? null;
     let supersedes: string | null = null;
 
-    if (fields.data.requestId) {
+    if (fields.requestId) {
       const request = db
         .query<{ engagement_id: string; kind: string; document_kind: string | null; status: string; person_id: string | null }, [string]>(
           "SELECT engagement_id, kind, document_kind, status, person_id FROM requests WHERE id = ?",
         )
-        .get(fields.data.requestId);
+        .get(fields.requestId);
       if (!request || request.engagement_id !== eng.id) return fail(404, "Request not found.");
       if (request.kind !== "document") return fail(400, "That request is a question; answer it instead.");
       if (request.status !== "open") return fail(409, "That request is already closed.");
@@ -96,7 +105,7 @@ export async function uploadDocument(req: Request, surface: Surface, devOrigin?:
           .query<{ id: string }, [string]>(
             "SELECT id FROM documents WHERE request_id = ? AND status = 'rejected' AND purged_at IS NULL ORDER BY created_at DESC LIMIT 1",
           )
-          .get(fields.data.requestId)?.id ?? null;
+          .get(fields.requestId)?.id ?? null;
     }
     if (!kind) return fail(400, "Say what kind of document this is.");
     if (!db.query("SELECT 1 FROM document_kinds WHERE code = ? AND active = 1").get(kind)) return fail(400, "Unknown document kind.");
@@ -104,7 +113,6 @@ export async function uploadDocument(req: Request, surface: Surface, devOrigin?:
       return fail(400, "That person isn't on this return.");
     }
 
-    const bytes = new Uint8Array(await file.arrayBuffer());
     const type = sniff(bytes);
     if (!type) return fail(415, "Upload a PDF or a photo (JPEG, PNG, WebP or HEIC).");
 
@@ -118,8 +126,8 @@ export async function uploadDocument(req: Request, surface: Surface, devOrigin?:
              mime_type, size_bytes, sha256, storage_key, uploaded_by, created_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, 'uploaded', ?, ?, ?, ?, ?, ?, ?)`,
           [
-            id, personId, eng.id, eng.tax_year, fields.data.requestId ?? null, supersedes, kind,
-            cleanName(file.name, `${kind}.${type.ext}`), type.mime, bytes.byteLength,
+            id, personId, eng.id, eng.tax_year, fields.requestId ?? null, supersedes, kind,
+            cleanName(filename, `${kind}.${type.ext}`), type.mime, bytes.byteLength,
             new Bun.CryptoHasher("sha256").update(bytes).digest("hex"), key, user.id, now(),
           ],
         );
@@ -130,7 +138,7 @@ export async function uploadDocument(req: Request, surface: Surface, devOrigin?:
           subjectId: id,
           householdId: eng.household_id,
           engagementId: eng.id,
-          data: { kind, request_id: fields.data.requestId ?? null, supersedes_id: supersedes },
+          data: { kind, request_id: fields.requestId ?? null, supersedes_id: supersedes },
         });
       })();
     } catch (e) {
@@ -139,6 +147,40 @@ export async function uploadDocument(req: Request, surface: Surface, devOrigin?:
     }
     const row = db.query<DocumentRow, [string]>(`SELECT ${DOCUMENT_COLUMNS} FROM documents d JOIN document_kinds k ON k.code = d.kind WHERE d.id = ?`).get(id)!;
     return json(201, toDocumentView(row, user));
+  } catch (e) {
+    return fromTrpc(e);
+  }
+}
+
+// The public demo's stand-in for an upload (ticket 46): the server draws an invented one-page PDF, stamped DEMO, for the
+// requested kind and stores it exactly as an upload would be. No visitor bytes are ever accepted. Public demo only:
+// anywhere else this path doesn't exist.
+export const SAMPLE_LIMIT_PER_RETURN = 25;
+export async function sampleDocument(req: Request, surface: Surface, devOrigin?: string): Promise<Response> {
+  if (runtime().mode !== "demo" || !runtime().publicDemo) return new Response("Not found", { status: 404 });
+  const user = guard(req, surface, devOrigin);
+  if (user instanceof Response) return user;
+  const fields = Fields.safeParse(await req.json().catch(() => null));
+  if (!fields.success) return fail(400, "Missing or invalid fields.");
+  const { db } = runtime();
+  try {
+    const eng = engagementFor(user, fields.data.engagementId);
+    const sent = db.query<{ n: number }, [string]>("SELECT COUNT(*) AS n FROM documents WHERE engagement_id = ? AND filename LIKE 'sample-%'").get(eng.id)!.n;
+    if (sent >= SAMPLE_LIMIT_PER_RETURN) return fail(429, "That's plenty of samples for one return. The demo resets every few hours.");
+    const request = fields.data.requestId
+      ? db.query<{ document_kind: string | null; person_id: string | null }, [string]>("SELECT document_kind, person_id FROM requests WHERE id = ?").get(fields.data.requestId)
+      : null;
+    const kind = fields.data.kind ?? request?.document_kind ?? "other";
+    const label = db.query<{ label: string }, [string]>("SELECT label FROM document_kinds WHERE code = ?").get(kind)?.label ?? "Document";
+    const personId = fields.data.personId ?? request?.person_id ?? null;
+    const person = personId ? db.query<{ name: string }, [string]>("SELECT first_name || ' ' || last_name AS name FROM people WHERE id = ?").get(personId)?.name : null;
+    const pdf = demoPdf([
+      `${label} - tax year ${eng.tax_year}`,
+      ...(person ? [`For ${person} (invented)`] : []),
+      "A sample sent from the Bell Tax public demo.",
+      "Every name and number in the demo is invented.",
+    ]);
+    return storeDocument(user, fields.data.requestId ? fields.data : { ...fields.data, kind }, pdf, `sample-${kind.replace(/_/g, "-")}.pdf`);
   } catch (e) {
     return fromTrpc(e);
   }

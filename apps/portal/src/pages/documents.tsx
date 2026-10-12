@@ -1,6 +1,7 @@
 import type { DocumentView } from "@app/schema";
 import { FolderCheck, FolderOpen } from "lucide-react";
 
+import { Banner } from "@app/ui/components/banner";
 import { EmptyState } from "@app/ui/components/empty-state";
 import { FileDropzone, UploadList } from "@app/ui/components/file-dropzone";
 import { PageHeader, SectionHeader } from "@app/ui/components/page-header";
@@ -10,7 +11,9 @@ import { Skeleton } from "@app/ui/components/skeleton";
 import { MyUpload } from "@/components/documents/my-upload";
 import { QuestionCard } from "@/components/documents/question-card";
 import { DocRow, RejectedNote, RequestRow, requestStatus } from "@/components/documents/request-row";
+import { SampleButton } from "@/components/documents/sample-button";
 import { useDocumentUploads } from "@/components/documents/use-upload";
+import { useDemoTour } from "@/lib/demo-tour";
 import { usePageTitle, useReturn } from "@/lib/return";
 import { trpc } from "@/lib/trpc";
 
@@ -24,6 +27,7 @@ const List = ({ label, children }: { label: string; children: React.ReactNode })
 );
 
 export default function Documents() {
+  const publicDemo = !!useDemoTour();
   usePageTitle("Documents");
   const { current, loading } = useReturn();
   const id = current?.engagementId;
@@ -96,7 +100,13 @@ export default function Documents() {
 
       <section className="grid gap-3">
         <SectionHeader title="Something else to send?" description="A letter from the IRS, a form you think matters: send it and it goes with your return." />
-        <FileDropzone label="Upload something else" onFiles={extra.start} disabled={!id} />
+        {publicDemo ? (
+          <Banner tone="info" title="Uploads are off in the public demo" action={id ? <SampleButton fields={{ engagementId: id }} label="Send a sample" /> : null}>
+            So nothing real can be sent here. A sample has invented details and goes through exactly the same steps.
+          </Banner>
+        ) : (
+          <FileDropzone label="Upload something else" onFiles={extra.start} disabled={!id} />
+        )}
         <UploadList items={extra.items.filter((i) => i.status !== "uploaded")} announcement={extra.announcement} onRetry={extra.retry} onRemove={extra.remove} />
         {others.length ? (
           <List label="Other things you sent">

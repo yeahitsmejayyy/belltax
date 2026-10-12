@@ -6,7 +6,7 @@ import { useRuntime } from "./db/client";
 import { demoPdf } from "./db/seed/pdf";
 import { ADMIN_MOUNT, withAdminMounted } from "./http";
 import { DEMO_USER_HEADER } from "./identity";
-import { PUBLIC_DEMO_UPLOADS_OFF } from "./rest/documents";
+import { PUBLIC_DEMO_UPLOADS_OFF, SAMPLE_LIMIT_PER_RETURN } from "./rest/documents";
 import { demoWorld, ORIGIN } from "./test-harness";
 
 // The hosted public demo (ticket 15, docs/demo-deploy.md): one public port with the admin under /admin/,
@@ -110,6 +110,70 @@ describe("uploads in the public demo", () => {
     asPublicDemo(false);
     const res = await upload(`${ADMIN_MOUNT}/api/documents`, w.preparerId);
     expect(res.status).not.toBe(403);
+  });
+});
+
+describe("sample documents", () => {
+  const sample = (body: unknown, as: string, base = "") =>
+    site(new Request(`${ORIGIN}${base}/api/documents/sample`, { method: "POST", headers: { [DEMO_USER_HEADER]: as, origin: ORIGIN, "content-type": "application/json" }, body: JSON.stringify(body) }));
+  const openRequest = () =>
+    w.get<{ id: string; engagement_id: string; document_kind: string; client: string }>(
+      `SELECT r.id, r.engagement_id, r.document_kind, u.id AS client FROM requests r
+         JOIN return_people rp ON rp.engagement_id = r.engagement_id AND rp.role = 'primary' JOIN users u ON u.person_id = rp.person_id
+        WHERE r.kind = 'document' AND r.status = 'open' LIMIT 1`,
+    );
+
+  test("answer a request with an invented PDF, stored and logged like any upload", async () => {
+    const r = openRequest();
+    const res = await sample({ engagementId: r.engagement_id, requestId: r.id }, r.client);
+    expect(res.status).toBe(201);
+    const doc = (await res.json()) as { id: string; filename: string; kind: string; status: string };
+    expect(doc).toMatchObject({ kind: r.document_kind, status: "uploaded" });
+    expect(doc.filename).toStartWith("sample-");
+    const bytes = w.storage.get(w.get<{ storage_key: string }>("SELECT storage_key FROM documents WHERE id = ?", doc.id).storage_key);
+    const text = new TextDecoder().decode(bytes);
+    expect(text).toStartWith("%PDF-");
+    expect(text).toContain("DEMO - NOT A REAL DOCUMENT");
+    expect(w.eventsOf("document.uploaded", doc.id)).toHaveLength(1);
+  });
+
+  test("works for 'something else' too, and for the tax agent through /admin", async () => {
+    const r = openRequest();
+    expect((await sample({ engagementId: r.engagement_id }, r.client)).status).toBe(201);
+    expect((await sample({ engagementId: r.engagement_id, kind: "other" }, w.preparerId, ADMIN_MOUNT)).status).toBe(201);
+  });
+
+  test("the same access rules: another household's return is not found", async () => {
+    const r = openRequest();
+    const stranger = w.get<{ id: string }>(
+      `SELECT u.id FROM users u WHERE u.role = 'client' AND u.person_id NOT IN (SELECT person_id FROM return_people WHERE engagement_id = ?) LIMIT 1`,
+      r.engagement_id,
+    ).id;
+    expect((await sample({ engagementId: r.engagement_id }, stranger)).status).toBe(404);
+  });
+
+  test("never takes a file: a multipart body is refused", async () => {
+    const r = openRequest();
+    const form = new FormData();
+    form.set("engagementId", r.engagement_id);
+    form.set("file", new File([demoPdf(["x"])], "real.pdf"));
+    const res = await site(new Request(`${ORIGIN}/api/documents/sample`, { method: "POST", headers: { [DEMO_USER_HEADER]: r.client, origin: ORIGIN }, body: form }));
+    expect(res.status).toBe(400);
+  });
+
+  test(`stops at ${SAMPLE_LIMIT_PER_RETURN} samples per return`, async () => {
+    const r = openRequest();
+    let last = 201;
+    for (let i = 0; i < SAMPLE_LIMIT_PER_RETURN + 1 && last === 201; i++) last = (await sample({ engagementId: r.engagement_id }, r.client)).status;
+    expect(last).toBe(429);
+  });
+
+  test("only on the public demo: the local demo and live mode don't have the path", async () => {
+    const r = openRequest();
+    asPublicDemo(false);
+    expect((await sample({ engagementId: r.engagement_id }, r.client)).status).toBe(404);
+    asPublicDemo(true, "live");
+    expect((await sample({ engagementId: r.engagement_id }, r.client)).status).toBe(404);
   });
 });
 

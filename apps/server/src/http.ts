@@ -4,7 +4,7 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { PRODUCT_NAME } from "@app/schema";
 import { appRouter } from "./appRouter";
 import { runtime } from "./db/client";
-import { downloadDocument, uploadDocument } from "./rest/documents";
+import { downloadDocument, sampleDocument, uploadDocument } from "./rest/documents";
 import { resolveUser, type Surface } from "./identity";
 import { routeOf, type RequestLog } from "./request-log";
 import { createContext } from "./trpc";
@@ -137,6 +137,7 @@ export function createFetchHandler({ surface, webDist, devOrigin, log }: Options
     }
 
     if (pathname === "/api/documents" && req.method === "POST") return cors(await uploadDocument(req, surface, devOrigin), req);
+    if (pathname === "/api/documents/sample" && req.method === "POST") return cors(await sampleDocument(req, surface, devOrigin), req);
     const file = pathname.match(/^\/api\/documents\/([0-9a-f-]{36})\/file$/);
     if (file && req.method === "GET") return cors(downloadDocument(req, surface, file[1]!), req);
     if (pathname.startsWith("/api/")) return new Response("Not found", { status: 404 });

@@ -7,7 +7,9 @@ import { ACCEPTED, UploadList } from "@app/ui/components/file-dropzone";
 import { DocumentChip, type DocumentChipStatus } from "@app/ui/components/status-chip";
 
 import { MyUpload } from "@/components/documents/my-upload";
+import { SampleButton } from "@/components/documents/sample-button";
 import { useDocumentUploads } from "@/components/documents/use-upload";
+import { useDemoTour } from "@/lib/demo-tour";
 
 // One requested document (portal 13, desktop 23): what, for whom, the preparer's note, where it stands, and
 // the upload button. A rejected upload shows the preparer's reason and asks for a better copy.
@@ -91,6 +93,12 @@ export function RequestRow({ request, who, engagementId, preparer, files }: { re
   const open = request.status === "open";
   const label = status === "needed" ? "Upload" : status === "rejected" ? "Upload again" : "Add another file";
   const sent = files.filter((d) => d.status !== "rejected");
+  const publicDemo = !!useDemoTour();
+  const pick = publicDemo ? (
+    <SampleButton fields={{ engagementId, requestId: request.id }} label={status === "rejected" ? "Send a sample again" : "Use a sample document"} variant={status === "uploaded" ? "ghost" : "outline"} />
+  ) : (
+    <PickFiles label={label} variant={status === "uploaded" ? "ghost" : "outline"} onFiles={uploads.start} />
+  );
 
   return (
     <DocRow
@@ -98,7 +106,7 @@ export function RequestRow({ request, who, engagementId, preparer, files }: { re
       meta={[who ? `For ${who}` : null, request.note].filter(Boolean).join(" · ") || null}
       status={status}
       note={status === "rejected" ? <RejectedNote preparer={preparer} reason={request.latestDocument?.rejectReason ?? null} /> : null}
-      action={open ? <PickFiles label={label} variant={status === "uploaded" ? "ghost" : "outline"} onFiles={uploads.start} /> : null}
+      action={open ? pick : null}
     >
       {sent.length || uploads.items.length ? (
         <>

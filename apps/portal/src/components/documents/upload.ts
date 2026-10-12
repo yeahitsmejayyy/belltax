@@ -26,3 +26,12 @@ export function uploadDocument(fields: UploadFields, file: File, onProgress: (fr
     xhr.send(form);
   });
 }
+
+// The public demo's stand-in for an upload (ticket 46): POST /api/documents/sample makes the server draw an invented
+// PDF for this request or kind. Nothing from the visitor's device is sent.
+export async function sendSampleDocument(fields: UploadFields): Promise<DocumentView> {
+  const res = await fetch("/api/documents/sample", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(fields) });
+  const body = (await res.json().catch(() => null)) as (DocumentView & { error?: string }) | null;
+  if (!res.ok) throw new Error(body?.error ?? "The sample didn't send. Try again.");
+  return body as DocumentView;
+}
