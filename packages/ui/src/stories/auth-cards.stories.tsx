@@ -17,7 +17,7 @@ const accepted = fn();
 const signIn = fn();
 export const Invite: Story = {
   name: "Invite",
-  render: () => <InviteWelcome preparerName="Patrick J. Bell" practiceName="Bell Tax" email={EMAIL} onAccept={accepted} onSignIn={signIn} />,
+  render: () => <InviteWelcome preparerName="Morgan Hale" practiceName="Bell Tax" email={EMAIL} onAccept={accepted} onSignIn={signIn} />,
 };
 export const InviteTest: Story = {
   ...Invite,
@@ -25,9 +25,9 @@ export const InviteTest: Story = {
   tags: ["!dev"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
-    await expect(c.getByRole("heading", { name: "Patrick J. Bell invited you to set up your account" })).toBeInTheDocument();
+    await expect(c.getByRole("heading", { name: "Morgan Hale invited you to set up your account" })).toBeInTheDocument();
     await expect(c.getByText(EMAIL)).toBeInTheDocument();
-    await expect(c.getByText(/only Patrick can see them/)).toBeInTheDocument();
+    await expect(c.getByText(/only Morgan can see them/)).toBeInTheDocument();
     await userEvent.click(c.getByRole("button", { name: "Set up my account" }));
     await expect(accepted).toHaveBeenCalledOnce();
     await userEvent.click(c.getByRole("button", { name: "Sign in" }));

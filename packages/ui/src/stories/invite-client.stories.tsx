@@ -32,7 +32,7 @@ function Demo({ fail = false }: { fail?: boolean }) {
         onOpenChange={setOpen}
         mode={mode}
         taxYear={2026}
-        preparerName="Patrick J. Bell"
+        preparerName="Morgan Hale"
         sample={SAMPLE}
         onSubmit={async (d) => {
           await new Promise((r) => setTimeout(r, 300));
@@ -107,7 +107,7 @@ export const InviteTest: Story = {
       await expect(d.getByRole("heading", { name: "Send the portal invite" })).toBeInTheDocument();
       await expect(d.getByText("jo@example.test")).toBeInTheDocument();
       await expect(d.getByText(/1 return · Married filing jointly · Jo Quartz and Sam Quartz/)).toBeInTheDocument();
-      await expect(d.getByText(/Hi Jo, Patrick J\. Bell invited you/)).toBeInTheDocument();
+      await expect(d.getByText(/Hi Jo, Morgan Hale invited you/)).toBeInTheDocument();
       await userEvent.click(d.getByRole("button", { name: "Send invite" }));
       await waitFor(() => expect(d.getByRole("heading", { name: "Invite sent" })).toBeInTheDocument());
       await expect(submitted).toHaveBeenLastCalledWith({

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { LetterView, PracticeView, PublicPractice } from "@app/schema";
+import { DEMO_PRACTICE } from "./db/seed/seed";
 import { demoWorld } from "./test-harness";
 
 // Ticket 37: the practice's own details, stored once (migration 007) and used wherever they appear.
@@ -14,10 +15,10 @@ afterAll(() => w.cleanup());
 const P = () => w.preparerId;
 const m = (path: string, input: unknown) => w.call(P(), path, input, "mutation");
 const get = async () => PracticeView.parse((await w.call(P(), "settings.practice.get", undefined)).data);
-const DESIGN = { practiceName: "BellTaxPrep", preparerName: "Patrick J. Bell", replyToEmail: "pj@belltaxprep.example", phone: "(555) 010-0142", city: "Los Angeles", state: "CA" };
+const DESIGN = { ...DEMO_PRACTICE };
 
 describe("Settings → Practice", () => {
-  test("ships with the design's (invented) details", async () => {
+  test("the demo world ships with an invented practice and preparer", async () => {
     expect(await get()).toMatchObject({ ...DESIGN, preparerCredential: null });
   });
 
@@ -68,7 +69,7 @@ describe("letters use it", () => {
     const res = await w.call(P(), "settings.letterTemplate.preview", { body });
     const preview = res.data as { problems: string[]; rendered: string | null };
     expect(preview.problems).toEqual([]);
-    expect(preview.rendered).toContain("Prepared by Patrick J. Bell at BellTaxPrep");
+    expect(preview.rendered).toContain("Prepared by Morgan Hale at Bell Tax");
   });
 });
 

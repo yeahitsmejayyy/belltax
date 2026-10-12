@@ -153,7 +153,7 @@ export const INTAKE_V1: readonly Section[] = [
         type: "choice",
         required: true,
         label: "Who prepared last year's return?",
-        options: opts(["bell_tax_prep", "Bell Tax Prep"], ["someone_else", "Another preparer"], ["self", "I did it myself"], ["did_not_file", "I didn't file"]),
+        options: opts(["bell_tax_prep", "Bell Tax"], ["someone_else", "Another preparer"], ["self", "I did it myself"], ["did_not_file", "I didn't file"]),
       },
       { id: "tax_letters", type: "yes_no", required: true, label: "Did you get any letters from the IRS or the California Franchise Tax Board this year?" },
       { id: "estimated_payments", type: "yes_no", required: true, label: "Did you make estimated tax payments for the year?" },

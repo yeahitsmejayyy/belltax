@@ -1,6 +1,6 @@
 # Written Information Security Plan (WISP)
 
-**Bell Tax Prep** · draft v0.1 · 2026-09-24 · next review: before the first live client (January 2027), then at least annually
+**Bell Tax** · draft v0.1 · 2026-09-24 · next review: before the first live client (January 2027), then at least annually
 
 > **Draft, not legal advice.** This plan is written to the FTC Safeguards Rule (16 CFR Part 314) and follows the
 > structure of IRS Publication 5708, with the practices in IRS Publication 4557. Have it reviewed by a qualified
@@ -41,7 +41,7 @@ PTIN renewal asks the preparer to attest to it on
 
 ## II. Qualified individual and authorized users ([16 CFR 314.4(a)](https://www.law.cornell.edu/cfr/text/16/314.4))
 
-**Qualified Individual (Data Security Coordinator):** ✍️ `[Owner name]`, owner of Bell Tax Prep. Responsible for
+**Qualified Individual (Data Security Coordinator):** ✍️ `[Owner name]`, owner of Bell Tax. Responsible for
 implementing, overseeing and enforcing this plan, and for the annual review in Section VI.
 
 **Authorized users and access levels** ([Pub 5708 Attachment F](https://www.irs.gov/pub/irs-pdf/p5708.pdf)):
@@ -78,7 +78,7 @@ relationships, signatures, IP addresses and payment records in the portal; full 
 
 **Small-practice note.** Institutions holding information on fewer than 5,000 consumers are exempt from the
 *written* risk assessment, penetration testing, the written incident response plan and the annual report
-([16 CFR 314.6](https://www.law.cornell.edu/cfr/text/16/314.6)). Bell Tax Prep keeps all four anyway: they're cheap
+([16 CFR 314.6](https://www.law.cornell.edu/cfr/text/16/314.6)). Bell Tax keeps all four anyway: they're cheap
 at this size and they're what a client or regulator will ask to see.
 
 **Testing and monitoring** ([314.4(d)](https://www.law.cornell.edu/cfr/text/16/314.4)): automated security tests run

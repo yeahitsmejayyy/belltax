@@ -44,7 +44,7 @@ function Shell({ defaultOpen = true, loading = false }: { defaultOpen?: boolean;
           taxYears={[2026, 2025, 2024]}
           taxYear={year}
           onTaxYearChange={setYear}
-          user={{ name: "Patrick J. Bell", email: "pj@belltax.example" }}
+          user={{ name: "Morgan Hale", email: "morgan@belltax.example" }}
           mode="demo"
           onSettings={() => setActive("settings")}
           onLogout={() => {}}
@@ -96,7 +96,7 @@ function Shell({ defaultOpen = true, loading = false }: { defaultOpen?: boolean;
           onOpenChange={(o) => !o && setInvite(null)}
           mode={invite ?? "invite"}
           taxYear={year}
-          preparerName="Patrick J. Bell"
+          preparerName="Morgan Hale"
           sample={SAMPLE}
           onSubmit={() => new Promise((r) => setTimeout(r, 300))}
         />

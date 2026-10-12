@@ -65,7 +65,7 @@ _Tick everything that applies to you or your spouse this year._
 
 | Question | Answer | Required | Shown when |
 |---|---|---|---|
-| Who prepared last year's return? | pick one<br>Bell Tax Prep · Another preparer · I did it myself · I didn't file | yes | always |
+| Who prepared last year's return? | pick one<br>Bell Tax · Another preparer · I did it myself · I didn't file | yes | always |
 | Did you get any letters from the IRS or the California Franchise Tax Board this year? | yes / no | yes | always |
 | Did you make estimated tax payments for the year? | yes / no | yes | always |
 | About how much, in total? | amount ($) | no | "Did you make estimated tax payments for the year?" is yes |
