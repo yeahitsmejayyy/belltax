@@ -1,10 +1,13 @@
 import { FileText } from "lucide-react";
+import { Link } from "react-router-dom";
 
+import { TryThis } from "@app/ui/components/demo-tour";
 import { EmptyState } from "@app/ui/components/empty-state";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@app/ui/components/select";
 import { Skeleton } from "@app/ui/components/skeleton";
 
 import { InvoiceCard } from "@/components/home/invoice-card";
+import { useDemoTour, useDismissed } from "@/lib/demo-tour";
 import { NeedsCard, needsFor } from "@/components/home/needs-card";
 import { StageProgress } from "@/components/home/stage-progress";
 import { usePageTitle, useReturn, type MyReturn } from "@/lib/return";
@@ -20,6 +23,13 @@ function returnLabel(r: MyReturn, households: boolean) {
   return households ? `${r.householdName} · ${year}` : year;
 }
 
+// The public demo's suggestions for a first visit (ticket 45).
+const CLIENT_TIPS = [
+  { id: "documents", label: "Send a document", detail: "See what's been asked for, and why one was sent back.", href: "/documents" },
+  { id: "letter", label: "Sign the engagement letter", detail: "Read it, type your name, sign.", href: "/letter" },
+  { id: "questions", label: "Answer a few questions", detail: "Answers save as you go.", href: "/questions" },
+];
+
 export default function Home() {
   usePageTitle("Home");
   const { all, current, choose, loading } = useReturn();
@@ -30,6 +40,8 @@ export default function Home() {
   const letter = trpc.letter.get.useQuery({ engagementId: id! }, { enabled: !!id });
   const intake = trpc.intake.get.useQuery({ engagementId: id! }, { enabled: !!id });
   const invoices = trpc.invoice.list.useQuery({ engagementId: id! }, { enabled: !!id });
+  const tour = useDemoTour();
+  const [tipsHidden, hideTips] = useDismissed("portal-home");
 
   if (!loading && !current) {
     return (
@@ -84,6 +96,18 @@ export default function Home() {
           </Select>
         ) : null}
       </header>
+
+      {tour && !tipsHidden ? (
+        <TryThis
+          items={CLIENT_TIPS}
+          onDismiss={hideTips}
+          renderLink={(item, className, children) => (
+            <Link to={item.href} className={className}>
+              {children}
+            </Link>
+          )}
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <div className="grid grid-cols-1 gap-6">

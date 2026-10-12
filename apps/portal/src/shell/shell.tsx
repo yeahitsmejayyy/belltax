@@ -9,12 +9,14 @@ import { Button } from "@app/ui/components/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@app/ui/components/dropdown-menu";
 import { Logo } from "@app/ui/components/logo";
 import { ModeBadge } from "@app/ui/components/mode-badge";
+import { DemoBar } from "@app/ui/components/demo-tour";
 import { ModeToggle } from "@app/ui/components/mode-toggle";
 import { Skeleton } from "@app/ui/components/skeleton";
 import { useTheme } from "@app/ui/components/theme-provider";
 import { clearDemoUser } from "@app/ui/demo";
 import { cn } from "@app/ui/utils";
 
+import { useDemoTour } from "@/lib/demo-tour";
 import { useOnline } from "@/lib/online";
 import { useReturn } from "@/lib/return";
 import { trpc } from "@/lib/trpc";
@@ -38,6 +40,7 @@ export function Shell() {
   const navigate = useNavigate();
   const utils = trpc.useUtils();
   const online = useOnline();
+  const tour = useDemoTour();
   const { resolvedTheme, setTheme } = useTheme();
   const { current } = useReturn();
 
@@ -61,12 +64,13 @@ export function Shell() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
+      {tour ? <DemoBar viewingAs="client" onSwitch={() => location.assign("/admin/")} /> : null}
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 md:px-6">
           <NavLink to="/" aria-label="Home" className="rounded-md focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none">
             <Logo size="sm" />
           </NavLink>
-          {mode === "demo" ? <ModeBadge mode="demo" className="rounded-full" /> : null}
+          {mode === "demo" && !tour ? <ModeBadge mode="demo" className="rounded-full" /> : null}
           <nav aria-label="Main" className="ml-auto hidden items-center gap-1 md:flex">
             {tabs.map((t) => (
               <NavLink

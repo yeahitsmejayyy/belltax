@@ -3,6 +3,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Link, useNavigate } from "react-router-dom";
 
 import { Button } from "@app/ui/components/button";
+import { TryThis } from "@app/ui/components/demo-tour";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/ui/components/card";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@app/ui/components/chart";
 import { Money } from "@app/ui/components/money";
@@ -13,6 +14,7 @@ import { HealthCheckRow, StatCard } from "@app/ui/components/stat-card";
 import { formatCents, formatDate } from "@app/ui/format";
 import { cn } from "@app/ui/utils";
 
+import { useDemoTour, useDismissed } from "@/lib/demo-tour";
 import { useTaxYear } from "@/lib/tax-year";
 import { trpc } from "@/lib/trpc";
 import { usePageTitle } from "@/shell/header-slots";
@@ -46,12 +48,21 @@ function Season({ s, taxYear }: { s: DashboardSummary["season"]; taxYear: number
   );
 }
 
+// The public demo's suggestions for a first visit (ticket 45).
+const AGENT_TIPS = [
+  { id: "pipeline", label: "Move a return forward", detail: "Drag a card in the pipeline to its next stage.", href: "/pipeline" },
+  { id: "inbox", label: "Work the inbox", detail: "New documents and answers from clients land here.", href: "/inbox" },
+  { id: "clients", label: "Open a household", detail: "People, returns and history in one place.", href: "/clients" },
+];
+
 export default function Dashboard() {
   usePageTitle("Dashboard");
   const navigate = useNavigate();
   const { taxYear } = useTaxYear();
   const q = trpc.dashboard.summary.useQuery(taxYear ? { taxYear } : undefined, { enabled: !!taxYear });
   const d = q.data;
+  const tour = useDemoTour();
+  const [tipsHidden, hideTips] = useDismissed("admin-dashboard");
 
   if (!d || !taxYear) {
     return (
@@ -68,6 +79,17 @@ export default function Dashboard() {
 
   return (
     <div className="grid grid-cols-1 animate-page gap-6">
+      {tour && !tipsHidden ? (
+        <TryThis
+          items={AGENT_TIPS}
+          onDismiss={hideTips}
+          renderLink={(item, className, children) => (
+            <Link to={item.href} className={className}>
+              {children}
+            </Link>
+          )}
+        />
+      ) : null}
       <Season s={d.season} taxYear={taxYear} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

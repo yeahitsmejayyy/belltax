@@ -64,6 +64,36 @@ describe("the admin mounted at /admin/", () => {
   });
 });
 
+describe("the front door's tour", () => {
+  const tour = async (surface: "portal" | "admin") => {
+    const res = await (surface === "admin" ? w.handler : w.portal)(new Request(`${ORIGIN}/trpc/demo.tour`));
+    return { status: res.status, body: (await res.json()) as { result?: { data: { publicDemo: boolean; client: { id: string; name: string } | null } } } };
+  };
+
+  test("names a client whose return shows a rejected document and an unsigned letter", async () => {
+    const { status, body } = await tour("portal");
+    expect(status).toBe(200);
+    const t = body.result!.data;
+    expect(t.publicDemo).toBe(true);
+    const row = w.get<{ rejected: number; letter: string }>(
+      `SELECT (SELECT COUNT(*) FROM documents d WHERE d.engagement_id = e.id AND d.status = 'rejected') AS rejected, l.status AS letter
+         FROM users u JOIN return_people rp ON rp.person_id = u.person_id AND rp.role = 'primary'
+         JOIN engagements e ON e.id = rp.engagement_id AND e.stage = 'documents'
+         LEFT JOIN engagement_letters l ON l.id = e.letter_id WHERE u.id = ?`,
+      t.client!.id,
+    );
+    expect(row.rejected).toBeGreaterThan(0);
+    expect(row.letter).toBe("sent");
+  });
+
+  test("says when it isn't the public demo, and doesn't exist in live mode", async () => {
+    asPublicDemo(false);
+    expect((await tour("admin")).body.result!.data.publicDemo).toBe(false);
+    asPublicDemo(true, "live");
+    expect((await tour("portal")).status).toBe(404);
+  });
+});
+
 describe("uploads in the public demo", () => {
   test("are refused on both surfaces before the file is read", async () => {
     const client = w.get<{ id: string }>("SELECT id FROM users WHERE role = 'client' LIMIT 1").id;

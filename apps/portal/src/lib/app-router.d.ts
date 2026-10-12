@@ -63,6 +63,18 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         errorShape: import("@trpc/server").TRPCDefaultErrorShape;
         transformer: false;
     }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        tour: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                publicDemo: boolean;
+                client: {
+                    id: string;
+                    name: string;
+                    household: string;
+                } | null;
+            };
+            meta: object;
+        }>;
         users: import("@trpc/server").TRPCQueryProcedure<{
             input: void;
             output: {

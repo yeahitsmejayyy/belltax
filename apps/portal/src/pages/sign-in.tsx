@@ -8,7 +8,10 @@ import { Input } from "@app/ui/components/input";
 import { Label } from "@app/ui/components/label";
 import { Logo, MarkLoader } from "@app/ui/components/logo";
 import { ModeBadge } from "@app/ui/components/mode-badge";
+import { DemoFrontDoor } from "@app/ui/components/demo-tour";
 import { setDemoUser } from "@app/ui/demo";
+
+import { useDemoTour } from "@/lib/demo-tour";
 
 import { usePageTitle } from "@/lib/return";
 import { trpc } from "@/lib/trpc";
@@ -21,6 +24,7 @@ export default function SignIn() {
   const [picking, setPicking] = React.useState(false);
   const users = trpc.demo.users.useQuery(undefined, { retry: false });
   const demo = !!users.data;
+  const tour = useDemoTour();
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
@@ -30,6 +34,19 @@ export default function SignIn() {
           {demo ? <ModeBadge mode="demo" className="rounded-full" /> : null}
         </div>
       </header>
+      {tour?.client ? (
+        <main className="mx-auto grid w-full max-w-3xl content-start gap-6 px-4 pt-10 md:pt-16">
+          <DemoFrontDoor
+            clientName={tour.client.name}
+            onClient={() => {
+              setDemoUser("portal", tour.client!.id);
+              navigate("/");
+            }}
+            onAgent={() => location.assign("/admin/")}
+            onPickAny={() => setPicking(true)}
+          />
+        </main>
+      ) : (
       <main className="mx-auto grid w-full max-w-sm content-start gap-6 px-4 pt-10 md:pt-16">
         <div className="grid gap-2">
           <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
@@ -75,6 +92,7 @@ export default function SignIn() {
           </>
         ) : null}
       </main>
+      )}
 
       <Dialog open={picking} onOpenChange={setPicking}>
         <DialogContent className="max-h-[80svh] grid-rows-[auto_1fr] overflow-hidden p-0">

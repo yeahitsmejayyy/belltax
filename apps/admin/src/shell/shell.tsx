@@ -13,9 +13,11 @@ import { InviteClientDialog, type InviteDraft } from "@app/ui/components/invite-
 import { SidebarInset, SidebarProvider } from "@app/ui/components/sidebar";
 import { Skeleton } from "@app/ui/components/skeleton";
 import { SplitButton } from "@app/ui/components/split-button";
-import { clearDemoUser } from "@app/ui/demo";
+import { DemoBar } from "@app/ui/components/demo-tour";
+import { clearDemoUser, setDemoUser } from "@app/ui/demo";
 
 import { useTaxYear } from "@/lib/tax-year";
+import { useDemoTour } from "@/lib/demo-tour";
 import { trpc } from "@/lib/trpc";
 import { useHeaderTitle } from "./header-slots";
 import { InviteContext } from "./invite";
@@ -43,6 +45,7 @@ export function Shell() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { taxYear, years, setTaxYear } = useTaxYear();
+  const tour = useDemoTour();
   const utils = trpc.useUtils();
 
   const mode = trpc.health.check.useQuery(undefined, { staleTime: Infinity }).data?.mode ?? "demo";
@@ -123,6 +126,15 @@ export function Shell() {
         )}
       />
       <SidebarInset className="min-w-0">
+        {tour?.client ? (
+          <DemoBar
+            viewingAs="agent"
+            onSwitch={() => {
+              setDemoUser("portal", tour.client!.id);
+              location.assign("/");
+            }}
+          />
+        ) : null}
         <AppHeader
           title={heading}
           search={{ groups, onQueryChange: setQ, filter: false }}

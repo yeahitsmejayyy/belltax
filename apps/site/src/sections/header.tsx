@@ -1,4 +1,4 @@
-import { ArrowRight, CircleQuestionMark, House, ListChecks, Lock, Menu, ReceiptText } from "lucide-react";
+import { ArrowRight, CircleQuestionMark, House, ListChecks, Menu, MonitorPlay, ReceiptText } from "lucide-react";
 
 import { Button } from "@app/ui/components/button";
 import { FloatingActionMenu } from "@app/ui/components/floating-action-menu";
@@ -38,7 +38,8 @@ export function Header() {
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <ModeToggle className="size-11 md:size-9" />
             <Button asChild variant="ghost" className="hidden md:inline-flex">
-              <a href={portalUrl("/sign-in")}>Sign in</a>
+              {/* The portal's sign-in is the hosted demo's front door (ticket 45). Back to "Sign in" when the practice goes live. */}
+              <a href={portalUrl("/sign-in")}>See the demo</a>
             </Button>
             <Button asChild className="h-11 px-4 text-base md:h-9 md:text-sm">
               <a href={start}>Get started</a>
@@ -52,7 +53,7 @@ export function Header() {
         className="bottom-4"
         items={[
           { label: "Get started", icon: ArrowRight, onSelect: go(start) },
-          { label: "Client sign in", icon: Lock, onSelect: go(portalUrl("/sign-in")) },
+          { label: "See the demo", icon: MonitorPlay, onSelect: go(portalUrl("/sign-in")) },
           { label: "How it works", icon: ListChecks, onSelect: go("#how") },
           { label: "Features", icon: House, onSelect: go("#features") },
           { label: "Pricing", icon: ReceiptText, onSelect: go("#pricing") },
