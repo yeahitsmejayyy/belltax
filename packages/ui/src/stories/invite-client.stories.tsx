@@ -109,7 +109,7 @@ export const InviteTest: Story = {
       await expect(d.getByText(/1 return · Married filing jointly · Jo Quartz and Sam Quartz/)).toBeInTheDocument();
       await expect(d.getByText(/Hi Jo, Morgan Hale invited you/)).toBeInTheDocument();
       await userEvent.click(d.getByRole("button", { name: "Send invite" }));
-      await waitFor(() => expect(d.getByRole("heading", { name: "Invite sent" })).toBeInTheDocument());
+      await waitFor(() => expect(d.getByRole("heading", { name: "Invite ready" })).toBeInTheDocument());
       await expect(submitted).toHaveBeenLastCalledWith({
         mode: "invite", surname: "Quartz", email: "jo@example.test", phone: "",
         members: [{ first: "Jo", role: "primary" }, { first: "Sam", role: "spouse" }], filing: "mfj", filers: [0, 1],

@@ -84,5 +84,10 @@ export const EfileStatus = z.enum(["submitted", "accepted", "rejected"]);
 
 // Reminder preferences (migration 009): requests (documents and questions), a letter to sign, a payment due.
 export const ReminderKind = z.enum(["requests", "letter", "invoice"]);
+// invites.purpose, sessions.surface (migration 010)
+export const InvitePurpose = z.enum(["invite", "reset"]);
+export type InvitePurpose = z.infer<typeof InvitePurpose>;
+export const SessionSurface = z.enum(["portal", "admin"]);
+export type SessionSurface = z.infer<typeof SessionSurface>;
 export type ReminderKind = z.infer<typeof ReminderKind>;
 export type EfileStatus = z.infer<typeof EfileStatus>;

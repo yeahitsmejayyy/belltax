@@ -1,56 +1,64 @@
 import { useNavigate } from "react-router-dom";
 
+import { SignInForm } from "@app/ui/components/auth-cards";
 import { Button } from "@app/ui/components/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/ui/components/card";
-import { Logo, MarkLoader } from "@app/ui/components/logo";
+import { Logo } from "@app/ui/components/logo";
 import { ModeBadge } from "@app/ui/components/mode-badge";
 import { setDemoUser } from "@app/ui/demo";
 
+import { authPost } from "@/lib/auth";
 import { trpc } from "@/lib/trpc";
 
-// Sign in (admin 01-access-signin). Until auth (ticket 05) it's the demo shortcut: pick who to be.
-// Email and password arrive with auth.
+// Sign in (admin 01-access-signin, ticket 05): the preparer's email and password. In demo mode the picker sits
+// underneath, so a walkthrough is one click; in live mode there is no picker at all.
 export default function Login() {
   const navigate = useNavigate();
+  const utils = trpc.useUtils();
   const users = trpc.demo.users.useQuery(undefined, { retry: false });
   const preparers = users.data?.filter((u) => u.role === "preparer") ?? [];
+  const enter = async () => {
+    await utils.invalidate();
+    navigate("/dashboard");
+  };
 
   return (
     <main className="grid min-h-svh place-items-center bg-muted/40 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="items-center text-center">
-          <Logo subtitle="Preparer admin" className="mx-auto mb-2" />
-          <CardTitle className="text-xl">Sign in</CardTitle>
-          <CardDescription>Email and password arrive with sign-in. For the demo, choose who to be.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3">
-          {users.isLoading ? <MarkLoader label="Loading" className="py-6" /> : null}
-          {/* NOT_FOUND is the server saying "live mode, no demo"; anything else means it isn't answering at all. */}
-          {users.error?.data?.code === "NOT_FOUND" ? <p className="text-sm text-muted-foreground">Sign-in arrives with auth. There's no demo sign-in in live mode.</p> : null}
-          {users.error && users.error.data?.code !== "NOT_FOUND" ? (
-            <div className="grid gap-3 text-center">
-              <p className="text-sm text-muted-foreground">Can't reach the server. Is it running (<code className="font-mono text-xs">bun run dev</code>)?</p>
-              <Button variant="outline" size="touch" onClick={() => users.refetch()}>
-                Try again
-              </Button>
+      <div className="grid w-full max-w-sm gap-6 rounded-xl border bg-card p-6 shadow-sm">
+        <Logo className="mx-auto" />
+        <SignInForm
+          title="Sign in"
+          description="The back office for your practice."
+          onSubmit={async (email, password) => {
+            const r = await authPost("/api/auth/sign-in", { email, password });
+            if (!r.ok) throw new Error(r.error);
+            await enter();
+          }}
+        >
+          {preparers.length ? (
+            <div className="grid gap-3">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                or, in the demo
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              {preparers.map((u) => (
+                <Button
+                  key={u.id}
+                  variant="outline"
+                  size="touch"
+                  onClick={() => {
+                    setDemoUser("admin", u.id);
+                    void enter();
+                  }}
+                >
+                  Continue as {u.label}
+                </Button>
+              ))}
+              <ModeBadge mode="demo" />
             </div>
           ) : null}
-          {preparers.map((u) => (
-            <Button
-              key={u.id}
-              size="touch"
-              className="w-full"
-              onClick={() => {
-                setDemoUser("admin", u.id);
-                navigate("/dashboard");
-              }}
-            >
-              Continue as {u.label}
-            </Button>
-          ))}
-          {users.data ? <ModeBadge mode="demo" /> : null}
-        </CardContent>
-      </Card>
+        </SignInForm>
+      </div>
     </main>
   );
 }

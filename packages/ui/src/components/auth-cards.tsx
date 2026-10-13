@@ -8,8 +8,8 @@ import { Button } from "./button";
 import { Input } from "./input";
 import { BellMark } from "./logo";
 
-// The portal's way in (portal 01-access-invite, 02-access-setpw, 04-access-expired). Presentational: props in,
-// callbacks out. The routes and sessions arrive with real sign-in (ticket 05).
+// The way in (portal 01-access-invite, 02-access-setpw, 04-access-expired; ticket 05 wires them). Presentational: props
+// in, callbacks out. Both apps use them: clients on the portal, the preparer on the admin.
 
 const first = (name: string) => name.split(/\s+/)[0] ?? name;
 
@@ -72,7 +72,9 @@ export function InviteWelcome({
 // 02: create a password. The checklist updates as you type; errors follow principles.md rule 10 (on leaving a
 // field, live once shown, everything again on submit). If `onSubmit` throws, its message shows above the button.
 
-export const PASSWORD_MIN = 12;
+// The same rules the server enforces (@app/schema passwordProblem).
+export { PASSWORD_MIN } from "@app/schema";
+import { PASSWORD_MIN } from "@app/schema";
 
 export function passwordRules(password: string, again: string, email: string) {
   const local = email.split("@")[0]?.toLowerCase() ?? "";
@@ -269,3 +271,92 @@ export function SessionExpired({ open, minutes = 30, onSignIn }: { open: boolean
     </AlertDialog>
   );
 }
+
+// Signing in with an email and password. If `onSubmit` throws, its message shows above the button; the server's
+// message is the same for a wrong password and an unknown email. `children` sits under the form (the demo picker).
+export function SignInForm({
+  title = "Sign in",
+  description,
+  onSubmit,
+  children,
+  className,
+}: {
+  title?: string;
+  description?: React.ReactNode;
+  onSubmit: (email: string, password: string) => Promise<void>;
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  const id = React.useId();
+  const [email, setEmail] = React.useState("");
+  const [pw, setPw] = React.useState("");
+  const [pending, setPending] = React.useState(false);
+  const [failed, setFailed] = React.useState<string | null>(null);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pending) return;
+    if (!email.trim() || !pw) return setFailed("Enter your email and password.");
+    setPending(true);
+    setFailed(null);
+    try {
+      await onSubmit(email.trim(), pw);
+    } catch (err) {
+      setFailed(err instanceof Error ? err.message : "That didn't work. Try again.");
+      setPending(false);
+    }
+  };
+  return (
+    <section data-slot="sign-in-form" aria-labelledby={`${id}-title`} className={cn("grid w-full max-w-sm gap-6", className)}>
+      <div className="grid gap-2">
+        <h1 id={`${id}-title`} className="text-3xl font-semibold tracking-tight">
+          {title}
+        </h1>
+        {description ? <p className="text-muted-foreground">{description}</p> : null}
+      </div>
+      <form className="grid gap-4" onSubmit={submit} noValidate>
+        <div className="grid gap-2">
+          <label htmlFor={`${id}-email`} className="text-sm font-medium">
+            Email
+          </label>
+          <Input id={`${id}-email`} type="email" autoComplete="username" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11" />
+        </div>
+        <div className="grid gap-2">
+          <label htmlFor={`${id}-password`} className="text-sm font-medium">
+            Password
+          </label>
+          <Input id={`${id}-password`} type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} className="h-11" />
+        </div>
+        {failed ? (
+          <Banner tone="danger" title={failed} />
+        ) : null}
+        <Button type="submit" size="touch" disabled={pending} aria-busy={pending}>
+          {pending ? "Signing in…" : "Sign in"}
+        </Button>
+      </form>
+      {children}
+    </section>
+  );
+}
+
+// A link that's been used, replaced or has expired. Says so plainly, and who to ask for a new one.
+export function LinkGone({ preparerName, onSignIn, className }: { preparerName?: string; onSignIn?: () => void; className?: string }) {
+  return (
+    <section data-slot="link-gone" aria-labelledby="link-gone-title" className={cn("grid w-full max-w-sm gap-6", className)}>
+      <BellMark className="size-12 justify-self-start" />
+      <div className="grid gap-2">
+        <h1 id="link-gone-title" className="text-3xl font-semibold tracking-tight text-balance">
+          This link no longer works
+        </h1>
+        <p className="text-pretty text-muted-foreground">
+          It was already used, a newer one replaced it, or it expired. {preparerName ? `Ask ${first(preparerName)} for a new link.` : "Ask for a new link."}
+        </p>
+      </div>
+      {onSignIn ? (
+        <Button size="touch" variant="outline" onClick={onSignIn}>
+          Sign in instead
+        </Button>
+      ) : null}
+    </section>
+  );
+}
+

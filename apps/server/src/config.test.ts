@@ -5,7 +5,7 @@ const repo = "/work/belltaxprep";
 
 describe("loadConfig", () => {
   test("defaults to demo with in-repo data dir", () => {
-    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null, stripe: null });
+    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null, stripe: null, links: { portal: "http://localhost:5173", admin: "http://localhost:5174" } });
   });
 
   test("rejects an unknown mode", () => {
@@ -32,7 +32,7 @@ describe("loadConfig", () => {
 
   test("live accepts a sibling dir that only shares a name prefix", () => {
     const cfg = loadConfig({ RUN_MODE: "live", LIVE_DATA_DIR: "/work/belltaxprep-live" }, repo);
-    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null, stripe: null });
+    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null, stripe: null, links: { portal: "http://127.0.0.1:3000", admin: "http://127.0.0.1:3001" } });
   });
 
   test("the admin gets its own port, never the portal's", () => {

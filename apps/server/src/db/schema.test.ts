@@ -6,6 +6,8 @@ import {
   EfileStatus,
   PackageFilingStatus,
   ReminderKind,
+  InvitePurpose,
+  SessionSurface,
   ActorKind,
   DocumentCategory,
   DocumentStatus,
@@ -103,6 +105,8 @@ describe("zod ↔ SQL drift", () => {
       "efile_submissions.jurisdiction": EfileJurisdiction.options,
       "efile_submissions.status": EfileStatus.options,
       "reminder_preferences.kind": ReminderKind.options,
+      "invites.purpose": InvitePurpose.options,
+      "sessions.surface": SessionSurface.options,
     };
     const found: Record<string, string[]> = {};
     const rows = db.query<{ name: string; sql: string }, []>("SELECT name, sql FROM sqlite_master WHERE type = 'table'").all();

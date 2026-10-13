@@ -18,7 +18,7 @@ if (config.mode === "live") {
 const storage = createStorage(config.dataDir);
 const { db, seeded } = await bootDatabase(config, { storage });
 const publicDemo = config.mode === "demo" && config.publicDemo !== null;
-useRuntime({ db, storage, mode: config.mode, dataDir: config.dataDir, publicDemo, stripe: config.stripe });
+useRuntime({ db, storage, mode: config.mode, dataDir: config.dataDir, publicDemo, stripe: config.stripe, links: config.links });
 
 const log = createRequestLog({ mode: config.mode, dataDir: config.dataDir });
 
@@ -35,7 +35,7 @@ if (config.publicDemo) {
   setInterval(async () => {
     const previous = runtime().db;
     const fresh = await bootDatabase(config, { storage });
-    useRuntime({ db: fresh.db, storage, mode: config.mode, dataDir: config.dataDir, publicDemo, stripe: config.stripe });
+    useRuntime({ db: fresh.db, storage, mode: config.mode, dataDir: config.dataDir, publicDemo, stripe: config.stripe, links: config.links });
     previous.close();
     console.log(`  demo world re-seeded on its ${reset} h timer`);
   }, reset * 3_600_000);

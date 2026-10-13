@@ -16,6 +16,7 @@ import { useTheme } from "@app/ui/components/theme-provider";
 import { clearDemoUser, setDemoUser } from "@app/ui/demo";
 import { cn } from "@app/ui/utils";
 
+import { signOut } from "@/lib/auth";
 import { useDemoTour } from "@/lib/demo-tour";
 import { useOnline } from "@/lib/online";
 import { useReturn } from "@/lib/return";
@@ -129,9 +130,10 @@ export function Shell() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="min-h-11"
-                onSelect={() => {
+                onSelect={async () => {
+                  await signOut();
                   clearDemoUser("portal");
-                  utils.invalidate();
+                  await utils.invalidate();
                   navigate("/sign-in");
                 }}
               >

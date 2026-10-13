@@ -1,10 +1,12 @@
-import { Archive, ArchiveRestore, CheckCircle2, ChevronRight, CircleDashed, Clock, KeyRound, UserX } from "lucide-react";
+import { Archive, ArchiveRestore, CheckCircle2, ChevronRight, CircleDashed, Clock, KeyRound, LogOut, UserX } from "lucide-react";
+import * as React from "react";
 import { toast } from "sonner";
 import { Link, useParams } from "react-router-dom";
 
 import { Banner } from "@app/ui/components/banner";
 import { Button } from "@app/ui/components/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@app/ui/components/card";
+import { CopyLink } from "@app/ui/components/copy-link";
 import { PageHeader } from "@app/ui/components/page-header";
 import { Skeleton } from "@app/ui/components/skeleton";
 import { StagePill } from "@app/ui/components/stage-pill";
@@ -37,6 +39,39 @@ function LoginChip({ m }: { m: Member }) {
   return m.login.activated ? <StatusChip tone="success" icon={CheckCircle2} label="Has portal login" /> : <StatusChip tone="brand" icon={Clock} label="Invited" />;
 }
 
+// The preparer's controls over a login (ticket 05): a one-time link to hand over (an invite until they've set a
+// password, a reset after), and signing them out of every browser.
+function LoginActions({ login }: { login: NonNullable<Member["login"]> }) {
+  const [url, setUrl] = React.useState<string | null>(null);
+  const purpose = login.activated ? "reset" : "invite";
+  const link = trpc.login.link.useMutation({ onSuccess: (r) => setUrl(r.url), onError: (e) => toast.error(e.message) });
+  const out = trpc.login.signOutEverywhere.useMutation({
+    onSuccess: (r) => toast.success(r.ended ? `Signed out of ${r.ended} ${r.ended === 1 ? "browser" : "browsers"}` : "Wasn't signed in anywhere"),
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="grid gap-2 sm:col-span-3">
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={() => link.mutate({ userId: login.userId, purpose })} disabled={link.isPending}>
+          <KeyRound aria-hidden="true" /> {purpose === "invite" ? "Invite link" : "Password reset link"}
+        </Button>
+        {login.activated ? (
+          <Button variant="ghost" size="sm" onClick={() => out.mutate({ userId: login.userId })} disabled={out.isPending}>
+            <LogOut aria-hidden="true" /> Sign out everywhere
+          </Button>
+        ) : null}
+      </div>
+      {url ? (
+        <CopyLink
+          url={url}
+          label={purpose === "invite" ? `Invite link for ${login.email}` : `Reset link for ${login.email}`}
+          note={purpose === "invite" ? "Send it to them yourself. It works once, for 7 days." : "Send it to them yourself. It works once, for 24 hours, and signs them out everywhere."}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function MemberRow({ m }: { m: Member }) {
   const name = [m.firstName, m.middleName, m.lastName, m.suffix].filter(Boolean).join(" ");
   const facts = [m.dateOfBirth ? `Born ${formatDate(`${m.dateOfBirth}T12:00:00Z`)}` : null, m.dateOfBirth ? (age(m.dateOfBirth) >= 18 ? "Adult" : `Age ${age(m.dateOfBirth)}`) : null]
@@ -54,6 +89,7 @@ function MemberRow({ m }: { m: Member }) {
         {m.ssnLast4 ? `•••-••-${m.ssnLast4}` : "No SSN"}
       </span>
       <LoginChip m={m} />
+      {m.login ? <LoginActions login={m.login} /> : null}
     </li>
   );
 }

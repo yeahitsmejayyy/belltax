@@ -2,11 +2,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 
-import { InviteWelcome, SessionExpired, SetPasswordForm } from "../components/auth-cards";
+import { InviteWelcome, LinkGone, SessionExpired, SetPasswordForm, SignInForm } from "../components/auth-cards";
+import { CopyLink } from "../components/copy-link";
 import { Button } from "../components/button";
 
-// Portal 01-access-invite, 02-access-setpw, 04-access-expired: the way in, before real sign-in (ticket 05) wires
-// them to routes. Invented people only.
+// The way in (portal 01-access-invite, 02-access-setpw, 04-access-expired; wired by ticket 05): sign in, an invite or
+// reset link, a link that no longer works, and the one-time link the preparer copies. Invented people only.
 const meta: Meta = { title: "Admin/Auth" };
 export default meta;
 type Story = StoryObj;
@@ -157,3 +158,64 @@ export const SignedOutTest: Story = {
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
   },
 };
+
+const signedIn = fn();
+export const SignIn: Story = {
+  render: () => (
+    <SignInForm
+      description="See where your return stands and what's needed from you."
+      onSubmit={async (email, password) => {
+        signedIn(email, password);
+        if (password !== "correct horse battery staple") throw new Error("That email and password don't match.");
+      }}
+    />
+  ),
+};
+export const SignInTest: Story = {
+  ...SignIn,
+  name: "Sign in · test",
+  tags: ["!dev"],
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement);
+    await userEvent.click(c.getByRole("button", { name: "Sign in" }));
+    await expect(await c.findByText("Enter your email and password.")).toBeInTheDocument();
+    await userEvent.type(c.getByLabelText("Email"), EMAIL);
+    await userEvent.type(c.getByLabelText("Password"), "wrong password");
+    await userEvent.click(c.getByRole("button", { name: "Sign in" }));
+    await expect(await c.findByText("That email and password don't match.")).toBeInTheDocument();
+    await expect(signedIn).toHaveBeenCalledWith(EMAIL, "wrong password");
+  },
+};
+
+export const LinkNoLongerWorks: Story = { render: () => <LinkGone preparerName="Morgan Hale" onSignIn={fn()} /> };
+export const LinkNoLongerWorksTest: Story = {
+  ...LinkNoLongerWorks,
+  name: "Link no longer works · test",
+  tags: ["!dev"],
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement);
+    await expect(c.getByRole("heading", { name: "This link no longer works" })).toBeInTheDocument();
+    await expect(c.getByText(/Ask Morgan for a new link/)).toBeInTheDocument();
+  },
+};
+
+const URL_ = "https://portal.example/invite/q1Xw3m5zJ7xk2p9rT4vB8nC0dF6hL2sY";
+export const OneTimeLink: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <CopyLink url={URL_} label="Invite link for jo@example.test" note="Send it to them yourself. It works once, for 7 days." />
+    </div>
+  ),
+};
+export const OneTimeLinkTest: Story = {
+  ...OneTimeLink,
+  name: "One-time link · test",
+  tags: ["!dev"],
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement);
+    await expect(c.getByLabelText("Invite link for jo@example.test")).toHaveValue(URL_);
+    await userEvent.click(c.getByRole("button", { name: "Copy link" }));
+    await waitFor(() => expect(c.getByLabelText("Invite link for jo@example.test")).toHaveFocus());
+  },
+};
+

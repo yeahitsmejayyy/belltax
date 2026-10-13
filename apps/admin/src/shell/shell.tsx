@@ -17,6 +17,7 @@ import { DemoBar } from "@app/ui/components/demo-tour";
 import { clearDemoUser, setDemoUser } from "@app/ui/demo";
 
 import { useTaxYear } from "@/lib/tax-year";
+import { signOut } from "@/lib/auth";
 import { useDemoTour } from "@/lib/demo-tour";
 import { trpc } from "@/lib/trpc";
 import { useHeaderTitle } from "./header-slots";
@@ -114,7 +115,8 @@ export function Shell() {
         user={{ name: practice?.preparerName ?? "Preparer", email: practice?.replyToEmail ?? "" }}
         mode={mode}
         onSettings={() => navigate("/settings")}
-        onLogout={() => {
+        onLogout={async () => {
+          await signOut();
           clearDemoUser("admin");
           utils.invalidate();
           navigate("/login");
@@ -176,7 +178,8 @@ export function Shell() {
           });
           setCreated(r.engagementIds[0] ?? null);
           await utils.invalidate();
-          toast.success(d.mode === "invite" ? `Invite sent to ${d.email}` : `${d.surname} household added`);
+          toast.success(d.mode === "invite" ? `Invite ready for ${d.email}` : `${d.surname} household added`);
+          return { inviteUrl: r.inviteUrl };
         }}
         onOpenReturn={
           created

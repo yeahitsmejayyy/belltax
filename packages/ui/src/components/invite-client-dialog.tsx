@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { cn } from "../utils";
 import { Banner } from "./banner";
+import { CopyLink } from "./copy-link";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./dialog";
@@ -86,7 +87,7 @@ type InviteClientDialogProps = {
   mode: InviteDraft["mode"];
   taxYear: number;
   preparerName: string;
-  onSubmit: (draft: InviteDraft) => Promise<void>;
+  onSubmit: (draft: InviteDraft) => Promise<void | { inviteUrl?: string | null }>; // an invite returns its one-time link to hand over
   sample?: Omit<InviteDraft, "mode">; // demo only: "Fill sample data"
   onOpenReturn?: () => void; // shown on the done step
 };
@@ -99,6 +100,7 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
   const [busy, setBusy] = React.useState(false);
   const [failure, setFailure] = React.useState<string | null>(null);
   const [sentAt, setSentAt] = React.useState<Date | null>(null);
+  const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
 
   // A fresh start every time it opens.
   React.useEffect(() => {
@@ -134,7 +136,8 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
     setBusy(true);
     setFailure(null);
     try {
-      await onSubmit({ ...draft, surname: draft.surname.trim(), email: draft.email.trim(), phone: draft.phone.trim() });
+      const r = await onSubmit({ ...draft, surname: draft.surname.trim(), email: draft.email.trim(), phone: draft.phone.trim() });
+      setInviteUrl((r && r.inviteUrl) || null);
       setSentAt(new Date());
       setStep(4);
     } catch (err) {
@@ -150,7 +153,7 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
     set({ filing: v, filers: v === "mfj" || v === "mfs" ? firstTwo : [adults[0]?.i ?? 0] });
   };
 
-  const titles = ["Create the household", "Add household members", `Choose this year's filers`, isAdd ? "Review and save" : "Send the portal invite", isAdd ? "Client added" : "Invite sent"];
+  const titles = ["Create the household", "Add household members", `Choose this year's filers`, isAdd ? "Review and save" : "Send the portal invite", isAdd ? "Client added" : "Invite ready"];
   const descs = [
     isAdd ? "Start with a name. Email is optional until you send the portal invite." : "Start with a name and the email the invite goes to.",
     "Add everyone who lives in the household, including dependents. Clients add SSNs themselves in the portal.",
@@ -319,11 +322,15 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
             <p>
               {isAdd
                 ? `${draft.surname.trim()} household added on ${stamp}. The return is in Invited and marked Not invited yet.`
-                : `Invite sent to ${draft.email.trim()} on ${stamp}. The return is in Invited until they set up their account.`}
+                : `Invite ready for ${draft.email.trim()} (${stamp}). The return is in Invited until they set up their account.`}
             </p>
-            <p className="text-muted-foreground">
-              {isAdd ? "Send the portal invite from the return's menu when you're ready." : "The link works once and expires in 7 days. You can resend it from the household page."}
-            </p>
+            {!isAdd && inviteUrl ? (
+              <CopyLink url={inviteUrl} label="Their invite link" note="Send it to them yourself. It works once and expires in 7 days; you can make a new one from the household page." />
+            ) : (
+              <p className="text-muted-foreground">
+                {isAdd ? "Send the portal invite from the household page when you're ready." : "The link works once and expires in 7 days. You can make a new one from the household page."}
+              </p>
+            )}
           </div>
         ) : null}
 

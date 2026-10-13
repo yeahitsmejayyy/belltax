@@ -48,6 +48,18 @@ folder to owner-only; refuses to start if the database is behind the code. It th
 
 Stop with `Ctrl+C`. SQLite's write-ahead log makes a stop mid-request safe.
 
+### Your first sign-in (once)
+
+```bash
+bun run preparer:invite you@yourpractice.com
+```
+
+It creates your login the first time (a reset after that) and prints a one-time link. Open it **on this machine**, set
+a password (12+ characters), and you're in. Clients get their links from you: the Invite dialog shows one, and each
+household member has **Invite link** / **Password reset link** and **Sign out everywhere**. Send links yourself; each
+works once (invites 7 days, resets 24 hours). Sessions end after 30 minutes idle or 12 hours; 10 wrong passwords lock
+a login for 15 minutes.
+
 Every request prints one line (time, portal or admin, method, route pattern, status, duration, user id) and is also
 appended to `<LIVE_DATA_DIR>/logs/requests.log`, owner-only, rotated at 5 MB with five old files kept. It never holds
 a path, query string, header or body. Who opened which return or file lives in the activity feed, not here.

@@ -1516,6 +1516,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 householdId: string;
                 engagementIds: string[];
                 invited: boolean;
+                inviteUrl: string | null;
             };
             meta: object;
         }>;
@@ -1713,6 +1714,27 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
         errorShape: import("@trpc/server").TRPCDefaultErrorShape;
         transformer: false;
     }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        link: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                userId: string;
+                purpose: "invite" | "reset";
+            };
+            output: {
+                url: string;
+                expiresAt: string;
+            };
+            meta: object;
+        }>;
+        signOutEverywhere: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                userId: string;
+            };
+            output: {
+                ended: number;
+            };
+            meta: object;
+        }>;
+    }> & import("@trpc/server").TRPCDecorateCreateRouterOptions<{
         create: import("@trpc/server").TRPCMutationProcedure<{
             input: {
                 personId: string;
@@ -1735,6 +1757,36 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     email: string;
                     activated: boolean;
                 } | null;
+            };
+            meta: object;
+        }>;
+    }>>;
+    auth: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        state: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                user: {
+                    id: string;
+                    role: "client" | "preparer";
+                    email: string;
+                } | null;
+                demo: boolean;
             };
             meta: object;
         }>;

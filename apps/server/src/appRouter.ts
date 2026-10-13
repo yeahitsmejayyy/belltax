@@ -1,3 +1,4 @@
+import { authRouter, loginLinkRouter } from "./routes/auth";
 import { dashboardRouter } from "./routes/dashboard";
 import { demoRouter } from "./routes/demo";
 import { documentRouter } from "./routes/document";
@@ -34,7 +35,8 @@ export const appRouter = router({
   me: meRouter,
   household: mergeRouters(householdRouter, router({ onboard: onboardProcedure })),
   person: personRouter,
-  login: loginRouter,
+  login: mergeRouters(loginRouter, loginLinkRouter),
+  auth: authRouter,
   access: accessRouter,
   inbox: inboxRouter,
   activity: activityRouter,

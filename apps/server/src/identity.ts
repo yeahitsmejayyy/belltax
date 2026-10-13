@@ -1,3 +1,4 @@
+import { sessionCookie, userForSession } from "./auth/auth";
 import { runtime } from "./db/client";
 
 // Who is making this request. The seam real auth (task 05) plugs into: it will replace
@@ -27,7 +28,14 @@ const cookie = (req: Request, name: string) =>
     .map((c) => c.trim().split("="))
     .find(([k]) => k === name)?.[1];
 
+// A signed-in session (ticket 05) comes first, in every mode. The demo identity (header or picker cookie) is the
+// fallback, in demo mode only.
 export function resolveUser(req: Request, surface: Surface): SessionUser | null {
+  const token = cookie(req, sessionCookie(surface));
+  if (token) {
+    const signedIn = userForSession(decodeURIComponent(token), surface);
+    if (signedIn) return signedIn;
+  }
   const user = identify(req, surface);
   return user && surface === "portal" && user.role === "preparer" ? null : user;
 }

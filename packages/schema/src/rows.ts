@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   EfileJurisdiction,
   ReminderKind,
+  InvitePurpose,
+  SessionSurface,
   EfileStatus,
   ActorKind,
   DocumentCategory,
@@ -58,6 +60,9 @@ export const UserRow = z.object({
   password_hash: text.nullable(),
   activated_at: Timestamp.nullable(),
   created_at: Timestamp,
+  failed_sign_ins: z.int().nonnegative(),
+  locked_until: Timestamp.nullable(),
+  last_sign_in_at: Timestamp.nullable(),
 });
 
 export const HouseholdAccessRow = z.object({
@@ -278,6 +283,32 @@ export const EfileSubmissionRow = z.object({
 });
 
 // A client's reminder choice for one kind of reminder (migration 009); no row means email on, text off.
+// Sign-in (migration 010): only hashes of link and session tokens are stored.
+const TokenHash = z.string().regex(/^[0-9a-f]{64}$/);
+export const InviteRow = z.object({
+  id: Id,
+  user_id: Id,
+  purpose: InvitePurpose,
+  token_hash: TokenHash,
+  created_by: Id.nullable(),
+  created_at: Timestamp,
+  expires_at: Timestamp,
+  used_at: Timestamp.nullable(),
+  revoked_at: Timestamp.nullable(),
+});
+export const SessionRow = z.object({
+  id: Id,
+  token_hash: TokenHash,
+  user_id: Id,
+  surface: SessionSurface,
+  created_at: Timestamp,
+  last_seen_at: Timestamp,
+  expires_at: Timestamp,
+  revoked_at: Timestamp.nullable(),
+  ip: text.nullable(),
+  user_agent: text.nullable(),
+});
+
 export const ReminderPreferenceRow = z.object({
   user_id: Id,
   kind: ReminderKind,
@@ -372,6 +403,8 @@ export const tables = {
   practice_settings: PracticeSettingsRow,
   efile_submissions: EfileSubmissionRow,
   reminder_preferences: ReminderPreferenceRow,
+  invites: InviteRow,
+  sessions: SessionRow,
 } as const;
 
 export type TableName = keyof typeof tables;

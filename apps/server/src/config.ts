@@ -13,7 +13,22 @@ export type Config = {
   publicDemo: { resetHours: number } | null;
   // Stripe, TEST mode only (ticket 09): both keys or neither. Without them the portal's Pay button stays off.
   stripe?: StripeConfig | null;
+  // Where sign-in links point (ticket 05): the portal clients use, and the admin the preparer uses.
+  links?: Links;
 };
+
+export type Links = { portal: string; admin: string };
+
+// Invite and reset links are copied by the preparer and opened elsewhere, so they need full addresses.
+// PUBLIC_ORIGIN is the portal's public address (the tunnel, or the hosted demo); the admin is this machine,
+// except on the hosted demo, where it's mounted at /admin on the same address.
+export function linksFor(env: Env, mode: RunMode, port: number, adminPort: number, publicDemo: boolean): Links {
+  const trim = (s: string) => s.replace(/\/$/, "");
+  const pub = env.PUBLIC_ORIGIN ? trim(env.PUBLIC_ORIGIN) : null;
+  if (mode === "live") return { portal: pub ?? `http://127.0.0.1:${port}`, admin: env.ADMIN_ORIGIN ? trim(env.ADMIN_ORIGIN) : `http://127.0.0.1:${adminPort}` };
+  if (publicDemo && pub) return { portal: pub, admin: `${pub}/admin` };
+  return { portal: pub ?? "http://localhost:5173", admin: env.ADMIN_ORIGIN ? trim(env.ADMIN_ORIGIN) : "http://localhost:5174" };
+}
 
 export type StripeConfig = { secretKey: string; webhookSecret: string; publicOrigin: string };
 
@@ -67,7 +82,7 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
       if (!Number.isFinite(resetHours) || resetHours <= 0) throw new Error(`DEMO_RESET_HOURS must be a positive number, got "${env.DEMO_RESET_HOURS}"`);
       publicDemo = { resetHours };
     }
-    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo"), publicDemo, stripe: loadStripe(env) };
+    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo"), publicDemo, stripe: loadStripe(env), links: linksFor(env, mode, port, adminPort, !!publicDemo) };
   }
 
   // Live mode never guesses where real data goes.
@@ -77,5 +92,5 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
   if (isInside(repoRoot, dir)) {
     throw new Error(`LIVE_DATA_DIR must be outside the repo (${repoRoot}), got "${dir}"`);
   }
-  return { mode, port, adminPort, dataDir: resolve(dir), publicDemo: null, stripe: loadStripe(env) };
+  return { mode, port, adminPort, dataDir: resolve(dir), publicDemo: null, stripe: loadStripe(env), links: linksFor(env, mode, port, adminPort, false) };
 }

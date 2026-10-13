@@ -135,8 +135,7 @@ outside penetration test ✍️ `[decide at first annual review]`.
   helping a parent. Grants are revocable and their history is kept ✅.
 - The preparer admin is never exposed to the internet 🔧 (separate app; admin traffic accepted locally only).
 - Sign-in: invite link, then a password (argon2id); 30-minute idle and 12-hour maximum sessions; lockout after
-  repeated failures 🔧 ticket 05.
-- Until sign-in exists, the live instance serves no client data at all ✅. Every non-public request is refused.
+  10 failures for 15 minutes; only hashes of link and session tokens are stored ✅ (ticket 05). MFA for everyone 🔧 ticket 05b.
 
 ### 5. Multi-factor authentication ([314.4(c)(5)](https://www.law.cornell.edu/cfr/text/16/314.4))
 The rule requires MFA for **any individual accessing any information system**, unless the Qualified Individual

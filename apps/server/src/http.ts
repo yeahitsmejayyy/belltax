@@ -5,6 +5,7 @@ import { PRODUCT_NAME } from "@app/schema";
 import { appRouter } from "./appRouter";
 import { runtime } from "./db/client";
 import { downloadDocument, sampleDocument, uploadDocument } from "./rest/documents";
+import { authRoute } from "./rest/auth";
 import { stripeWebhook } from "./rest/stripe";
 import { resolveUser, type Surface } from "./identity";
 import { routeOf, type RequestLog } from "./request-log";
@@ -81,6 +82,23 @@ export function withAdminMounted(portal: Handler, admin: Handler): Handler {
   };
 }
 
+// Is this request from one of our own pages? No Origin means not a browser form or fetch (a script, a test): the
+// session cookie is what protects those. Otherwise the Origin's host must be this server as the browser saw it.
+export function fromOurPages(req: Request, devOrigin?: string) {
+  const origin = req.headers.get("origin");
+  if (!origin) return true;
+  if (devOrigin && origin === devOrigin && runtime().mode === "demo") return true;
+  let host: string;
+  try {
+    host = new URL(origin).host;
+  } catch {
+    return false;
+  }
+  const { links } = runtime();
+  const ours = [new URL(req.url).host, req.headers.get("host"), req.headers.get("x-forwarded-host"), ...[links?.portal, links?.admin].map((u) => (u ? new URL(u).host : null))];
+  return ours.includes(host);
+}
+
 const count = (table: string) => (runtime().db.query(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
 
 export function createFetchHandler({ surface, webDist, devOrigin, log }: Options) {
@@ -131,6 +149,17 @@ export function createFetchHandler({ surface, webDist, devOrigin, log }: Options
   async function route(req: Request, pathname: string, socketIp?: string): Promise<Response> {
 
     if (req.method === "OPTIONS") return cors(new Response(null, { status: 204 }), req);
+
+    // CSRF (ticket 05): a change can only come from our own pages. Browsers always send Origin on a cross-site POST,
+    // so a foreign one is refused; with SameSite=Lax cookies that closes the door. Stripe's webhook is signed instead.
+    if (req.method !== "GET" && req.method !== "HEAD" && pathname !== "/api/stripe/webhook" && !fromOurPages(req, devOrigin)) {
+      return Response.json({ error: "Cross-site request refused." }, { status: 403 });
+    }
+
+    if (pathname.startsWith("/api/auth/")) {
+      const res = await authRoute(req, surface, pathname, socketIp);
+      if (res) return cors(res, req);
+    }
 
     if (pathname.startsWith("/trpc")) {
       const res = await fetchRequestHandler({ endpoint: "/trpc", req, router: appRouter, createContext: (o) => createContext({ req: o.req, ip: socketIp, surface }) });

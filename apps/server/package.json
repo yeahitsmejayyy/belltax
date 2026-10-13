@@ -17,7 +17,8 @@
     "export": "bun src/export/cli.ts",
     "export:open": "bun src/export/cli.ts open",
     "bench:seed": "bun src/bench/cli.ts seed",
-    "bench": "bun src/bench/cli.ts run"
+    "bench": "bun src/bench/cli.ts run",
+    "preparer:invite": "bun src/auth/cli.ts"
   },
   "dependencies": {
     "@app/schema": "workspace:*",

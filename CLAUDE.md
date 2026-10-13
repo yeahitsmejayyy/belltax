@@ -24,20 +24,23 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 
 - `apps/server` — Bun + tRPC backend (skelly-backend). Config and run mode in `src/config.ts`.
   Routes read the DB via `runtime()` (`src/db/client.ts`), never the tRPC context — keeps Bun types out of
-  the `AppRouter` contract (`bun run --filter @app/server types:emit` refuses a leaky one). Preparer procedures
-  are closed in live mode until auth (task 05). **Two listeners, both 127.0.0.1:** portal on `PORT` (3000, the only one a
+  the `AppRouter` contract (`bun run --filter @app/server types:emit` refuses a leaky one). Sign-in (ticket 05):
+  `src/auth/auth.ts` (sessions, one-time links, lockout), `src/rest/auth.ts` (`/api/auth/*`, httpOnly cookie
+  `btp_session_<surface>`), `auth.state` / `login.link` / `login.signOutEverywhere` (`src/routes/auth.ts`); every non-GET
+  must come from our own Origin (`fromOurPages`, `http.ts`); `bun run preparer:invite <email>` makes the preparer's first
+  link (live). **Two listeners, both 127.0.0.1:** portal on `PORT` (3000, the only one a
   tunnel may forward; serves `apps/portal/dist`) and admin on `ADMIN_PORT` (3001; serves `apps/admin/dist`). Preparer
   procedures are 404 on the portal and a preparer identity is ignored there (`src/identity.ts`, `src/trpc.ts`).
 - **Access:** every client-facing procedure goes through `src/access.ts` (`engagementFor`, `documentFor`).
-  Denials are NOT_FOUND. Identity comes from `src/identity.ts` — demo header/cookie today, sessions after task 05.
+  Denials are NOT_FOUND. Identity comes from `src/identity.ts`: a session first, then (demo mode only) the demo header/cookie.
 - `apps/portal` — the client portal: React 19 + Vite + Tailwind v4 on `packages/ui`, phone first (402px), top nav
   from `md` (ticket 12). Dev on :5173, proxied to the portal listener (:3000, override with `PORTAL_API_PORT`, never
   `PORT`, which launchers set for Vite itself). Screens are `src/pages/*` (lazy per route) inside `src/shell/shell.tsx`
   (header, account menu, bottom tabs / top nav with counts, offline banner). `useReturn()` (`lib/return.tsx`) is the
   return being shown (newest by default, remembered per device). A 401 anywhere clears the demo identity and goes to
   sign-in (both apps, `main.tsx`): the demo re-seeds on every boot. Intake renders `INTAKE_V1` (`components/intake`),
-  autosaves drafts and sends emptied answers as `clear`. Auth screens (invite, set password, expired) are
-  `packages/ui` `auth-cards.tsx`, unwired until ticket 05.
+  autosaves drafts and sends emptied answers as `clear`. Auth screens (sign in, invite, set password, link gone, expired) are
+  `packages/ui` `auth-cards.tsx`; `/invite/:token` in both apps.
 - `apps/admin` — the preparer admin: React 19 + Vite from skelly-admin (ticket 13). Dev on :5174, proxied to :3001.
   Screens are `src/pages/*` (lazy-loaded per route; the return is `pages/return/`, one file per tab) inside
   `src/shell/shell.tsx` (sidebar, header, phone bottom tabs + More button). Shared hooks: `usePageTitle`

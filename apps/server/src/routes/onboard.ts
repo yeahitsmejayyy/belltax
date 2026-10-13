@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { HouseholdOnboardInput, HouseholdOnboardResult, now } from "@app/schema";
 import type { z } from "zod";
+import { linkFor } from "../auth/auth";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import { preparerProcedure } from "../trpc";
@@ -44,6 +45,7 @@ export const onboardProcedure = preparerProcedure
     const householdId = Bun.randomUUIDv7();
     const engagementIds: string[] = [];
 
+    let userId: string | null = null;
     db.transaction(() => {
       const ev = (type: string, subjectType: string, subjectId: string, engagementId: string | null = null, data?: Record<string, string | number | boolean | null>) =>
         appendEvent(db, { actor: ctx.user, type, subjectType, subjectId, householdId, engagementId, data });
@@ -84,7 +86,7 @@ export const onboardProcedure = preparerProcedure
       });
 
       if (input.mode === "invite" && email) {
-        const userId = Bun.randomUUIDv7();
+        userId = Bun.randomUUIDv7();
         const primary = people.find((p) => p.role === "primary")!;
         db.run("INSERT INTO users (id, role, email, person_id, created_at) VALUES (?, 'client', ?, ?, ?)", [userId, email, primary.id, at]);
         ev("login.created", "user", userId);
@@ -95,5 +97,7 @@ export const onboardProcedure = preparerProcedure
       ev("household.onboarded", "household", householdId, null, { mode: input.mode, returns: engagementIds.length, filing: input.filing });
     })();
 
-    return { householdId, engagementIds, invited: input.mode === "invite" };
+    // The one-time link for the preparer to send (ticket 05): made after the household exists, shown once.
+    const inviteUrl = userId ? linkFor(userId, "invite", ctx.user.id).url : null;
+    return { householdId, engagementIds, invited: input.mode === "invite", inviteUrl };
   });

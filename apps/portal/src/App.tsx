@@ -1,8 +1,9 @@
 import { lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { demoUser } from "@app/ui/demo";
 
+import Invite from "@/pages/invite";
 import SignIn from "@/pages/sign-in";
+import { trpc } from "@/lib/trpc";
 import { ReturnProvider } from "@/lib/return";
 import { Shell } from "@/shell/shell";
 
@@ -14,15 +15,18 @@ const Letter = lazy(() => import("@/pages/letter"));
 const Invoice = lazy(() => import("@/pages/invoice"));
 const Settings = lazy(() => import("@/pages/settings"));
 
-// Until auth (ticket 05), "signed in" means a demo identity cookie is set.
+// Signed in means the server knows which client this is: a session (ticket 05), or the demo identity in demo mode.
 function RequireIdentity({ children }: { children: React.ReactNode }) {
-  return demoUser("portal") ? children : <Navigate to="/sign-in" replace />;
+  const state = trpc.auth.state.useQuery(undefined, { staleTime: 30_000 });
+  if (state.isLoading) return null;
+  return state.data?.user?.role === "client" ? children : <Navigate to="/sign-in" replace />;
 }
 
 export default function App() {
   return (
     <Routes>
       <Route path="/sign-in" element={<SignIn />} />
+      <Route path="/invite/:token" element={<Invite />} />
       <Route
         element={
           <RequireIdentity>
