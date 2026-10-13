@@ -1,9 +1,28 @@
+<a href="https://belltax-demo.onrender.com/sign-in"><img src="docs/images/cover.png" alt="belltax.: the tax agent's pipeline and a client's phone, from the live demo"></a>
+
+<br>
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="packages/ui/src/brand/bell-wordmark-dark.svg">
-  <img src="packages/ui/src/brand/bell-wordmark.svg" alt="belltax." height="44">
+  <img src="packages/ui/src/brand/bell-wordmark.svg" alt="belltax." height="48">
 </picture>
 
-[![CI](https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml/badge.svg)](https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml)
+<p>
+  <a href="https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml"><img src="https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/chromatic.yml"><img src="https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/chromatic.yml/badge.svg" alt="Chromatic"></a>
+  <a href="https://belltax-demo.onrender.com/sign-in"><img src="https://img.shields.io/badge/demo-live-c7ef4a?logo=render&amp;logoColor=white" alt="Live demo"></a>
+  <a href="https://main--6acc3e31a2af6c6973a2ed80.chromatic.com"><img src="https://img.shields.io/badge/storybook-design%20system-ff4785?logo=storybook&amp;logoColor=white" alt="Storybook"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
+</p>
+<p>
+  <img src="https://img.shields.io/badge/Bun-1.3-000?logo=bun&amp;logoColor=white" alt="Bun 1.3">
+  <img src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&amp;logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&amp;logoColor=black" alt="React 19">
+  <img src="https://img.shields.io/badge/tRPC-11-398ccb?logo=trpc&amp;logoColor=white" alt="tRPC 11">
+  <img src="https://img.shields.io/badge/SQLite-strict%20tables-003b57?logo=sqlite&amp;logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss&amp;logoColor=white" alt="Tailwind v4">
+  <img src="https://img.shields.io/badge/Stripe-test%20mode-635bff?logo=stripe&amp;logoColor=white" alt="Stripe test mode">
+</p>
 
 A client portal and a back office for a small tax practice. Clients answer questions, send documents, sign the
 engagement letter and pay from their phone; the tax agent runs every return from one pipeline. It handles
@@ -22,8 +41,6 @@ test card `4242 4242 4242 4242`. (Free hosting: the first visit can take up to a
 | **Design system** | [Storybook](https://main--6acc3e31a2af6c6973a2ed80.chromatic.com), published by Chromatic on every push |
 | **Case study** | [docs/case-study.md](docs/case-study.md) |
 | **3-minute demo script** | [docs/demo-script.md](docs/demo-script.md) |
-
-[![belltax.: the tax agent's pipeline and a client's phone, from the live demo](docs/images/cover.png)](https://belltax-demo.onrender.com/sign-in)
 
 ## What's in it
 
