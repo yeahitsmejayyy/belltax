@@ -1,6 +1,7 @@
 {
   "name": "belltaxprep",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "workspaces": [
     "apps/*",

@@ -138,3 +138,7 @@ flowchart LR
 
 Designed and built by PJ Bell, a CTEC Registered Tax Preparer, to run Bell Tax.
 Every name, number and document in this repository and the demo is invented.
+
+## License
+
+[MIT](LICENSE). The code is free to reuse; the belltax. name and brand marks are not part of the license.

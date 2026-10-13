@@ -1,5 +1,8 @@
 # Written Information Security Plan (WISP)
 
+> **This public copy is the template.** Once the `[brackets]` are filled in with real devices, locations, insurer,
+> counsel and contacts, that copy lives offline with the practice's records, never in this repository.
+
 **Bell Tax** · draft v0.1 · 2026-09-24 · next review: before the first live client (January 2027), then at least annually
 
 > **Draft, not legal advice.** This plan is written to the FTC Safeguards Rule (16 CFR Part 314) and follows the
