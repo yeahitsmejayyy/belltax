@@ -204,7 +204,9 @@ export function BoardColumn({ stage, count, aimed, closed, children, className }
 }
 
 function DraggableCard({ card, stages, allowed, staleAfterDays, onMove, onOpen, lifted }: { card: BoardCardData; stages: readonly Stage[]; allowed: (card: BoardCardData, to: Stage) => boolean; staleAfterDays: number; onMove: (card: BoardCardData, to: Stage) => void; onOpen?: (id: string) => void; lifted: boolean }) {
-  const { setNodeRef, listeners, attributes } = useDraggable({ id: card.id });
+  // role "group", not dnd-kit's default "button": the card holds its own buttons (open, move menu), and a button
+  // can't contain buttons (axe: nested-interactive). It stays focusable, Space lifts it, Enter opens it.
+  const { setNodeRef, listeners, attributes } = useDraggable({ id: card.id, attributes: { role: "group" } });
   const targets = stages.filter((s) => allowed(card, s));
   return (
     // The whole card is the handle. The original stays where it was, faded, so the board never collapses under you.

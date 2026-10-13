@@ -65,7 +65,7 @@ export const DraggableTest: Story = {
     });
 
     await step("keyboard drag: focus the card, Space, → one column, Space", async () => {
-      c.getByRole("button", { name: "Wren, Documents" }).focus();
+      c.getByRole("group", { name: "Wren, Documents" }).focus();
       await userEvent.keyboard(" ");
       await userEvent.keyboard("{ArrowRight}");
       await userEvent.keyboard(" ");

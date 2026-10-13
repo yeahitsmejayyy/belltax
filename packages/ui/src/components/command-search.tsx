@@ -72,6 +72,12 @@ export function InlineSearch({ groups, placeholder = "Search clients, returns, i
     return () => document.removeEventListener("pointerdown", away);
   }, [open]);
 
+  // cmdk always marks its input expanded and pointing at the list; the list stays in the page (hidden while closed) so
+  // that reference is real, and the expanded state follows ours (axe: aria-valid-attr-value).
+  React.useEffect(() => {
+    input.current?.setAttribute("aria-expanded", String(open));
+  });
+
   const done = () => {
     setOpen(false);
     setQuery("");
@@ -114,14 +120,13 @@ export function InlineSearch({ groups, placeholder = "Search clients, returns, i
           </kbd>
         ) : null}
       </div>
-      {open ? (
-        <CommandList
-          label="Search results"
-          className="absolute top-full right-0 left-0 z-50 mt-2 max-h-[min(24rem,60dvh)] min-w-80 animate-in rounded-lg border bg-popover p-1 text-popover-foreground shadow-lg duration-150 fade-in-0 slide-in-from-top-1"
-        >
-          <Results groups={groups} query={query} onDone={done} />
-        </CommandList>
-      ) : null}
+      <CommandList
+        label="Search results"
+        hidden={!open}
+        className="absolute top-full right-0 left-0 z-50 mt-2 max-h-[min(24rem,60dvh)] min-w-80 animate-in rounded-lg border bg-popover p-1 text-popover-foreground shadow-lg duration-150 fade-in-0 slide-in-from-top-1"
+      >
+        {open ? <Results groups={groups} query={query} onDone={done} /> : null}
+      </CommandList>
     </CommandPrimitive>
   );
 }

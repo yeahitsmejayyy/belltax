@@ -5,7 +5,6 @@ import { Button } from "@app/ui/components/button";
 import { Input } from "@app/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@app/ui/components/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@app/ui/components/select";
-import { Tabs, TabsList, TabsTrigger } from "@app/ui/components/tabs";
 import { cn } from "@app/ui/utils";
 
 import { stageLabel } from "@/lib/labels";
@@ -66,12 +65,21 @@ export function PipelineToolbar({ rows, shown, selected, filters, setFilters }: 
 
   return (
     <div className="flex flex-wrap items-center gap-2 md:gap-3">
-      <Tabs value={filters.view} onValueChange={(v) => setFilters({ view: v as PipelineFilters["view"] })}>
-        <TabsList aria-label="View" className="h-11 md:h-9">
-          <TabsTrigger value="board">Board</TabsTrigger>
-          <TabsTrigger value="table">Table</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* A two-way switch, not tabs: there are no tab panels, the whole page changes (axe: aria-valid-attr-value). */}
+      <div role="group" aria-label="View" className="inline-flex h-11 w-fit items-center rounded-lg bg-muted p-1 text-muted-foreground md:h-9">
+        {(["board", "table"] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={filters.view === v}
+            data-state={filters.view === v ? "active" : "inactive"}
+            onClick={() => setFilters({ view: v })}
+            className="inline-flex h-full items-center rounded-md px-3 text-sm font-medium whitespace-nowrap outline-none transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm dark:data-[state=active]:bg-card"
+          >
+            {v === "board" ? "Board" : "Table"}
+          </button>
+        ))}
+      </div>
 
       <div className="relative min-w-0 flex-1 md:max-w-64 md:flex-none">
         <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
