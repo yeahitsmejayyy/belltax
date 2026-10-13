@@ -31,8 +31,17 @@ p { font-size: 20px; line-height: 1.45; color: oklch(0.78 0 0); }
 .bar i { width: 11px; height: 11px; border-radius: 50%; background: oklch(0.42 0 0); }
 .bar span { margin-left: 12px; font-size: 13px; color: oklch(0.65 0 0); }
 .window img { display: block; width: 100%; }
-.phone { position: absolute; left: 610px; top: 268px; width: 236px; border-radius: 38px; padding: 9px; background: oklch(0.12 0 0); border: 1px solid oklch(0.4 0 0); box-shadow: 0 40px 70px -20px black; }
-.phone img { display: block; width: 100%; border-radius: 30px; }
+/* A phone with its own status bar and home indicator, so the screenshot's top and bottom never meet the curve. */
+.phone { position: absolute; left: 600px; top: 150px; width: 262px; border-radius: 50px; padding: 10px; background: oklch(0.1 0 0); border: 1.5px solid oklch(0.4 0 0); box-shadow: 0 0 0 5px oklch(0.16 0 0), 0 50px 90px -20px black; }
+.screen { border-radius: 40px; overflow: hidden; background: oklch(0.22 0 0); }
+.status { position: relative; height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 6px 26px 0; font: 600 13px "Space", sans-serif; color: oklch(0.98 0 0); }
+.status .island { position: absolute; left: 50%; top: 10px; width: 84px; height: 24px; margin-left: -42px; border-radius: 999px; background: black; }
+.status .icons { display: flex; gap: 5px; align-items: center; }
+.status .icons i { display: block; width: 15px; height: 9px; border-radius: 2px; border: 1.5px solid currentColor; }
+.status .icons i:first-child { width: 12px; border: 0; background: linear-gradient(to right, currentColor 0 2px, transparent 2px 4px, currentColor 4px 6px, transparent 6px 8px, currentColor 8px 10px); height: 9px; }
+.screen img { display: block; width: 100%; }
+.home { height: 22px; display: grid; place-items: center; background: oklch(0.2 0 0); }
+.home i { width: 96px; height: 5px; border-radius: 999px; background: oklch(0.95 0 0 / 0.7); }
 </style></head><body>
 <div class="grid"></div><div class="glow"></div>
 <div class="copy">
@@ -47,7 +56,7 @@ p { font-size: 20px; line-height: 1.45; color: oklch(0.78 0 0); }
   </div>
 </div>
 <div class="window"><div class="bar"><i></i><i></i><i></i><span>belltax. admin · Pipeline</span></div><img src="${img("admin-pipeline")}" alt=""></div>
-<div class="phone"><img src="${img("portal-home")}" alt=""></div>
+<div class="phone"><div class="screen"><div class="status"><span>9:41</span><span class="island"></span><span class="icons"><i></i><i></i></span></div><img src="${img("portal-home")}" alt=""><div class="home"><i></i></div></div></div>
 </body></html>`;
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
