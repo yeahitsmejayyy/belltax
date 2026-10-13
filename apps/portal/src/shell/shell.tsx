@@ -13,7 +13,7 @@ import { DemoBar } from "@app/ui/components/demo-tour";
 import { ModeToggle } from "@app/ui/components/mode-toggle";
 import { Skeleton } from "@app/ui/components/skeleton";
 import { useTheme } from "@app/ui/components/theme-provider";
-import { clearDemoUser } from "@app/ui/demo";
+import { clearDemoUser, setDemoUser } from "@app/ui/demo";
 import { cn } from "@app/ui/utils";
 
 import { useDemoTour } from "@/lib/demo-tour";
@@ -64,7 +64,15 @@ export function Shell() {
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      {tour ? <DemoBar viewingAs="client" onSwitch={() => location.assign("/admin/")} /> : null}
+      {tour ? (
+        <DemoBar
+          viewingAs="client"
+          onSwitch={() => {
+            if (tour.preparerId) setDemoUser("admin", tour.preparerId);
+            location.assign("/admin/");
+          }}
+        />
+      ) : null}
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 md:px-6">
           <NavLink to="/" aria-label="Home" className="rounded-md focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none">

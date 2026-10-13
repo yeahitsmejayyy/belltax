@@ -15,6 +15,7 @@ const DemoUser = z.object({ id: z.string(), email: z.string(), role: z.enum(["cl
 const DemoTour = z.object({
   publicDemo: z.boolean(),
   client: z.object({ id: z.string(), name: z.string(), household: z.string() }).nullable(),
+  preparerId: z.string().nullable(), // so "See it as the tax agent" signs straight in
 });
 
 export const demoRouter = router({
@@ -38,7 +39,8 @@ export const demoRouter = router({
           LIMIT 1`,
       )
       .get();
-    return { publicDemo: !!publicDemo, client: client ?? null };
+    const preparer = db.query<{ id: string }, []>("SELECT id FROM users WHERE role = 'preparer' ORDER BY created_at LIMIT 1").get();
+    return { publicDemo: !!publicDemo, client: client ?? null, preparerId: preparer?.id ?? null };
   }),
 
   users: publicProcedure.output(z.array(DemoUser)).query(({ ctx, path }) => {

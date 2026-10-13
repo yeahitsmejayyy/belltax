@@ -42,7 +42,10 @@ export default function SignIn() {
               setDemoUser("portal", tour.client!.id);
               navigate("/");
             }}
-            onAgent={() => location.assign("/admin/")}
+            onAgent={() => {
+              if (tour.preparerId) setDemoUser("admin", tour.preparerId);
+              location.assign("/admin/");
+            }}
             onPickAny={() => setPicking(true)}
           />
         </main>

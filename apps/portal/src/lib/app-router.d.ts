@@ -72,6 +72,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     name: string;
                     household: string;
                 } | null;
+                preparerId: string | null;
             };
             meta: object;
         }>;

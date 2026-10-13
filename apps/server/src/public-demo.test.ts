@@ -67,7 +67,7 @@ describe("the admin mounted at /admin/", () => {
 describe("the front door's tour", () => {
   const tour = async (surface: "portal" | "admin") => {
     const res = await (surface === "admin" ? w.handler : w.portal)(new Request(`${ORIGIN}/trpc/demo.tour`));
-    return { status: res.status, body: (await res.json()) as { result?: { data: { publicDemo: boolean; client: { id: string; name: string } | null } } } };
+    return { status: res.status, body: (await res.json()) as { result?: { data: { publicDemo: boolean; client: { id: string; name: string } | null; preparerId: string | null } } } };
   };
 
   test("names a client whose return shows a rejected document and an unsigned letter", async () => {
@@ -75,6 +75,7 @@ describe("the front door's tour", () => {
     expect(status).toBe(200);
     const t = body.result!.data;
     expect(t.publicDemo).toBe(true);
+    expect(t.preparerId).toBe(w.preparerId);
     const row = w.get<{ rejected: number; letter: string }>(
       `SELECT (SELECT COUNT(*) FROM documents d WHERE d.engagement_id = e.id AND d.status = 'rejected') AS rejected, l.status AS letter
          FROM users u JOIN return_people rp ON rp.person_id = u.person_id AND rp.role = 'primary'
