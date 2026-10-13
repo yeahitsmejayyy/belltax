@@ -1,5 +1,5 @@
 // README screenshots, taken from the deployed public demo (invented data only) into docs/images/.
-// Run after a deploy: bun scripts/screenshots.ts   (DEMO_URL / SITE_URL override the hosted addresses)
+// Run after a deploy: bun scripts/screenshots.ts, then bun scripts/cover.ts for the README cover   (DEMO_URL overrides the hosted address)
 import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { chromium, type Page } from "playwright";
@@ -7,7 +7,6 @@ import { chromium, type Page } from "playwright";
 const ROOT = resolve(import.meta.dir, "..");
 const OUT = join(ROOT, "docs/images");
 const DEMO = (process.env.DEMO_URL ?? "https://belltax-demo.onrender.com").replace(/\/$/, "");
-const SITE = (process.env.SITE_URL ?? "https://belltaxprep.vercel.app").replace(/\/$/, "");
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
@@ -42,9 +41,6 @@ const quiet = async (page: Page) =>
 {
   const ctx = await browser.newContext(desktop);
   const page = await ctx.newPage();
-  await shot(page, SITE, "site");
-  await ctx.clearCookies();
-  await shot(page, `${DEMO}/sign-in`, "front-door");
   await ctx.addCookies([{ name: "btp_demo_admin", value: preparer, domain: host, path: "/" }]);
   await quiet(page);
   await shot(page, `${DEMO}/admin/dashboard`, "admin-dashboard");

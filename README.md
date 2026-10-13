@@ -23,19 +23,7 @@ test card `4242 4242 4242 4242`. (Free hosting: the first visit can take up to a
 | **Case study** | [docs/case-study.md](docs/case-study.md) |
 | **3-minute demo script** | [docs/demo-script.md](docs/demo-script.md) |
 
-<table>
-  <tr>
-    <td width="66%"><img src="docs/images/admin-pipeline.png" alt="The tax agent's pipeline: every return as a card, by stage"></td>
-    <td rowspan="2"><img src="docs/images/portal-home.png" alt="A client's home screen on a phone: three things need you"></td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/admin-dashboard.png" alt="The tax agent's dashboard: returns filed, money collected, what's waiting"></td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/site.png" alt="The marketing site"></td>
-    <td><img src="docs/images/portal-documents.png" alt="A client's documents on a phone, with a rejected W-2 to send again"></td>
-  </tr>
-</table>
+[![belltax.: the tax agent's pipeline and a client's phone, from the live demo](docs/images/cover.png)](https://belltax-demo.onrender.com/sign-in)
 
 ## What's in it
 
