@@ -79,6 +79,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   Clients only, their own person only; each change is an event on the household. **Receipts** are `invoice.receipt`
   (`src/routes/receipt.ts`): data for the portal to render and print, one per issued invoice with money on it, numbered
   `R-<invoice number>`, same access as the invoice (NOT_FOUND otherwise), logged as `receipt.viewed`.
+- **Paying online** is Stripe, TEST mode only (ticket 09, `docs/stripe.md`): `payment.checkout` opens Stripe's hosted page,
+  `POST /api/stripe/webhook` (`src/rest/stripe.ts`, portal listener only) settles it; no SDK (`src/money/stripe.ts`). Keys
+  `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`, both or neither; a live key refuses to boot.
 - **Pricing** is packages (one per filing status) + add-ons (`price_packages`, `price_addons`, migration 006), edited via
   `settings.pricing.*`; `pricing.public` feeds the marketing site. `src/money/pricing.ts` turns a return's facts (filing
   status, sources, intake answers) into a suggested invoice. An add-on with no price is "Included": named on the invoice

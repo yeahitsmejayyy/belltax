@@ -11,7 +11,24 @@ export type Config = {
   // The hosted public demo (docs/demo-deploy.md): invented data on a public interface, the admin mounted at
   // /admin/ on the one listener, uploads off, re-seeded every resetHours. Demo mode only, never live.
   publicDemo: { resetHours: number } | null;
+  // Stripe, TEST mode only (ticket 09): both keys or neither. Without them the portal's Pay button stays off.
+  stripe?: StripeConfig | null;
 };
+
+export type StripeConfig = { secretKey: string; webhookSecret: string; publicOrigin: string };
+
+// Test keys only, both or neither. A live key refuses to boot: real money waits for a deliberate decision.
+export function loadStripe(env: Env): StripeConfig | null {
+  const secretKey = env.STRIPE_SECRET_KEY?.trim();
+  const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim();
+  if (!secretKey && !webhookSecret) return null;
+  if (!secretKey || !webhookSecret) throw new Error("Set both STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET, or neither");
+  if (/^(sk|rk)_live_/.test(secretKey)) throw new Error("STRIPE_SECRET_KEY is a live key. Only test keys (sk_test_…) are allowed");
+  if (!/^(sk|rk)_test_/.test(secretKey)) throw new Error("STRIPE_SECRET_KEY must be a Stripe test key (sk_test_…)");
+  if (!webhookSecret.startsWith("whsec_")) throw new Error("STRIPE_WEBHOOK_SECRET must be a webhook signing secret (whsec_…)");
+  const publicOrigin = (env.PUBLIC_ORIGIN ?? "http://localhost:5173").replace(/\/$/, "");
+  return { secretKey, webhookSecret, publicOrigin };
+}
 
 type Env = Record<string, string | undefined>;
 
@@ -50,7 +67,7 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
       if (!Number.isFinite(resetHours) || resetHours <= 0) throw new Error(`DEMO_RESET_HOURS must be a positive number, got "${env.DEMO_RESET_HOURS}"`);
       publicDemo = { resetHours };
     }
-    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo"), publicDemo };
+    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo"), publicDemo, stripe: loadStripe(env) };
   }
 
   // Live mode never guesses where real data goes.
@@ -60,5 +77,5 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
   if (isInside(repoRoot, dir)) {
     throw new Error(`LIVE_DATA_DIR must be outside the repo (${repoRoot}), got "${dir}"`);
   }
-  return { mode, port, adminPort, dataDir: resolve(dir), publicDemo: null };
+  return { mode, port, adminPort, dataDir: resolve(dir), publicDemo: null, stripe: loadStripe(env) };
 }

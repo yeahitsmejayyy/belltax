@@ -5,7 +5,7 @@ const repo = "/work/belltaxprep";
 
 describe("loadConfig", () => {
   test("defaults to demo with in-repo data dir", () => {
-    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null });
+    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null, stripe: null });
   });
 
   test("rejects an unknown mode", () => {
@@ -32,7 +32,7 @@ describe("loadConfig", () => {
 
   test("live accepts a sibling dir that only shares a name prefix", () => {
     const cfg = loadConfig({ RUN_MODE: "live", LIVE_DATA_DIR: "/work/belltaxprep-live" }, repo);
-    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null });
+    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null, stripe: null });
   });
 
   test("the admin gets its own port, never the portal's", () => {
@@ -52,5 +52,14 @@ describe("loadConfig", () => {
     for (const flag of ["1", "true", "yes"]) {
       expect(() => loadConfig({ RUN_MODE: "live", LIVE_DATA_DIR: "/srv/btp", DEMO_PUBLIC: flag }, repo)).toThrow("never be set with RUN_MODE=live");
     }
+  });
+
+  test("Stripe takes test keys only, both or neither", () => {
+    const keys = { STRIPE_SECRET_KEY: "sk_test_abc", STRIPE_WEBHOOK_SECRET: "whsec_abc" };
+    expect(loadConfig(keys, repo).stripe).toEqual({ secretKey: "sk_test_abc", webhookSecret: "whsec_abc", publicOrigin: "http://localhost:5173" });
+    expect(loadConfig({ ...keys, PUBLIC_ORIGIN: "https://demo.example/" }, repo).stripe?.publicOrigin).toBe("https://demo.example");
+    expect(() => loadConfig({ ...keys, STRIPE_SECRET_KEY: "sk_live_abc" }, repo)).toThrow("live key");
+    expect(() => loadConfig({ STRIPE_SECRET_KEY: "sk_test_abc" }, repo)).toThrow("both");
+    expect(() => loadConfig({ ...keys, STRIPE_WEBHOOK_SECRET: "nope" }, repo)).toThrow("whsec_");
   });
 });

@@ -12,5 +12,10 @@ services:
       - key: DEMO_RESET_HOURS
         value: "6"
       # The public address, for link previews (scripts/vite-share-meta.ts). Passed to the Docker build as a build arg.
+      # Stripe test keys (docs/stripe.md): set in the Render dashboard, never here.
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
       - key: PUBLIC_ORIGIN
         value: https://belltax-demo.onrender.com

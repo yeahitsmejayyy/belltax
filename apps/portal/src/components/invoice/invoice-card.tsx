@@ -1,4 +1,4 @@
-import { CircleDashed, Lock, ReceiptText } from "lucide-react";
+import { CircleDashed, CreditCard, Lock, ReceiptText } from "lucide-react";
 
 import { Banner } from "@app/ui/components/banner";
 import { Button } from "@app/ui/components/button";
@@ -10,7 +10,8 @@ import { formatCents } from "@app/ui/format";
 import { longDay, longDateTime, paymentMethod, type ClientInvoice, type ClientPayment } from "./words";
 
 // One invoice as the client sees it (portal 17 unpaid, 18 failed, 19 paid; desktop 24): the amount, what it
-// covers, then the one thing to do. Paying online stays off until Stripe (ticket 09), and says why.
+// covers, then the one thing to do. Paying online goes to Stripe's hosted checkout (ticket 09) when it's set up
+// (onPay given); otherwise the button stays off and says why.
 
 const paidOn = (p: ClientPayment) => (p.receivedOn ? longDay(p.receivedOn) : longDateTime(p.createdAt));
 const today = () => new Date().toISOString().slice(0, 10);
@@ -22,7 +23,7 @@ function DueChip({ invoice }: { invoice: ClientInvoice }) {
   return <StatusChip tone="neutral" icon={CircleDashed} label={invoice.dueOn ? `Due ${longDay(invoice.dueOn)}` : "Due before filing"} />;
 }
 
-export function InvoiceCard({ invoice, preparer, onReceipt }: { invoice: ClientInvoice; preparer: string; onReceipt: () => void }) {
+export function InvoiceCard({ invoice, preparer, onReceipt, onPay, paying = false }: { invoice: ClientInvoice; preparer: string; onReceipt: () => void; onPay?: () => void; paying?: boolean }) {
   const owes = invoice.status === "issued" && invoice.balanceCents > 0;
   const paid = invoice.payments.filter((p) => p.status === "succeeded" || p.status === "refunded");
   const hasReceipt = invoice.paidCents > 0;
@@ -91,12 +92,20 @@ export function InvoiceCard({ invoice, preparer, onReceipt }: { invoice: ClientI
 
         {owes ? (
           <div className="grid gap-3">
-            <Button size="touch" disabled aria-describedby={`pay-later-${invoice.id}`}>
-              Pay {formatCents(invoice.balanceCents)}
+            <Button size="touch" disabled={!onPay || paying} aria-busy={paying} onClick={onPay} aria-describedby={`pay-note-${invoice.id}`}>
+              {onPay ? <CreditCard aria-hidden="true" /> : null}
+              {paying ? "Opening checkout…" : `Pay ${formatCents(invoice.balanceCents)}`}
             </Button>
-            <p id={`pay-later-${invoice.id}`} className="flex items-start gap-2 text-sm text-muted-foreground">
+            <p id={`pay-note-${invoice.id}`} className="flex items-start gap-2 text-sm text-muted-foreground">
               <Lock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-              Online payment opens soon. You can also pay {preparer} by Zelle, check or cash.
+              {onPay ? (
+                <span>
+                  Secure checkout by Stripe, in test mode: no real money moves. Use card <span className="font-mono">4242 4242 4242 4242</span>, any future date
+                  and any CVC. You can also pay {preparer} by Zelle, check or cash.
+                </span>
+              ) : (
+                <>Online payment opens soon. You can also pay {preparer} by Zelle, check or cash.</>
+              )}
             </p>
           </div>
         ) : null}

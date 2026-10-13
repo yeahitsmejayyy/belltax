@@ -1,7 +1,10 @@
 import { ChevronRight, ReceiptText } from "lucide-react";
 import * as React from "react";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Banner } from "@app/ui/components/banner";
+import { Button } from "@app/ui/components/button";
 import { EmptyState } from "@app/ui/components/empty-state";
 import { Money } from "@app/ui/components/money";
 import { Skeleton } from "@app/ui/components/skeleton";
@@ -23,6 +26,24 @@ export default function Invoice() {
   const practice = trpc.practice.public.useQuery(undefined, { staleTime: Infinity }).data;
   const [chosen, setChosen] = React.useState<string | null>(null);
   const [receiptFor, setReceiptFor] = React.useState<string | null>(null);
+  // Back from Stripe's checkout (?paid=1): the webhook may land a moment after the redirect, so look again briefly.
+  const [params, setParams] = useSearchParams();
+  const back = params.get("paid") === "1";
+  const online = trpc.payment.online.useQuery(undefined, { staleTime: Infinity }).data?.enabled ?? false;
+  const checkout = trpc.payment.checkout.useMutation({
+    onSuccess: ({ url }) => location.assign(url),
+    onError: (e) => toast.error(e.message),
+  });
+  const settled = (q.data ?? []).every((i) => i.status !== "issued" || i.balanceCents === 0);
+  React.useEffect(() => {
+    if (!back || settled) return;
+    const t = setInterval(() => q.refetch(), 2000);
+    const stop = setTimeout(() => clearInterval(t), 30_000);
+    return () => {
+      clearInterval(t);
+      clearTimeout(stop);
+    };
+  }, [back, settled, q]);
 
   const invoices = q.data ?? [];
   const newestIssued = [...invoices].reverse().find((i) => i.status === "issued") ?? invoices.at(-1); // oldest first
@@ -49,10 +70,29 @@ export default function Invoice() {
         />
       ) : (
         <>
+          {back ? (
+            <Banner
+              tone={shown.balanceCents === 0 ? "success" : "info"}
+              title={shown.balanceCents === 0 ? "Payment received. Thank you!" : "Payment sent. Confirming with Stripe…"}
+              action={
+                <Button variant="ghost" size="sm" onClick={() => setParams({}, { replace: true })}>
+                  Dismiss
+                </Button>
+              }
+            >
+              {shown.balanceCents === 0 ? "Your receipt is below." : "This usually takes a few seconds."}
+            </Banner>
+          ) : null}
           {shown.settlement === "failed_last_attempt" && lastPayment?.status === "failed" ? (
             <PaymentFailed payment={lastPayment} preparer={preparer} replyTo={practice?.replyToEmail ?? "your preparer"} />
           ) : null}
-          <InvoiceCard invoice={shown} preparer={preparer} onReceipt={() => setReceiptFor(shown.id)} />
+          <InvoiceCard
+            invoice={shown}
+            preparer={preparer}
+            onReceipt={() => setReceiptFor(shown.id)}
+            onPay={online ? () => checkout.mutate({ invoiceId: shown.id }) : undefined}
+            paying={checkout.isPending || checkout.isSuccess}
+          />
         </>
       )}
 

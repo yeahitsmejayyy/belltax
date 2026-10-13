@@ -11,6 +11,8 @@ import {
   InvoiceUpdateLinesInput,
   InvoiceVoidInput,
   now,
+  PaymentCheckout,
+  PaymentOnline,
   PaymentRecordInput,
 } from "@app/schema";
 import type { Database } from "bun:sqlite";
@@ -20,6 +22,7 @@ import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import type { SessionUser } from "../identity";
 import { nextInvoiceNumber, suggestionFor, type Line } from "../money/pricing";
+import { createCheckoutSession, getCheckoutSession } from "../money/stripe";
 import { INVOICE_TABS, TAB_RANK_SQL } from "../money/settlement";
 import { authedProcedure, preparerProcedure, router } from "../trpc";
 
@@ -338,4 +341,80 @@ export const paymentRouter = router({
       })();
       return summaryOf(inv.id, inv.eng.id, ctx.user);
     }),
+
+  // Is online payment set up? (Stripe keys present; test mode only.) The portal shows the Pay button when it is.
+  online: authedProcedure.output(PaymentOnline).query(() => ({ enabled: !!runtime().stripe })),
+
+  // Pay the balance on Stripe's hosted page (ticket 09). One open checkout per invoice: asking again reuses it while it
+  // is still open. The payment row is pending until the webhook says how it went (rest/stripe.ts).
+  checkout: authedProcedure
+    .input(InvoiceRefInput)
+    .output(PaymentCheckout)
+    .mutation(async ({ ctx, input }) => {
+      const { db, stripe } = runtime();
+      if (!stripe) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Online payment isn't set up yet." });
+      const inv = invoiceFor(ctx.user, input.invoiceId);
+      if (inv.status !== "issued") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This invoice can't be paid." });
+      const balance = db.query<{ balance_cents: number }, [string]>("SELECT balance_cents FROM invoice_balances WHERE invoice_id = ?").get(inv.id)!.balance_cents;
+      if (balance <= 0) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This invoice is already paid." });
+
+      const open = db
+        .query<{ id: string; checkout_session_id: string }, [string]>("SELECT id, checkout_session_id FROM payments WHERE invoice_id = ? AND provider = 'stripe' AND status = 'pending' ORDER BY created_at DESC LIMIT 1")
+        .get(inv.id);
+      if (open) {
+        const session = await getCheckoutSession(stripe, open.checkout_session_id);
+        if (session.status === "open" && session.url) return { url: session.url };
+        if (session.status === "complete") throw new TRPCError({ code: "CONFLICT", message: "A payment is already going through. Give it a minute." });
+        dropExpiredCheckout(open.id, "replaced");
+      }
+
+      const paymentId = Bun.randomUUIDv7();
+      const meta = db
+        .query<{ number: string | null; practice: string; email: string | null }, [string, string]>(
+          "SELECT i.number, (SELECT practice_name FROM practice_settings WHERE id = 1) AS practice, (SELECT email FROM users WHERE id = ?) AS email FROM invoices i WHERE i.id = ?",
+        )
+        .get(ctx.user.id, inv.id)!;
+      const session = await createCheckoutSession(stripe, {
+        amountCents: balance,
+        description: `${meta.practice} · invoice ${meta.number ?? ""}`.trim(),
+        email: ctx.user.role === "client" ? meta.email : null,
+        invoiceId: inv.id,
+        paymentId,
+        returnPath: "/invoice",
+      });
+      if (!session.url) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Stripe didn't return a checkout page." });
+      const at = now();
+      db.transaction(() => {
+        db.run(
+          `INSERT INTO payments (id, invoice_id, provider, checkout_session_id, amount_cents, status, created_at, updated_at)
+           VALUES (?, ?, 'stripe', ?, ?, 'pending', ?, ?)`,
+          [paymentId, inv.id, session.id, balance, at, at],
+        );
+        appendEvent(db, {
+          actor: ctx.user,
+          type: "payment.checkout_started",
+          subjectType: "payment",
+          subjectId: paymentId,
+          householdId: inv.eng.household_id,
+          engagementId: inv.eng.id,
+          data: { amount_cents: balance },
+        });
+      })();
+      return { url: session.url };
+    }),
 });
+
+// An abandoned checkout isn't a payment: the pending row goes, the history keeps a note of it.
+export function dropExpiredCheckout(paymentId: string, why: "expired" | "replaced") {
+  const { db } = runtime();
+  const row = db
+    .query<{ invoice_id: string; household_id: string; engagement_id: string }, [string]>(
+      "SELECT p.invoice_id, e.household_id, e.id AS engagement_id FROM payments p JOIN invoices i ON i.id = p.invoice_id JOIN engagements e ON e.id = i.engagement_id WHERE p.id = ? AND p.status = 'pending'",
+    )
+    .get(paymentId);
+  if (!row) return;
+  db.transaction(() => {
+    db.run("DELETE FROM payments WHERE id = ? AND status = 'pending'", [paymentId]);
+    appendEvent(db, { actor: "stripe", type: "payment.checkout_closed", subjectType: "payment", subjectId: paymentId, householdId: row.household_id, engagementId: row.engagement_id, data: { why } });
+  })();
+}

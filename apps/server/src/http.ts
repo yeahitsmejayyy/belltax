@@ -5,6 +5,7 @@ import { PRODUCT_NAME } from "@app/schema";
 import { appRouter } from "./appRouter";
 import { runtime } from "./db/client";
 import { downloadDocument, sampleDocument, uploadDocument } from "./rest/documents";
+import { stripeWebhook } from "./rest/stripe";
 import { resolveUser, type Surface } from "./identity";
 import { routeOf, type RequestLog } from "./request-log";
 import { createContext } from "./trpc";
@@ -137,6 +138,8 @@ export function createFetchHandler({ surface, webDist, devOrigin, log }: Options
     }
 
     if (pathname === "/api/documents" && req.method === "POST") return cors(await uploadDocument(req, surface, devOrigin), req);
+    // Stripe calls the public listener only; the admin never takes outside traffic.
+    if (pathname === "/api/stripe/webhook" && req.method === "POST" && surface === "portal") return stripeWebhook(req);
     if (pathname === "/api/documents/sample" && req.method === "POST") return cors(await sampleDocument(req, surface, devOrigin), req);
     const file = pathname.match(/^\/api\/documents\/([0-9a-f-]{36})\/file$/);
     if (file && req.method === "GET") return cors(downloadDocument(req, surface, file[1]!), req);

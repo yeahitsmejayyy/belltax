@@ -1379,6 +1379,22 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             };
             meta: object;
         }>;
+        online: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                enabled: boolean;
+            };
+            meta: object;
+        }>;
+        checkout: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                invoiceId: string;
+            };
+            output: {
+                url: string;
+            };
+            meta: object;
+        }>;
     }>>;
     me: import("@trpc/server").TRPCBuiltRouter<{
         ctx: {

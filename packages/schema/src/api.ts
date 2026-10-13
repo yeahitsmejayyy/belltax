@@ -359,6 +359,10 @@ export const PaymentRecordInput = z.object({
   note: z.string().trim().max(500).optional(),
 });
 
+// Paying online with Stripe (ticket 09, test mode): where to send the client, and whether it's set up at all.
+export const PaymentCheckout = z.object({ url: z.url() });
+export const PaymentOnline = z.object({ enabled: z.boolean() });
+
 // ---- Onboarding: households, people, returns, logins (preparer) ----
 
 const Name = z.string().trim().min(1).max(80);
