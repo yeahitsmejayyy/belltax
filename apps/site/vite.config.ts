@@ -12,5 +12,5 @@ const PORTAL = `http://127.0.0.1:${process.env.PORTAL_API_PORT ?? 3000}`;
 export default defineConfig({
   plugins: [react(), tailwindcss(), shareMeta()],
   resolve: { alias: { "@": path.resolve(__dirname, "./src") } },
-  server: { port: 5175, strictPort: true, proxy: { "/trpc": PORTAL } },
+  server: { port: 5176, strictPort: true, proxy: { "/trpc": PORTAL } },
 });

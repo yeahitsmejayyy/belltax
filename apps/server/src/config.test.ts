@@ -5,7 +5,7 @@ const repo = "/work/belltaxprep";
 
 describe("loadConfig", () => {
   test("defaults to demo with in-repo data dir", () => {
-    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null, stripe: null, links: { portal: "http://localhost:5173", admin: "http://localhost:5174" } });
+    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null, stripe: null, links: { portal: "http://localhost:5175", admin: "http://localhost:5174" } });
   });
 
   test("rejects an unknown mode", () => {
@@ -56,7 +56,7 @@ describe("loadConfig", () => {
 
   test("Stripe takes test keys only, both or neither", () => {
     const keys = { STRIPE_SECRET_KEY: "sk_test_abc", STRIPE_WEBHOOK_SECRET: "whsec_abc" };
-    expect(loadConfig(keys, repo).stripe).toEqual({ secretKey: "sk_test_abc", webhookSecret: "whsec_abc", publicOrigin: "http://localhost:5173" });
+    expect(loadConfig(keys, repo).stripe).toEqual({ secretKey: "sk_test_abc", webhookSecret: "whsec_abc", publicOrigin: "http://localhost:5175" });
     expect(loadConfig({ ...keys, PUBLIC_ORIGIN: "https://demo.example/" }, repo).stripe?.publicOrigin).toBe("https://demo.example");
     expect(() => loadConfig({ ...keys, STRIPE_SECRET_KEY: "sk_live_abc" }, repo)).toThrow("live key");
     expect(() => loadConfig({ STRIPE_SECRET_KEY: "sk_test_abc" }, repo)).toThrow("both");

@@ -28,7 +28,7 @@ beforeAll(async () => {
 beforeEach(() => useRuntime({ db, storage, mode: "demo" }));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 
-const handler = createFetchHandler({ surface: "admin", webDist, devOrigin: "http://localhost:5173" });
+const handler = createFetchHandler({ surface: "admin", webDist, devOrigin: "http://localhost:5175" });
 const get = (path: string, headers: Record<string, string> = {}) => handler(new Request(`http://127.0.0.1${path}`, { headers }));
 const list = async (input?: unknown) => {
   const qs = input === undefined ? "" : `?input=${encodeURIComponent(JSON.stringify(input))}`;
@@ -143,15 +143,15 @@ describe("single host: the SPA", () => {
 
 describe("CORS for the Vite dev server", () => {
   test("allowed in demo mode for the dev origin only", async () => {
-    const dev = await get("/trpc/health.check", { origin: "http://localhost:5173" });
-    expect(dev.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+    const dev = await get("/trpc/health.check", { origin: "http://localhost:5175" });
+    expect(dev.headers.get("access-control-allow-origin")).toBe("http://localhost:5175");
     const other = await get("/trpc/health.check", { origin: "https://evil.example" });
     expect(other.headers.get("access-control-allow-origin")).toBeNull();
   });
 
   test("never in live mode", async () => {
     useRuntime({ db, storage, mode: "live" });
-    const res = await get("/trpc/health.check", { origin: "http://localhost:5173" });
+    const res = await get("/trpc/health.check", { origin: "http://localhost:5175" });
     expect(res.headers.get("access-control-allow-origin")).toBeNull();
   });
 });

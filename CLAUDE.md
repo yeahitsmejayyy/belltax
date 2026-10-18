@@ -34,7 +34,7 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - **Access:** every client-facing procedure goes through `src/access.ts` (`engagementFor`, `documentFor`).
   Denials are NOT_FOUND. Identity comes from `src/identity.ts`: a session first, then (demo mode only) the demo header/cookie.
 - `apps/portal` — the client portal: React 19 + Vite + Tailwind v4 on `packages/ui`, phone first (402px), top nav
-  from `md` (ticket 12). Dev on :5173, proxied to the portal listener (:3000, override with `PORTAL_API_PORT`, never
+  from `md` (ticket 12). Dev on :5175, proxied to the portal listener (:3000, override with `PORTAL_API_PORT`, never
   `PORT`, which launchers set for Vite itself). Screens are `src/pages/*` (lazy per route) inside `src/shell/shell.tsx`
   (header, account menu, bottom tabs / top nav with counts, offline banner). `useReturn()` (`lib/return.tsx`) is the
   return being shown (newest by default, remembered per device). A 401 anywhere clears the demo identity and goes to
@@ -62,7 +62,7 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   `@app/ui/components/<name>`, never copy them. Every component gets stories in `packages/ui/src/stories` (Storybook sections: Principles, Tokens, Primitives, Admin, Site); interaction tests go in a hidden `<Name>Test` twin
   (`tags: ["!dev"]`), never on the visible story. The admin shell is `AppSidebar` + `AppHeader` (on shadcn's `sidebar`). Search is `InlineSearch` (header field with a results dropdown) + `CommandPalette` (⌘K), both fed the same `SearchGroup[]`,
   from `search.query` (server: word-prefix SQL, no index; never searches SSN digits). Invite client / Add without invite open `InviteClientDialog` (Household → Members → Filers → Send). Story fixtures live in `packages/ui/src/stories/fixtures.tsx`.
-- `apps/site` — the marketing site (ticket 14): one static page, React + Tailwind on `packages/ui`, dev on :5175. Prices and
+- `apps/site` — the marketing site (ticket 14): one static page, React + Tailwind on `packages/ui`, dev on :5176. Prices and
   the practice's details are read at load from the portal's `pricing.public` / `practice.public` (`src/lib/public.tsx`;
   the server lets any origin GET only those two, `SITE_READABLE` in `http.ts`), never copied; a deployed site sets
   `VITE_PORTAL_ORIGIN`. Unavailable → no prices shown, never stale ones. "How it works" is a scripted walkthrough of

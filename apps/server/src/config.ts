@@ -27,7 +27,7 @@ export function linksFor(env: Env, mode: RunMode, port: number, adminPort: numbe
   const pub = env.PUBLIC_ORIGIN ? trim(env.PUBLIC_ORIGIN) : null;
   if (mode === "live") return { portal: pub ?? `http://127.0.0.1:${port}`, admin: env.ADMIN_ORIGIN ? trim(env.ADMIN_ORIGIN) : `http://127.0.0.1:${adminPort}` };
   if (publicDemo && pub) return { portal: pub, admin: `${pub}/admin` };
-  return { portal: pub ?? "http://localhost:5173", admin: env.ADMIN_ORIGIN ? trim(env.ADMIN_ORIGIN) : "http://localhost:5174" };
+  return { portal: pub ?? "http://localhost:5175", admin: env.ADMIN_ORIGIN ? trim(env.ADMIN_ORIGIN) : "http://localhost:5174" };
 }
 
 export type StripeConfig = { secretKey: string; webhookSecret: string; publicOrigin: string };
@@ -41,7 +41,7 @@ export function loadStripe(env: Env): StripeConfig | null {
   if (/^(sk|rk)_live_/.test(secretKey)) throw new Error("STRIPE_SECRET_KEY is a live key. Only test keys (sk_test_…) are allowed");
   if (!/^(sk|rk)_test_/.test(secretKey)) throw new Error("STRIPE_SECRET_KEY must be a Stripe test key (sk_test_…)");
   if (!webhookSecret.startsWith("whsec_")) throw new Error("STRIPE_WEBHOOK_SECRET must be a webhook signing secret (whsec_…)");
-  const publicOrigin = (env.PUBLIC_ORIGIN ?? "http://localhost:5173").replace(/\/$/, "");
+  const publicOrigin = (env.PUBLIC_ORIGIN ?? "http://localhost:5175").replace(/\/$/, "");
   return { secretKey, webhookSecret, publicOrigin };
 }
 

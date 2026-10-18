@@ -89,9 +89,9 @@ Needs [Bun](https://bun.sh) 1.3.
 ```bash
 bun install
 bun run dev          # server: portal on :3000, admin on :3001; re-seeds 25 invented households
-bun run dev:portal   # client portal on :5173
+bun run dev:portal   # client portal on :5175
 bun run dev:admin    # tax agent admin on :5174
-bun run dev:site     # marketing site on :5175
+bun run dev:site     # marketing site on :5176
 bun run storybook    # design system on :6006
 ```
 

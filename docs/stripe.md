@@ -30,7 +30,7 @@ Both or neither (`apps/server/src/config.ts`). Without them, the Pay button stay
 |---|---|
 | `STRIPE_SECRET_KEY` | Stripe → Developers → API keys, **test mode**, the `sk_test_…` secret key |
 | `STRIPE_WEBHOOK_SECRET` | the webhook endpoint's signing secret, `whsec_…` (below) |
-| `PUBLIC_ORIGIN` | where clients come back to after paying. Local default: `http://localhost:5173` |
+| `PUBLIC_ORIGIN` | where clients come back to after paying. Local default: `http://localhost:5175` |
 
 Never commit them: they go in `apps/server/.env` (gitignored; Bun loads it when the server starts) or the host's
 environment settings.

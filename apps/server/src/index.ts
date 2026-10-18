@@ -24,7 +24,7 @@ const log = createRequestLog({ mode: config.mode, dataDir: config.dataDir });
 
 // Two listeners, both on 127.0.0.1. The portal is the only one a tunnel may forward; the admin never
 // leaves this machine, and preparer procedures don't exist on the portal at all.
-const portal = createFetchHandler({ surface: "portal", webDist: join(REPO_ROOT, "apps/portal/dist"), devOrigin: "http://localhost:5173", log });
+const portal = createFetchHandler({ surface: "portal", webDist: join(REPO_ROOT, "apps/portal/dist"), devOrigin: "http://localhost:5175", log });
 const admin = createFetchHandler({ surface: "admin", webDist: join(REPO_ROOT, "apps/admin/dist"), devOrigin: "http://localhost:5174", log });
 
 if (config.publicDemo) {
