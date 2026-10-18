@@ -85,6 +85,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - **Paying online** is Stripe, TEST mode only (ticket 09, `docs/stripe.md`): `payment.checkout` opens Stripe's hosted page,
   `POST /api/stripe/webhook` (`src/rest/stripe.ts`, portal listener only) settles it; no SDK (`src/money/stripe.ts`). Keys
   `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`, both or neither; a live key refuses to boot.
+- **Email** (ticket 51, `docs/email.md`): `src/email/` — `send()` with two drivers: Resend (live, `RESEND_API_KEY` +
+  `EMAIL_FROM`) or the outbox (everywhere else, never sends; admin Outbox page, `email.outbox`). Invite, reset and
+  sign-in-changed templates; every send is an event (to + template, never a link).
 - **Pricing** is packages (one per filing status) + add-ons (`price_packages`, `price_addons`, migration 006), edited via
   `settings.pricing.*`; `pricing.public` feeds the marketing site. `src/money/pricing.ts` turns a return's facts (filing
   status, sources, intake answers) into a suggested invoice. An add-on with no price is "Included": named on the invoice

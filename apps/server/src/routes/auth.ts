@@ -2,6 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { AuthState, InviteLink, InviteLinkInput, UserRefInput } from "@app/schema";
 import { z } from "zod";
 import { linkFor, revokeAllSessions } from "../auth/auth";
+import { outboxMessages } from "../email/email";
+import { emailLink } from "../email/notify";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import { preparerProcedure, publicProcedure, router } from "../trpc";
@@ -30,9 +32,11 @@ export const loginLinkRouter = router({
   link: preparerProcedure
     .input(InviteLinkInput)
     .output(InviteLink)
-    .mutation(({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       loginOf(input.userId);
-      return linkFor(input.userId, input.purpose, ctx.user.id);
+      const link = linkFor(input.userId, input.purpose, ctx.user.id);
+      const sent = await emailLink(input.userId, input.purpose, link.url);
+      return { ...link, emailed: sent.sent };
     }),
 
   // Sign a login out of every browser, now.
@@ -49,4 +53,14 @@ export const loginLinkRouter = router({
       })();
       return { ended };
     }),
+});
+
+// The outbox (ticket 51): what the practice would have emailed, in dev and the demos, where nothing is sent. Live mode
+// with Resend has no outbox; there, mail really goes and the path doesn't exist.
+const OutboxEntry = z.object({ id: z.string(), at: z.string(), to: z.string(), from: z.string(), subject: z.string(), text: z.string(), html: z.string(), template: z.string() });
+export const emailRouter = router({
+  outbox: preparerProcedure.output(z.array(OutboxEntry)).query(({ path }) => {
+    if (runtime().email?.driver === "resend") throw new TRPCError({ code: "NOT_FOUND", message: `No procedure found on path "${path}"` });
+    return [...outboxMessages()];
+  }),
 });

@@ -43,8 +43,12 @@ function LoginChip({ m }: { m: Member }) {
 // password, a reset after), and signing them out of every browser.
 function LoginActions({ login }: { login: NonNullable<Member["login"]> }) {
   const [url, setUrl] = React.useState<string | null>(null);
+  const [emailed, setEmailed] = React.useState(false);
   const purpose = login.activated ? "reset" : "invite";
-  const link = trpc.login.link.useMutation({ onSuccess: (r) => setUrl(r.url), onError: (e) => toast.error(e.message) });
+  const link = trpc.login.link.useMutation({ onSuccess: (r) => {
+      setUrl(r.url);
+      setEmailed(r.emailed);
+    }, onError: (e) => toast.error(e.message) });
   const out = trpc.login.signOutEverywhere.useMutation({
     onSuccess: (r) => toast.success(r.ended ? `Signed out of ${r.ended} ${r.ended === 1 ? "browser" : "browsers"}` : "Wasn't signed in anywhere"),
     onError: (e) => toast.error(e.message),
@@ -65,7 +69,7 @@ function LoginActions({ login }: { login: NonNullable<Member["login"]> }) {
         <CopyLink
           url={url}
           label={purpose === "invite" ? `Invite link for ${login.email}` : `Reset link for ${login.email}`}
-          note={purpose === "invite" ? "Send it to them yourself. It works once, for 7 days." : "Send it to them yourself. It works once, for 24 hours, and signs them out everywhere."}
+          note={`${emailed ? `Emailed to ${login.email}; here too in case they need it another way.` : "Send it to them yourself."} ${purpose === "invite" ? "It works once, for 7 days." : "It works once, for 24 hours, and signs them out everywhere."}`}
         />
       ) : null}
     </div>

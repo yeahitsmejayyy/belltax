@@ -1,6 +1,7 @@
 import { SetPasswordInput, SignInInput } from "@app/schema";
 import { describeLink, revokeSession, SESSION_MAX_MS, sessionCookie, signIn, useLink } from "../auth/auth";
 import { runtime } from "../db/client";
+import { emailSignInChanged } from "../email/notify";
 import type { Surface } from "../identity";
 
 // Sign-in over REST (ticket 05): these set and clear the session cookie, which tRPC's handlers can't do cleanly.
@@ -71,7 +72,10 @@ export async function authRoute(req: Request, surface: Surface, pathname: string
     const input = SetPasswordInput.safeParse(await req.json().catch(() => null));
     if (!input.success) return fail(400, "Create a password.");
     const r = await useLink(link[1]!, input.data.password, surface, clientOf(req, ip));
-    return r.ok ? signedIn(surface, r.token) : fail(r.status, r.message);
+    if (!r.ok) return fail(r.status, r.message);
+    // A reset changed how they sign in: tell the address on file, so an unexpected change gets noticed (ticket 51).
+    if (r.purpose === "reset") await emailSignInChanged(r.user.id, "Your password was changed");
+    return signedIn(surface, r.token);
   }
   return null;
 }

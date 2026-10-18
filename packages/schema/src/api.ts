@@ -468,7 +468,7 @@ export const HouseholdOnboardInput = z.object({
   filing: z.enum(["single", "mfj", "mfs", "hoh"]),
   filers: z.array(z.int().nonnegative()).min(1).max(2), // indexes into members
 });
-export const HouseholdOnboardResult = z.object({ householdId: Id, engagementIds: z.array(Id), invited: z.boolean(), inviteUrl: z.string().nullable() });
+export const HouseholdOnboardResult = z.object({ householdId: Id, engagementIds: z.array(Id), invited: z.boolean(), inviteUrl: z.string().nullable(), inviteEmailed: z.boolean() });
 
 export const LoginCreateInput = z.object({
   personId: Id,

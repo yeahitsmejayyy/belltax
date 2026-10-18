@@ -5,7 +5,7 @@ const repo = "/work/belltaxprep";
 
 describe("loadConfig", () => {
   test("defaults to demo with in-repo data dir", () => {
-    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null, stripe: null, links: { portal: "http://localhost:5175", admin: "http://localhost:5174" } });
+    expect(loadConfig({}, repo)).toEqual({ mode: "demo", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep/data/demo", publicDemo: null, stripe: null, links: { portal: "http://localhost:5175", admin: "http://localhost:5174" }, email: { driver: "outbox", from: "Bell Tax <hello@belltax.example>" } });
   });
 
   test("rejects an unknown mode", () => {
@@ -32,7 +32,7 @@ describe("loadConfig", () => {
 
   test("live accepts a sibling dir that only shares a name prefix", () => {
     const cfg = loadConfig({ RUN_MODE: "live", LIVE_DATA_DIR: "/work/belltaxprep-live" }, repo);
-    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null, stripe: null, links: { portal: "http://127.0.0.1:3000", admin: "http://127.0.0.1:3001" } });
+    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null, stripe: null, links: { portal: "http://127.0.0.1:3000", admin: "http://127.0.0.1:3001" }, email: { driver: "outbox", from: "Bell Tax <hello@belltax.example>" } });
   });
 
   test("the admin gets its own port, never the portal's", () => {
@@ -61,5 +61,14 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ ...keys, STRIPE_SECRET_KEY: "sk_live_abc" }, repo)).toThrow("live key");
     expect(() => loadConfig({ STRIPE_SECRET_KEY: "sk_test_abc" }, repo)).toThrow("both");
     expect(() => loadConfig({ ...keys, STRIPE_WEBHOOK_SECRET: "nope" }, repo)).toThrow("whsec_");
+  });
+
+  test("email sends for real only in live mode with a Resend key and a from address", () => {
+    const live = { RUN_MODE: "live", LIVE_DATA_DIR: "/srv/btp" };
+    expect(loadConfig({ ...live, RESEND_API_KEY: "re_abc", EMAIL_FROM: "Bell Tax <hi@belltax.test>" }, repo).email).toEqual({ driver: "resend", apiKey: "re_abc", from: "Bell Tax <hi@belltax.test>" });
+    expect(() => loadConfig({ ...live, RESEND_API_KEY: "re_abc" }, repo)).toThrow("EMAIL_FROM");
+    expect(() => loadConfig({ ...live, RESEND_API_KEY: "sk_abc", EMAIL_FROM: "x <x@y.test>" }, repo)).toThrow("re_");
+    expect(loadConfig({ RESEND_API_KEY: "re_abc", EMAIL_FROM: "x <x@y.test>" }, repo).email?.driver).toBe("outbox"); // demo never sends
+    expect(loadConfig({ DEMO_PUBLIC: "1", RESEND_API_KEY: "re_abc" }, repo).email?.driver).toBe("outbox");
   });
 });

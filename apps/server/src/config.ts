@@ -15,7 +15,24 @@ export type Config = {
   stripe?: StripeConfig | null;
   // Where sign-in links point (ticket 05): the portal clients use, and the admin the preparer uses.
   links?: Links;
+  // Outgoing email (ticket 51): Resend in live mode with a key; otherwise the outbox, which never sends.
+  email?: EmailConfig;
 };
+
+export type EmailConfig = { driver: "resend"; apiKey: string; from: string } | { driver: "outbox"; from: string };
+
+// Real email only in live mode with a Resend key. The demos (local and hosted) always use the outbox, so a visitor can
+// never make the practice send mail, whatever keys are set.
+export function loadEmail(env: Env, mode: RunMode): EmailConfig {
+  const from = env.EMAIL_FROM?.trim() || "Bell Tax <hello@belltax.example>";
+  const key = env.RESEND_API_KEY?.trim();
+  if (mode === "live" && key) {
+    if (!key.startsWith("re_")) throw new Error("RESEND_API_KEY must be a Resend API key (re_…)");
+    if (!env.EMAIL_FROM) throw new Error("Set EMAIL_FROM (e.g. Bell Tax <hello@yourdomain.com>) to send with Resend");
+    return { driver: "resend", apiKey: key, from };
+  }
+  return { driver: "outbox", from };
+}
 
 export type Links = { portal: string; admin: string };
 
@@ -82,7 +99,7 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
       if (!Number.isFinite(resetHours) || resetHours <= 0) throw new Error(`DEMO_RESET_HOURS must be a positive number, got "${env.DEMO_RESET_HOURS}"`);
       publicDemo = { resetHours };
     }
-    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo"), publicDemo, stripe: loadStripe(env), links: linksFor(env, mode, port, adminPort, !!publicDemo) };
+    return { mode, port, adminPort, dataDir: resolve(repoRoot, "data/demo"), publicDemo, stripe: loadStripe(env), links: linksFor(env, mode, port, adminPort, !!publicDemo), email: loadEmail(env, mode) };
   }
 
   // Live mode never guesses where real data goes.
@@ -92,5 +109,5 @@ export function loadConfig(env: Env = process.env, repoRoot = REPO_ROOT): Config
   if (isInside(repoRoot, dir)) {
     throw new Error(`LIVE_DATA_DIR must be outside the repo (${repoRoot}), got "${dir}"`);
   }
-  return { mode, port, adminPort, dataDir: resolve(dir), publicDemo: null, stripe: loadStripe(env), links: linksFor(env, mode, port, adminPort, false) };
+  return { mode, port, adminPort, dataDir: resolve(dir), publicDemo: null, stripe: loadStripe(env), links: linksFor(env, mode, port, adminPort, false), email: loadEmail(env, mode) };
 }

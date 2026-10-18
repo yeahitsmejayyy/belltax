@@ -163,7 +163,7 @@ export function describeLink(token: string, surface: Surface) {
   return { purpose: l.purpose, email: u.email, firstName: first, practiceName: p.practice_name, preparerName: p.preparer_name };
 }
 
-export type UseLinkResult = { ok: true; user: SessionUser; token: string } | { ok: false; message: string; status: 400 | 410 };
+export type UseLinkResult = { ok: true; user: SessionUser; token: string; purpose: "invite" | "reset" } | { ok: false; message: string; status: 400 | 410 };
 
 /** Set the password from a link, sign every other session out, and sign this browser in. */
 export async function useLink(token: string, password: string, surface: Surface, client: { ip?: string; userAgent?: string } = {}): Promise<UseLinkResult> {
@@ -195,5 +195,5 @@ export async function useLink(token: string, password: string, surface: Surface,
     return createSession(u.id, surface, client);
   })();
   if (!session) return { ok: false, message: "This link has expired or was already used. Ask for a new one.", status: 410 };
-  return { ok: true, user: asSession(u), token: session };
+  return { ok: true, user: asSession(u), token: session, purpose: l.purpose };
 }

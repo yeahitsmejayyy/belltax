@@ -87,7 +87,7 @@ type InviteClientDialogProps = {
   mode: InviteDraft["mode"];
   taxYear: number;
   preparerName: string;
-  onSubmit: (draft: InviteDraft) => Promise<void | { inviteUrl?: string | null }>; // an invite returns its one-time link to hand over
+  onSubmit: (draft: InviteDraft) => Promise<void | { inviteUrl?: string | null; inviteEmailed?: boolean }>; // an invite returns its one-time link, and whether the practice emailed it
   sample?: Omit<InviteDraft, "mode">; // demo only: "Fill sample data"
   onOpenReturn?: () => void; // shown on the done step
 };
@@ -101,6 +101,7 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
   const [failure, setFailure] = React.useState<string | null>(null);
   const [sentAt, setSentAt] = React.useState<Date | null>(null);
   const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
+  const [emailed, setEmailed] = React.useState(false);
 
   // A fresh start every time it opens.
   React.useEffect(() => {
@@ -138,6 +139,7 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
     try {
       const r = await onSubmit({ ...draft, surname: draft.surname.trim(), email: draft.email.trim(), phone: draft.phone.trim() });
       setInviteUrl((r && r.inviteUrl) || null);
+      setEmailed(!!(r && r.inviteEmailed));
       setSentAt(new Date());
       setStep(4);
     } catch (err) {
@@ -325,7 +327,15 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
                 : `Invite ready for ${draft.email.trim()} (${stamp}). The return is in Invited until they set up their account.`}
             </p>
             {!isAdd && inviteUrl ? (
-              <CopyLink url={inviteUrl} label="Their invite link" note="Send it to them yourself. It works once and expires in 7 days; you can make a new one from the household page." />
+              <CopyLink
+                url={inviteUrl}
+                label="Their invite link"
+                note={
+                  emailed
+                    ? `Emailed to ${draft.email.trim()}. It's here too, in case they need it another way. It works once and expires in 7 days.`
+                    : "Send it to them yourself. It works once and expires in 7 days; you can make a new one from the household page."
+                }
+              />
             ) : (
               <p className="text-muted-foreground">
                 {isAdd ? "Send the portal invite from the household page when you're ready." : "The link works once and expires in 7 days. You can make a new one from the household page."}

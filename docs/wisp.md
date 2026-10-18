@@ -161,7 +161,8 @@ Choose providers able to protect client information, require it contractually, a
 | Intuit (ProSeries) | Full return data | Review their security terms; MFA on the account |
 | Stripe (🔧 ticket 09) | Name, email, amount, card data (held by Stripe, never by us) | Review their security documentation; test mode until go-live |
 | Tunnel: Cloudflare or Tailscale (🔧 decision pending) | Encrypted traffic metadata | Review terms; lock the tunnel to the portal only |
-| Email provider `[name]` | Anything clients email | MFA; ask clients to use the portal instead |
+| Email: your mailbox `[name]` | Anything clients email | MFA; ask clients to use the portal instead |
+| Resend (practice's outgoing mail) | Recipient address, first name, sign-in links | Sending-only API key; verified domain with SPF, DKIM, DMARC; MFA on the account |
 | Backup storage `[name]` | Encrypted blobs only | Encryption key never stored with the backup |
 | GitHub, demo hosting | **Code and invented demo data only** | No real data, ever |
 

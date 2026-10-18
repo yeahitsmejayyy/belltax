@@ -27,5 +27,5 @@ export const InviteInfo = z.object({ purpose: z.enum(["invite", "reset"]), email
 
 // The preparer's link to hand a client (or themselves): shown once, never stored.
 export const InviteLinkInput = z.object({ userId: z.string(), purpose: z.enum(["invite", "reset"]) });
-export const InviteLink = z.object({ url: z.url(), expiresAt: z.string() });
+export const InviteLink = z.object({ url: z.url(), expiresAt: z.string(), emailed: z.boolean() }); // emailed: the practice sent it (ticket 51)
 export const UserRefInput = z.object({ userId: z.string() });

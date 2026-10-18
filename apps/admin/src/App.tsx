@@ -19,6 +19,7 @@ const Pipeline = lazy(() => import("@/pages/pipeline"));
 const ReturnPage = lazy(() => import("@/pages/return/return-page"));
 const Season = lazy(() => import("@/pages/season"));
 const Settings = lazy(() => import("@/pages/settings"));
+const Outbox = lazy(() => import("@/pages/outbox"));
 
 // Signed in means the server knows who this is on the admin: a session (ticket 05), or the demo identity in demo mode.
 function RequireIdentity({ children }: { children: React.ReactNode }) {
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/clients/:id" element={<Household />} />
         <Route path="/invoices" element={<Invoices />} />
         <Route path="/activity" element={<Activity />} />
+        <Route path="/outbox" element={<Outbox />} />
         <Route path="/settings/:tab?" element={<Settings />} />
         <Route path="/season" element={<Season />} />
       </Route>

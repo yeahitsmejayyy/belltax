@@ -1,4 +1,4 @@
-import { Activity, CalendarPlus, ChevronRight, FileText, Inbox, LayoutDashboard, LayoutGrid, Receipt, Settings, User, UserPlus, Users, Workflow } from "lucide-react";
+import { Activity, CalendarPlus, ChevronRight, FileText, Inbox, LayoutDashboard, LayoutGrid, Mail, Receipt, Settings, User, UserPlus, Users, Workflow } from "lucide-react";
 import * as React from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -53,6 +53,7 @@ export function Shell() {
   const practice = trpc.settings.practice.get.useQuery(undefined, { staleTime: 60_000 }).data;
   const badges = trpc.dashboard.badges.useQuery(taxYear ? { taxYear } : undefined, { enabled: !!taxYear, refetchInterval: 60_000 }).data;
 
+  const outbox = trpc.email.outbox.useQuery(undefined, { retry: false, refetchInterval: 15_000 });
   const items: NavItem[] = [
     { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { key: "pipeline", label: "Pipeline", icon: Workflow, count: badges?.pipeline },
@@ -60,6 +61,8 @@ export function Shell() {
     { key: "clients", label: "Clients", icon: Users },
     { key: "invoices", label: "Invoices", icon: Receipt, count: badges?.invoices, countTone: "danger" },
     { key: "activity", label: "Activity", icon: Activity },
+    // The outbox exists only where mail isn't really sent (dev and the demos; ticket 51).
+    ...(outbox.isSuccess ? [{ key: "outbox", label: "Outbox", icon: Mail, count: outbox.data.length || undefined } satisfies NavItem] : []),
   ];
   const active = pathname.split("/")[1] === "returns" ? "pipeline" : pathname.split("/")[1] || "pipeline";
 
@@ -179,7 +182,7 @@ export function Shell() {
           setCreated(r.engagementIds[0] ?? null);
           await utils.invalidate();
           toast.success(d.mode === "invite" ? `Invite ready for ${d.email}` : `${d.surname} household added`);
-          return { inviteUrl: r.inviteUrl };
+          return { inviteUrl: r.inviteUrl, inviteEmailed: r.inviteEmailed };
         }}
         onOpenReturn={
           created

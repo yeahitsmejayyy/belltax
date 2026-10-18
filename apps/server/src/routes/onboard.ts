@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { HouseholdOnboardInput, HouseholdOnboardResult, now } from "@app/schema";
 import type { z } from "zod";
 import { linkFor } from "../auth/auth";
+import { emailLink } from "../email/notify";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import { preparerProcedure } from "../trpc";
@@ -33,7 +34,7 @@ function problem(i: Input): string | null {
 export const onboardProcedure = preparerProcedure
   .input(HouseholdOnboardInput)
   .output(HouseholdOnboardResult)
-  .mutation(({ ctx, input }) => {
+  .mutation(async ({ ctx, input }) => {
     const { db } = runtime();
     const why = problem(input);
     if (why) throw new TRPCError({ code: "BAD_REQUEST", message: why });
@@ -99,5 +100,6 @@ export const onboardProcedure = preparerProcedure
 
     // The one-time link for the preparer to send (ticket 05): made after the household exists, shown once.
     const inviteUrl = userId ? linkFor(userId, "invite", ctx.user.id).url : null;
-    return { householdId, engagementIds, invited: input.mode === "invite", inviteUrl };
+    const inviteEmailed = userId && inviteUrl ? (await emailLink(userId, "invite", inviteUrl)).sent : false;
+    return { householdId, engagementIds, invited: input.mode === "invite", inviteUrl, inviteEmailed };
   });

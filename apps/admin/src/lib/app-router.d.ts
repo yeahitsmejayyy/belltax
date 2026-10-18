@@ -1517,6 +1517,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 engagementIds: string[];
                 invited: boolean;
                 inviteUrl: string | null;
+                inviteEmailed: boolean;
             };
             meta: object;
         }>;
@@ -1722,6 +1723,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             output: {
                 url: string;
                 expiresAt: string;
+                emailed: boolean;
             };
             meta: object;
         }>;
@@ -1788,6 +1790,38 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 } | null;
                 demo: boolean;
             };
+            meta: object;
+        }>;
+    }>>;
+    email: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        outbox: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                id: string;
+                at: string;
+                to: string;
+                from: string;
+                subject: string;
+                text: string;
+                html: string;
+                template: string;
+            }[];
             meta: object;
         }>;
     }>>;
