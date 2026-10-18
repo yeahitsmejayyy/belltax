@@ -8,8 +8,8 @@
 </picture>
 
 <p>
-  <a href="https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml"><img src="https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/chromatic.yml"><img src="https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/chromatic.yml/badge.svg" alt="Chromatic"></a>
+  <a href="https://github.com/yeahitsmejayyy/belltax/actions/workflows/ci.yml"><img src="https://github.com/yeahitsmejayyy/belltax/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/yeahitsmejayyy/belltax/actions/workflows/chromatic.yml"><img src="https://github.com/yeahitsmejayyy/belltax/actions/workflows/chromatic.yml/badge.svg" alt="Chromatic"></a>
   <a href="https://belltax-demo.onrender.com/sign-in"><img src="https://img.shields.io/badge/demo-live-c7ef4a?logo=render&amp;logoColor=white" alt="Live demo"></a>
   <a href="https://main--6acc3e31a2af6c6973a2ed80.chromatic.com"><img src="https://img.shields.io/badge/storybook-design%20system-ff4785?logo=storybook&amp;logoColor=white" alt="Storybook"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>

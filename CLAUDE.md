@@ -1,6 +1,6 @@
 # belltaxprep
 
-[![CI](https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml/badge.svg)](https://github.com/yeahitsmejayyy/belltaxprep/actions/workflows/ci.yml)
+[![CI](https://github.com/yeahitsmejayyy/belltax/actions/workflows/ci.yml/badge.svg)](https://github.com/yeahitsmejayyy/belltax/actions/workflows/ci.yml)
 
 Client portal + preparer admin for a small tax practice. Everything around the return; never the
 return itself (ProSeries owns that). Read `.docs/belltaxprep-portal.md` for the brief (kept out of git: private notes).
