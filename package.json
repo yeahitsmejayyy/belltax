@@ -33,7 +33,8 @@
     "storybook:build": "storybook build -o storybook-static",
     "test:storybook": "vitest run --project=storybook",
     "dev:site": "bun --filter @app/site dev",
-    "preparer:invite": "bun --filter @app/server preparer:invite"
+    "preparer:invite": "bun --filter @app/server preparer:invite",
+    "email:test": "bun --filter @app/server email:test"
   },
   "devDependencies": {
     "@storybook/addon-a11y": "^10.6.0",

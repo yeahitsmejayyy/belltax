@@ -18,7 +18,8 @@
     "export:open": "bun src/export/cli.ts open",
     "bench:seed": "bun src/bench/cli.ts seed",
     "bench": "bun src/bench/cli.ts run",
-    "preparer:invite": "bun src/auth/cli.ts"
+    "preparer:invite": "bun src/auth/cli.ts",
+    "email:test": "bun src/email/cli.ts"
   },
   "dependencies": {
     "@app/schema": "workspace:*",

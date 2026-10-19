@@ -19,22 +19,27 @@ export const clearOutbox = () => void outbox.splice(0);
 // Overridable in tests, so no test ever calls Resend.
 export const emailHttp = { fetch: (url: string, init: RequestInit) => fetch(url, init) };
 
+/** One message through Resend. No database: also used by `bun run email:test`. */
+export async function deliverWithResend(cfg: { apiKey: string; from: string }, m: Message): Promise<SendResult> {
+  try {
+    const res = await emailHttp.fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${cfg.apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: cfg.from, to: [m.to], subject: m.subject, text: m.text, html: m.html }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
+    return res.ok ? { sent: true, id: body.id ?? null, driver: "resend" } : { sent: false, error: body.message ?? `Resend answered ${res.status}` };
+  } catch (e) {
+    return { sent: false, error: (e as Error).message };
+  }
+}
+
 export async function send(m: Message, about: { userId?: string | null; householdId?: string | null } = {}): Promise<SendResult> {
   const { db, email } = runtime();
   const cfg = email ?? { driver: "outbox" as const, from: "Bell Tax <hello@belltax.example>" };
   let result: SendResult;
   if (cfg.driver === "resend") {
-    try {
-      const res = await emailHttp.fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${cfg.apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: cfg.from, to: [m.to], subject: m.subject, text: m.text, html: m.html }),
-      });
-      const body = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
-      result = res.ok ? { sent: true, id: body.id ?? null, driver: "resend" } : { sent: false, error: body.message ?? `Resend answered ${res.status}` };
-    } catch (e) {
-      result = { sent: false, error: (e as Error).message };
-    }
+    result = await deliverWithResend(cfg, m);
   } else {
     const entry = { id: Bun.randomUUIDv7(), at: new Date().toISOString(), to: m.to, from: cfg.from, subject: m.subject, text: m.text, html: m.html, template: m.template };
     outbox.unshift(entry);
