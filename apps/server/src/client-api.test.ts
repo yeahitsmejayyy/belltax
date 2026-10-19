@@ -262,9 +262,10 @@ describe("documents", () => {
     expect(list.find((r) => r.id === rejectedRequestId)).toMatchObject({ status: "open", latestDocument: { id: doc.id } });
   });
 
-  test("download returns the exact bytes, never cached", async () => {
+  test("the preparer's download returns the exact bytes, never cached; the client who sent it can't read it back", async () => {
     const up = DocumentView.parse((await upload(alice.userId, { engagementId: alice.engagementId, kind: "other" }, pdf())).body);
-    const res = await download(alice.userId, up.id);
+    expect((await download(alice.userId, up.id)).status).toBe(404); // send-only portal (ticket 52)
+    const res = await adminHandler(new Request(`${ORIGIN}/api/documents/${up.id}/file`, { headers: { [DEMO_USER_HEADER]: preparerId } }));
     expect(res.status).toBe(200);
     expect(Buffer.from(await res.arrayBuffer()).equals(Buffer.from(pdf()))).toBe(true);
     expect(res.headers.get("cache-control")).toBe("private, no-store");

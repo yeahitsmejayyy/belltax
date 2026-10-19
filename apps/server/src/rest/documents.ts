@@ -189,6 +189,9 @@ export async function sampleDocument(req: Request, surface: Surface, devOrigin?:
 export function downloadDocument(req: Request, surface: Surface, documentId: string): Response {
   const user = guard(req, surface);
   if (user instanceof Response) return user;
+  // The portal is a mail slot, not a filing cabinet (ticket 52): what a client sent can't be read back out of it, so a
+  // taken-over client account yields no documents. Clients get "not found", exactly like someone else's file.
+  if (user.role === "client") return fail(404, "Not found.");
   try {
     const doc = documentFor(user, documentId);
     const bytes = runtime().storage.get(doc.storage_key!);

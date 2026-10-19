@@ -89,7 +89,7 @@ describe("security headers", () => {
   test("the download reached the file, so its headers were tested on a real response", async () => {
     w.use("demo");
     const doc = clientDoc();
-    const res = await surfaces.portal(new Request(`${ORIGIN}/api/documents/${doc.id}/file`, { headers: { [DEMO_USER_HEADER]: doc.user } }));
+    const res = await surfaces.admin(new Request(`${ORIGIN}/api/documents/${doc.id}/file`, { headers: { [DEMO_USER_HEADER]: w.preparerId } }));
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe("private, no-store");
   });

@@ -44,7 +44,8 @@ export function listRequests(engagementId: string, user: SessionUser): RequestVi
       documentKind: r.document_kind,
       title: r.title,
       note: r.note,
-      response: r.response,
+      // Send-only (ticket 52): a client sees that a question was answered, not their answer again.
+      response: user.role === "client" && r.status === "fulfilled" ? null : r.response,
       status: r.status,
       personId: r.person_id,
       personName: r.person_name,

@@ -1,4 +1,4 @@
-import { CheckCircle2, FolderOpen } from "lucide-react";
+import { CheckCircle2, FolderOpen, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Banner } from "@app/ui/components/banner";
@@ -8,8 +8,9 @@ import { formatDateTime } from "@app/ui/format";
 import { AnswerSummary } from "./review";
 import type { Answers } from "./rules";
 
-// After the answers are sent, or once the return is past the questionnaire: what happens next, then
-// the answers read-only. Only the preparer can reopen them.
+// After the answers are sent, or once the return is past the questionnaire: what happens next. Sent answers aren't
+// shown back (ticket 52, send-only portal): the preparer has them, and a stolen login can't read them. Only the
+// preparer can reopen them.
 
 type Props = { answers: Answers; submittedAt: string | null; preparer: string; replyTo?: string };
 
@@ -63,7 +64,14 @@ export function SentAnswers({ answers, submittedAt, preparer, replyTo }: Props) 
         if something's wrong or missing. {preparer} can reopen your answers for you.
       </Banner>
 
-      <AnswerSummary answers={answers} />
+      {submittedAt ? (
+        <p className="flex items-start gap-2 text-sm text-pretty text-muted-foreground">
+          <Lock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+          For your privacy, answers aren't shown here once they're sent. {preparer} has them.
+        </p>
+      ) : (
+        <AnswerSummary answers={answers} />
+      )}
     </div>
   );
 }

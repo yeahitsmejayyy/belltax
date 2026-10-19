@@ -19,6 +19,10 @@ const toView = (r: Row): IntakeView => {
   };
 };
 
+// Send-only (ticket 52): after submission a client's view keeps the dates and drops the answers. The preparer sees all.
+const forUser = (view: IntakeView, role: "client" | "preparer"): IntakeView =>
+  role === "client" && view.submittedAt ? { ...view, answers: {}, missing: [] } : view;
+
 export const readIntake = (engagementId: string): IntakeView | null => {
   const row = read(engagementId);
   return row ? toView(row) : null;
@@ -34,7 +38,7 @@ export const intakeRouter = router({
     .query(({ ctx, input }) => {
       engagementFor(ctx.user, input.engagementId);
       const row = read(input.engagementId);
-      return row ? toView(row) : null;
+      return row ? forUser(toView(row), ctx.user.role) : null;
     }),
 
   // Each step saves only its own fields; they're merged over what's already there.
@@ -85,6 +89,6 @@ export const intakeRouter = router({
           data: { fields: Object.keys(input.answers).length, cleared: input.clear?.length ?? 0 },
         });
       })();
-      return toView(read(eng.id)!);
+      return forUser(toView(read(eng.id)!), ctx.user.role);
     }),
 });

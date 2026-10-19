@@ -32,6 +32,13 @@ PTIN renewal asks the preparer to attest to it on
 |---|---|---|
 | Intuit ProSeries | Full returns, SSNs, bank details, e-file records (the system of record) | Intuit, via the preparer's account |
 | Client portal and preparer admin (this repository's software, **live instance**) | Contact details, household members, **last 4 digits of SSN only**, intake answers, uploaded documents (W-2s, 1099s, IDs), engagement letters and signatures, invoices, payment records, audit log | One local instance on hardware the owner controls ✍️ `[laptop / home lab]` |
+
+**The portal is send-only for clients** ✅ (ticket 52, "a mail slot, not a filing cabinet"). A taken-over client
+login exposes nothing of value: clients see *that* they sent a document and its status, never the file
+(`GET /api/documents/:id/file` is 404 for clients; only the preparer can open it); submitted intake answers and
+answers to the preparer's questions aren't shown back; a signed letter shows its text and when it was signed, never
+the signature evidence. Receipts stay visible.
+
 | Portal backups | Copies of the live database and uploads | ✅ `bun run backup` (AES-256-GCM, versioned) · ✍️ at `[location]` |
 | Email and phone | Whatever clients send outside the portal | `[provider]` |
 | Paper | Documents clients hand over in person | `[office / home]` |

@@ -32,7 +32,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   tunnel may forward; serves `apps/portal/dist`) and admin on `ADMIN_PORT` (3001; serves `apps/admin/dist`). Preparer
   procedures are 404 on the portal and a preparer identity is ignored there (`src/identity.ts`, `src/trpc.ts`).
 - **Access:** every client-facing procedure goes through `src/access.ts` (`engagementFor`, `documentFor`).
-  Denials are NOT_FOUND. Identity comes from `src/identity.ts`: a session first, then (demo mode only) the demo header/cookie.
+  Denials are NOT_FOUND. **The portal is send-only for clients** (ticket 52, `docs/wisp.md`): `GET /api/documents/:id/file` is
+  404 for a client; submitted intake answers (`intake.get`) and answered questions' `response` (`request.list`) come back
+  empty to clients; letter signature evidence is preparer-only. Never add a client path that reads back what they sent. Identity comes from `src/identity.ts`: a session first, then (demo mode only) the demo header/cookie.
 - `apps/portal` — the client portal: React 19 + Vite + Tailwind v4 on `packages/ui`, phone first (402px), top nav
   from `md` (ticket 12). Dev on :5175, proxied to the portal listener (:3000, override with `PORTAL_API_PORT`, never
   `PORT`, which launchers set for Vite itself). Screens are `src/pages/*` (lazy per route) inside `src/shell/shell.tsx`

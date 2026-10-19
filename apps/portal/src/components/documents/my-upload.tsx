@@ -1,5 +1,5 @@
 import type { DocumentView } from "@app/schema";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { FileCheck2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -10,7 +10,8 @@ import { formatDate } from "@app/ui/format";
 
 import { trpc } from "@/lib/trpc";
 
-// A file already sent: open it in a new tab, or take it back while it hasn't been reviewed (document.delete).
+// A file already sent: its name and when, and taking it back while it hasn't been reviewed (document.delete). It can't
+// be opened again from here (ticket 52, send-only portal): the preparer has it, and a stolen login can't read it.
 export function MyUpload({ doc }: { doc: DocumentView }) {
   const utils = trpc.useUtils();
   const remove = trpc.document.delete.useMutation({
@@ -24,16 +25,10 @@ export function MyUpload({ doc }: { doc: DocumentView }) {
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-      <a
-        href={`/api/documents/${doc.id}/file`}
-        target="_blank"
-        rel="noopener"
-        className="inline-flex min-h-11 min-w-0 items-center gap-1.5 rounded-md font-medium text-primary underline-offset-4 hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none md:min-h-8"
-      >
+      <span className="inline-flex min-h-11 min-w-0 items-center gap-1.5 font-medium md:min-h-8">
+        <FileCheck2 aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
         <span className="truncate">{doc.filename}</span>
-        <ExternalLink aria-hidden="true" className="size-3.5 shrink-0" />
-        <span className="sr-only">(opens in a new tab)</span>
-      </a>
+      </span>
       <span className="text-muted-foreground">· sent {formatDate(doc.uploadedAt)}</span>
       {removable ? (
         <AlertDialog>

@@ -39,12 +39,12 @@ const clientDoc = () =>
 describe("document.viewed", () => {
   test("a download writes one event, attributed, with ids and no file contents", async () => {
     const doc = clientDoc();
-    const res = await w.portal(new Request(`${ORIGIN}/api/documents/${doc.id}/file`, { headers: { [DEMO_USER_HEADER]: doc.user } }));
+    const res = await w.handler(new Request(`${ORIGIN}/api/documents/${doc.id}/file`, { headers: { [DEMO_USER_HEADER]: w.preparerId } }));
     expect(res.status).toBe(200);
     const bytes = Buffer.from(await res.arrayBuffer()).toString("latin1");
     const [ev, ...more] = views("document.viewed", doc.id);
     expect(more).toHaveLength(0);
-    expect(ev).toEqual({ actor_user_id: doc.user, data: "{}", household_id: doc.household_id, engagement_id: doc.engagement_id });
+    expect(ev).toEqual({ actor_user_id: w.preparerId, data: "{}", household_id: doc.household_id, engagement_id: doc.engagement_id });
     expect(bytes.length).toBeGreaterThan(0);
     expect(ev!.data).not.toContain(bytes.slice(0, 16));
   });
@@ -141,14 +141,14 @@ describe("request log", () => {
     const doc = clientDoc();
     const input = encodeURIComponent(JSON.stringify({ search: SSN }));
     await c.admin(new Request(`${ORIGIN}/trpc/household.list?input=${input}`, { headers: { [DEMO_USER_HEADER]: w.preparerId } }));
-    await c.portal(new Request(`${ORIGIN}/api/documents/${doc.id}/file?name=${SSN}`, { headers: { [DEMO_USER_HEADER]: doc.user, cookie: `x=${SSN}` } }));
+    await c.admin(new Request(`${ORIGIN}/api/documents/${doc.id}/file?name=${SSN}`, { headers: { [DEMO_USER_HEADER]: w.preparerId, cookie: `x=${SSN}` } }));
     await c.portal(new Request(`${ORIGIN}/returns/${SSN}?q=${SSN}`));
     await c.portal(new Request(`${ORIGIN}/trpc/${SSN}`));
     await c.admin(new Request(`${ORIGIN}/api/${SSN}`));
 
     expect(c.entries.map(({ surface, method, route, status, user }) => ({ surface, method, route, status, user }))).toEqual([
       { surface: "admin", method: "GET", route: "/trpc/household.list", status: 200, user: w.preparerId },
-      { surface: "portal", method: "GET", route: "/api/documents/:id/file", status: 200, user: doc.user },
+      { surface: "admin", method: "GET", route: "/api/documents/:id/file", status: 200, user: w.preparerId },
       { surface: "portal", method: "GET", route: "/*", status: 503, user: null },
       { surface: "portal", method: "GET", route: "/trpc/:unknown", status: 404, user: null },
       { surface: "admin", method: "GET", route: "/api/:unknown", status: 404, user: w.preparerId }, // no header on admin: the demo preparer
