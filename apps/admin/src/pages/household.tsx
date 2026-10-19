@@ -39,8 +39,8 @@ function LoginChip({ m }: { m: Member }) {
   return m.login.activated ? <StatusChip tone="success" icon={CheckCircle2} label="Has portal login" /> : <StatusChip tone="brand" icon={Clock} label="Invited" />;
 }
 
-// The preparer's controls over a login (ticket 05): a one-time link to hand over (an invite until they've set a
-// password, a reset after), and signing them out of every browser.
+// The preparer's controls over a login (tickets 05, 05b): a one-time link to hand over (an invite until they've set
+// up sign-in, a reset after, which replaces their passkeys), and signing them out of every browser.
 function LoginActions({ login }: { login: NonNullable<Member["login"]> }) {
   const [url, setUrl] = React.useState<string | null>(null);
   const [emailed, setEmailed] = React.useState(false);
@@ -57,7 +57,7 @@ function LoginActions({ login }: { login: NonNullable<Member["login"]> }) {
     <div className="grid gap-2 sm:col-span-3">
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={() => link.mutate({ userId: login.userId, purpose })} disabled={link.isPending}>
-          <KeyRound aria-hidden="true" /> {purpose === "invite" ? "Invite link" : "Password reset link"}
+          <KeyRound aria-hidden="true" /> {purpose === "invite" ? "Invite link" : "Sign-in reset link"}
         </Button>
         {login.activated ? (
           <Button variant="ghost" size="sm" onClick={() => out.mutate({ userId: login.userId })} disabled={out.isPending}>
@@ -69,7 +69,7 @@ function LoginActions({ login }: { login: NonNullable<Member["login"]> }) {
         <CopyLink
           url={url}
           label={purpose === "invite" ? `Invite link for ${login.email}` : `Reset link for ${login.email}`}
-          note={`${emailed ? `Emailed to ${login.email}; here too in case they need it another way.` : "Send it to them yourself."} ${purpose === "invite" ? "It works once, for 7 days." : "It works once, for 24 hours, and signs them out everywhere."}`}
+          note={`${emailed ? `Emailed to ${login.email}; here too in case they need it another way.` : "Send it to them yourself."} ${purpose === "invite" ? "It works once, for 7 days." : "It works once, for 24 hours: it removes their old passkeys and signs them out everywhere."}`}
         />
       ) : null}
     </div>

@@ -55,8 +55,8 @@ export const HOUSEHOLD_SCOPE: Record<string, string> = {
   events: `household_id = ?1 OR engagement_id IN (${E})`,
 };
 // The practice's own settings and bookkeeping: no client's record.
-// invites and sessions are credentials (hashed tokens), not part of anyone's record: never exported.
-export const PRACTICE_WIDE = ["document_kinds", "letter_templates", "price_packages", "price_addons", "practice_settings", "webhook_receipts", "schema_migrations", "invites", "sessions"];
+// invites, sessions, passkeys, authenticator secrets and recovery codes are credentials: never exported.
+export const PRACTICE_WIDE = ["document_kinds", "letter_templates", "price_packages", "price_addons", "practice_settings", "webhook_receipts", "schema_migrations", "invites", "sessions", "passkeys", "totp_secrets", "recovery_codes"];
 const OMIT: Record<string, string[]> = { users: ["password_hash"] }; // a login, never its credential
 const JSON_COLUMNS: Record<string, string[]> = { intake_responses: ["answers"], events: ["data"] };
 const ORDER: Record<string, string> = {

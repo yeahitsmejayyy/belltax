@@ -141,16 +141,29 @@ outside penetration test ✍️ `[decide at first annual review]`.
 - Clients see only returns they file, plus households the preparer has explicitly granted, for example an adult child
   helping a parent. Grants are revocable and their history is kept ✅.
 - The preparer admin is never exposed to the internet 🔧 (separate app; admin traffic accepted locally only).
-- Sign-in: invite link, then a password (argon2id); 30-minute idle and 12-hour maximum sessions; lockout after
-  10 failures for 15 minutes; only hashes of link and session tokens are stored ✅ (ticket 05). MFA for everyone 🔧 ticket 05b.
+- Sign-in: a one-time invite link, then multi-factor setup (§5); 30-minute idle and 12-hour maximum sessions;
+  lockout after 10 failures for 15 minutes; only hashes of link and session tokens are stored ✅ (tickets 05, 05b).
 
 ### 5. Multi-factor authentication ([314.4(c)(5)](https://www.law.cornell.edu/cfr/text/16/314.4))
 The rule requires MFA for **any individual accessing any information system**, unless the Qualified Individual
 approves equivalent or stronger controls in writing.
 - ✍️ Turn on MFA for: Intuit/ProSeries, IRS e-Services, email, Stripe (when used), GitHub, the tunnel provider, and
   the password manager.
-- 🔧 Portal: MFA for the preparer is required before go-live. For clients, decide between MFA (passkeys) and a
-  written equivalent-controls approval, and record the decision here: ✍️ `[decision, date]`.
+- ✅ Portal: **MFA for everyone** (ticket 05b, decided 2026-10-12). No one signs in with a password alone.
+  - **Clients:** a passkey (Face ID, Touch ID or the device PIN; synced by iCloud Keychain or Google). A passkey is
+    multi-factor on its own: something you have (the device) unlocked by something you are or know. Where a device
+    can't make one, a password plus an authenticator app (TOTP, RFC 6238). No recovery codes; Settings encourages a
+    second passkey.
+  - **Preparer:** a passkey **and** a password with an authenticator app, plus ten one-time recovery codes (stored
+    as SHA-256, shown once). The admin is reached at `http://localhost:3001`: browsers refuse passkeys on a bare IP.
+  - **Recovery is self-serve:** "Lost your passkey?" emails a one-time link (24 hours) to the address on file, with the
+    same answer whether or not the email has an account. Using it signs out every session, removes every old passkey
+    and authenticator app, and requires a new one; it is logged and the address on file is told. A stolen inbox could
+    take over a client login, which is acceptable because the portal is send-only (ticket 52): a taken-over client
+    account shows nothing of value.
+  - Passkeys are public keys bound to the site's address (phishing-resistant); authenticator secrets are readable in
+    the database (they have to be, to check a code) but useless without the argon2id password. Every add, removal,
+    reset and new set of recovery codes is an event, and the address on file is emailed.
 
 ### 6. Network protection and remote access
 - Router firmware current, default admin password changed, WPA3 (or WPA2-AES) Wi-Fi, guest network for visitors and

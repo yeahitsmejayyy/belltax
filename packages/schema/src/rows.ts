@@ -309,6 +309,25 @@ export const SessionRow = z.object({
   user_agent: text.nullable(),
 });
 
+// MFA (migration 011): passkeys are public keys; the authenticator secret is the one readable credential; recovery codes
+// are hashes.
+const Bit = z.union([z.literal(0), z.literal(1)]);
+export const PasskeyRow = z.object({
+  id: Id,
+  user_id: Id,
+  credential_id: z.string().min(16).max(1400),
+  public_key: z.instanceof(Uint8Array),
+  counter: z.int().nonnegative(),
+  transports: text.nullable(),
+  rp_id: text,
+  backed_up: Bit,
+  name: z.string().min(1).max(60),
+  created_at: Timestamp,
+  last_used_at: Timestamp.nullable(),
+});
+export const TotpSecretRow = z.object({ user_id: Id, secret: z.string().regex(/^[A-Z2-7]{32}$/), last_step: z.int().nonnegative(), created_at: Timestamp });
+export const RecoveryCodeRow = z.object({ id: Id, user_id: Id, code_hash: TokenHash, created_at: Timestamp, used_at: Timestamp.nullable() });
+
 export const ReminderPreferenceRow = z.object({
   user_id: Id,
   kind: ReminderKind,
@@ -405,6 +424,9 @@ export const tables = {
   reminder_preferences: ReminderPreferenceRow,
   invites: InviteRow,
   sessions: SessionRow,
+  passkeys: PasskeyRow,
+  totp_secrets: TotpSecretRow,
+  recovery_codes: RecoveryCodeRow,
 } as const;
 
 export type TableName = keyof typeof tables;

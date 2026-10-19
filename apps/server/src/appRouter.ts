@@ -1,4 +1,4 @@
-import { authRouter, emailRouter, loginLinkRouter } from "./routes/auth";
+import { authRouter, emailRouter, loginLinkRouter, mfaRouter } from "./routes/auth";
 import { dashboardRouter } from "./routes/dashboard";
 import { demoRouter } from "./routes/demo";
 import { documentRouter } from "./routes/document";
@@ -38,6 +38,7 @@ export const appRouter = router({
   login: mergeRouters(loginRouter, loginLinkRouter),
   auth: authRouter,
   email: emailRouter,
+  mfa: mfaRouter,
   access: accessRouter,
   inbox: inboxRouter,
   activity: activityRouter,

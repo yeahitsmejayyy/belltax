@@ -40,12 +40,15 @@ export function inviteEmail(to: string, firstName: string | null, p: Practice, u
 export function resetEmail(to: string, firstName: string | null, p: Practice, url: string, hours: number): Message {
   const { html, text } = layout(
     p,
-    "Set a new password",
-    [firstName ? `Hi ${firstName},` : "Hi,", "Use this link to choose a new password. You'll be signed out everywhere else when you do."],
-    { label: "Set a new password", url },
-    `This link works once and expires in ${hours} hours. If you didn't ask for it, ignore this email: your password stays as it is.`,
+    "Set up your sign-in again",
+    [
+      firstName ? `Hi ${firstName},` : "Hi,",
+      "Use this link to set up a new passkey on the phone or computer you have now. Your old passkeys stop working, and you'll be signed out everywhere else.",
+    ],
+    { label: "Set up my sign-in", url },
+    `This link works once and expires in ${hours} hours. If you didn't ask for it, ignore this email: nothing changes until the link is used.`,
   );
-  return { to, subject: `Your ${p.practiceName} password`, text, html, template: "reset" };
+  return { to, subject: `Set up your ${p.practiceName} sign-in again`, text, html, template: "reset" };
 }
 
 export function signInChangedEmail(to: string, firstName: string | null, p: Practice, what: string): Message {

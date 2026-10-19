@@ -1,15 +1,16 @@
 import { useNavigate } from "react-router-dom";
 
-import { SignInForm } from "@app/ui/components/auth-cards";
 import { Button } from "@app/ui/components/button";
 import { Logo } from "@app/ui/components/logo";
 import { ModeBadge } from "@app/ui/components/mode-badge";
+import { SignInSteps } from "@app/ui/components/sign-in-flows";
 import { setDemoUser } from "@app/ui/demo";
 
-import { authPost } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { trpc } from "@/lib/trpc";
 
-// Sign in (admin 01-access-signin, ticket 05): the preparer's email and password. In demo mode the picker sits
+// Sign in (admin 01-access-signin, tickets 05, 05b): a passkey, or the password and then the app's code (or a
+// recovery code). In demo mode the picker sits
 // underneath, so a walkthrough is one click; in live mode there is no picker at all.
 export default function Login() {
   const navigate = useNavigate();
@@ -25,14 +26,14 @@ export default function Login() {
     <main className="grid min-h-svh place-items-center bg-muted/40 p-4">
       <div className="grid w-full max-w-sm gap-6 rounded-xl border bg-card p-6 shadow-sm">
         <Logo className="mx-auto" />
-        <SignInForm
+        <SignInSteps
           title="Sign in"
           description="The back office for your practice."
-          onSubmit={async (email, password) => {
-            const r = await authPost("/api/auth/sign-in", { email, password });
-            if (!r.ok) throw new Error(r.error);
-            await enter();
-          }}
+          signIn={auth.signIn}
+          onPasskey={auth.signInWithPasskey}
+          recover={auth.recover}
+          onDone={enter}
+          onSetup={(token) => navigate(`/invite/${token}`)}
         >
           {preparers.length ? (
             <div className="grid gap-3">
@@ -57,7 +58,7 @@ export default function Login() {
               <ModeBadge mode="demo" />
             </div>
           ) : null}
-        </SignInForm>
+        </SignInSteps>
       </div>
     </main>
   );

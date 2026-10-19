@@ -1,7 +1,8 @@
 # Outgoing email
 
-Ticket 51. The practice emails three things: an **invite** (set up your account), a **password reset**, and **"your
-sign-in changed"** after a reset. Bodies carry a first name and the practice's details, never anything about a return.
+Ticket 51. The practice emails three things: an **invite** (set up your account), a **reset** ("set up your sign-in
+again", from the preparer or from "Lost your passkey?", ticket 05b), and **"your sign-in changed"** after a reset, a
+passkey added or removed, or new recovery codes. Bodies carry a first name and the practice's details, never anything about a return.
 
 ## Two drivers
 
@@ -15,7 +16,8 @@ failure) is an event naming the recipient and the template, never the body or a 
 the action: the preparer still sees the link to copy.
 
 Templates: `apps/server/src/email/templates.ts` (one inline-styled layout, a plain-text twin for each).
-When they're sent: `apps/server/src/email/notify.ts`, called by `login.link`, onboarding, and a used reset link.
+When they're sent: `apps/server/src/email/notify.ts`, called by `login.link`, onboarding, `POST /api/auth/recover`,
+a used reset link, and the passkey and recovery-code changes in Settings.
 
 ## Setting up Resend (before the first live client)
 

@@ -2,9 +2,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:tes
 import { hashToken, LOCK_AFTER, linkFor, SESSION_IDLE_MS, SESSION_MAX_MS, SIGN_IN_FAILED, SIGN_IN_LOCKED } from "./auth/auth";
 import { useRuntime } from "./db/client";
 import { resetSignInThrottle } from "./rest/auth";
+import { appCode } from "./test-auth";
 import { demoWorld, ORIGIN } from "./test-harness";
 
-// Ticket 05: real sign-in. Links that set a password, sessions on each surface, lockout, sign-out, and the CSRF rule.
+// Ticket 05: real sign-in. Links, sessions on each surface, lockout, sign-out, and the CSRF rule. Since 05b a password
+// always comes with an authenticator app (passkeys have their own tests, mfa.test.ts).
 
 let w: Awaited<ReturnType<typeof demoWorld>>;
 const LINKS = { portal: "https://portal.example", admin: "http://127.0.0.1:3001" };
@@ -38,12 +40,25 @@ function newClient() {
   return { id, email };
 }
 const tokenOf = (url: string) => url.split("/invite/")[1]!;
+// Open a link's setup (what the page does first) and get the authenticator secret it offers.
+const optionsFor = async (surface: "portal" | "admin", token: string) =>
+  ((await (await post(surface, `/api/auth/link/${token}/options`, {})).json()) as { totp: { secret: string } }).totp.secret;
+// Set up from a link with a password and an authenticator app.
+async function setUp(surface: "portal" | "admin", token: string, password = PASSWORD) {
+  const secret = await optionsFor(surface, token);
+  return { res: await post(surface, `/api/auth/link/${token}`, { password, code: appCode(secret) }), secret };
+}
 async function clientWithPassword() {
   const c = newClient();
-  const res = await post("portal", `/api/auth/link/${tokenOf(linkFor(c.id, "invite", w.preparerId).url)}`, { password: PASSWORD });
+  const { res, secret } = await setUp("portal", tokenOf(linkFor(c.id, "invite", w.preparerId).url));
   expect(res.status).toBe(204);
-  return { ...c, cookie: cookieFrom(res) };
+  return { ...c, secret, cookie: cookieFrom(res) };
 }
+// The app's current code, as if a fresh 30 seconds had started (a code is only good once).
+const codeOf = (c: { id: string; secret: string }) => {
+  w.db.run("UPDATE totp_secrets SET last_step = 0 WHERE user_id = ?", [c.id]);
+  return appCode(c.secret);
+};
 
 describe("invite links", () => {
   test("point at the portal for clients, show who they're for, and set the password once", async () => {
@@ -52,8 +67,8 @@ describe("invite links", () => {
     expect(url).toStartWith("https://portal.example/invite/");
     const token = tokenOf(url);
     const info = await (await w.portal(new Request(`${ORIGIN}/api/auth/link/${token}`))).json();
-    expect(info).toMatchObject({ purpose: "invite", email: c.email });
-    const res = await post("portal", `/api/auth/link/${token}`, { password: PASSWORD });
+    expect(info).toMatchObject({ purpose: "invite", email: c.email, role: "client" });
+    const { res } = await setUp("portal", token);
     expect(res.status).toBe(204);
     expect(res.headers.get("set-cookie")).toContain("HttpOnly");
     expect(await whoAmI("portal", cookieFrom(res))).toMatchObject({ id: c.id, role: "client" });
@@ -67,8 +82,11 @@ describe("invite links", () => {
     const first = tokenOf(linkFor(c.id, "invite", w.preparerId).url);
     const second = tokenOf(linkFor(c.id, "invite", w.preparerId).url);
     expect((await post("portal", `/api/auth/link/${first}`, { password: PASSWORD })).status).toBe(410); // replaced
-    expect((await post("portal", `/api/auth/link/${second}`, { password: "short" })).status).toBe(400);
-    expect((await post("portal", `/api/auth/link/${second}`, { password: `${c.email.split("@")[0]}-is-long-enough` })).status).toBe(400);
+    const secret = await optionsFor("portal", second);
+    expect((await post("portal", `/api/auth/link/${second}`, { password: "short", code: appCode(secret) })).status).toBe(400);
+    expect((await post("portal", `/api/auth/link/${second}`, { password: `${c.email.split("@")[0]}-is-long-enough`, code: appCode(secret) })).status).toBe(400);
+    expect((await post("portal", `/api/auth/link/${second}`, { password: PASSWORD })).status).toBe(400); // no app code
+    expect((await post("portal", `/api/auth/link/${second}`, { password: PASSWORD, code: appCode(secret, 5) })).status).toBe(400); // a wrong one
     expect((await post("admin", `/api/auth/link/${second}`, { password: PASSWORD })).status).toBe(410); // a client's link on the admin
     w.db.run("UPDATE invites SET expires_at = '2020-01-02T00:00:00.000Z', created_at = '2020-01-01T00:00:00.000Z' WHERE token_hash = ?", [hashToken(second)]);
     expect((await post("portal", `/api/auth/link/${second}`, { password: PASSWORD })).status).toBe(410);
@@ -77,7 +95,7 @@ describe("invite links", () => {
   test("a reset signs the login out everywhere else", async () => {
     const c = await clientWithPassword();
     const reset = tokenOf(linkFor(c.id, "reset", w.preparerId).url);
-    expect((await post("portal", `/api/auth/link/${reset}`, { password: `${PASSWORD} again` })).status).toBe(204);
+    expect((await setUp("portal", reset, `${PASSWORD} again`)).res.status).toBe(204);
     expect(await whoAmI("portal", c.cookie)).toBeNull();
   });
 });
@@ -85,7 +103,11 @@ describe("invite links", () => {
 describe("signing in", () => {
   test("the right password signs in; a wrong one and an unknown email get the same answer", async () => {
     const c = await clientWithPassword();
-    const ok = await post("portal", "/api/auth/sign-in", { email: c.email.toUpperCase(), password: PASSWORD });
+    const half = await post("portal", "/api/auth/sign-in", { email: c.email.toUpperCase(), password: PASSWORD });
+    expect(half.status).toBe(202); // the right password alone isn't enough
+    expect(await half.json()).toEqual({ next: "code", recoveryCodes: false });
+    expect(half.headers.get("set-cookie")).toBeNull();
+    const ok = await post("portal", "/api/auth/sign-in", { email: c.email.toUpperCase(), password: PASSWORD, code: codeOf(c) });
     expect(ok.status).toBe(204);
     expect(await whoAmI("portal", cookieFrom(ok))).toMatchObject({ id: c.id });
     const wrong = await post("portal", "/api/auth/sign-in", { email: c.email, password: "not the password at all" });
@@ -110,7 +132,7 @@ describe("signing in", () => {
     expect(((await locked.json()) as { error: string }).error).toBe(SIGN_IN_LOCKED);
     expect(w.eventsOf("auth.locked", c.id)).toHaveLength(1);
     w.db.run("UPDATE users SET locked_until = '2020-01-01T00:00:00.000Z' WHERE id = ?", [c.id]);
-    expect((await post("portal", "/api/auth/sign-in", { email: c.email, password: PASSWORD })).status).toBe(204);
+    expect((await post("portal", "/api/auth/sign-in", { email: c.email, password: PASSWORD, code: codeOf(c) })).status).toBe(204);
   });
 
   test("many failures from one address are slowed down, whatever the email", async () => {
@@ -135,7 +157,7 @@ describe("sessions", () => {
     const c = await clientWithPassword();
     expect((await post("portal", "/api/auth/sign-out", {}, { cookie: c.cookie })).status).toBe(204);
     expect(await whoAmI("portal", c.cookie)).toBeNull();
-    const again = await post("portal", "/api/auth/sign-in", { email: c.email, password: PASSWORD });
+    const again = await post("portal", "/api/auth/sign-in", { email: c.email, password: PASSWORD, code: codeOf(c) });
     const cookie = cookieFrom(again);
     expect((await w.call(w.preparerId, "login.signOutEverywhere", { userId: c.id }, "mutation")).data).toEqual({ ended: 1 });
     expect(await whoAmI("portal", cookie)).toBeNull();
@@ -153,7 +175,7 @@ describe("sessions", () => {
   test("in live mode the cookie is Secure on the portal, not on the loopback-only admin", async () => {
     as("live");
     const c = newClient();
-    const res = await post("portal", `/api/auth/link/${tokenOf(linkFor(c.id, "invite", w.preparerId).url)}`, { password: PASSWORD });
+    const { res } = await setUp("portal", tokenOf(linkFor(c.id, "invite", w.preparerId).url));
     expect(res.headers.get("set-cookie")).toContain("Secure");
   });
 });

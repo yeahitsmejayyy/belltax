@@ -54,9 +54,12 @@ Stop with `Ctrl+C`. SQLite's write-ahead log makes a stop mid-request safe.
 bun run preparer:invite you@yourpractice.com
 ```
 
-It creates your login the first time (a reset after that) and prints a one-time link. Open it **on this machine**, set
-a password (12+ characters), and you're in. Clients get their links from you: the Invite dialog shows one, and each
-household member has **Invite link** / **Password reset link** and **Sign out everywhere**. Send links yourself; each
+It creates your login the first time (a reset after that) and prints a one-time link. Open it **on this machine, at
+`http://localhost:3001`** (browsers refuse passkeys on `127.0.0.1`), then set up all three (ticket 05b): a passkey, a
+password (12+ characters) with an authenticator app, and save the ten recovery codes it shows once. After that, sign
+in with the passkey, or the password and the app's code (or a recovery code). Lost your phone? "Lost your passkey?"
+emails you a fresh link; Settings › Sign-in adds passkeys and makes new recovery codes. Clients get their links from you: the Invite dialog shows one, and each
+household member has **Invite link** / **Sign-in reset link** and **Sign out everywhere**. Send links yourself; each
 works once (invites 7 days, resets 24 hours). Sessions end after 30 minutes idle or 12 hours; 10 wrong passwords lock
 a login for 15 minutes.
 

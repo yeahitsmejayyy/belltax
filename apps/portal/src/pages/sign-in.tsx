@@ -6,17 +6,17 @@ import { Button } from "@app/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@app/ui/components/dialog";
 import { Logo, MarkLoader } from "@app/ui/components/logo";
 import { ModeBadge } from "@app/ui/components/mode-badge";
-import { SignInForm } from "@app/ui/components/auth-cards";
+import { SignInSteps } from "@app/ui/components/sign-in-flows";
 import { DemoFrontDoor } from "@app/ui/components/demo-tour";
 import { setDemoUser } from "@app/ui/demo";
 
-import { authPost } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { useDemoTour } from "@/lib/demo-tour";
 
 import { usePageTitle } from "@/lib/return";
 import { trpc } from "@/lib/trpc";
 
-// Sign in (portal 03-access-signin, ticket 05): email and password. In demo mode the picker of invented clients sits
+// Sign in (portal 03-access-signin, tickets 05, 05b): a passkey first, or a password and the app's code. In demo mode the picker of invented clients sits
 // underneath; on the public demo the front door replaces the form.
 export default function SignIn() {
   usePageTitle("Sign in");
@@ -52,14 +52,16 @@ export default function SignIn() {
         </main>
       ) : (
       <main className="mx-auto grid w-full max-w-sm content-start gap-6 px-4 pt-10 md:pt-16">
-        <SignInForm
+        <SignInSteps
           description="See where your return stands and what's needed from you."
-          onSubmit={async (email, password) => {
-            const r = await authPost("/api/auth/sign-in", { email, password });
-            if (!r.ok) throw new Error(r.error);
+          signIn={auth.signIn}
+          onPasskey={auth.signInWithPasskey}
+          recover={auth.recover}
+          onDone={async () => {
             await utils.invalidate();
             navigate("/");
           }}
+          onSetup={(token) => navigate(`/invite/${token}`)}
         />
         {users.isLoading ? <MarkLoader label="Loading" className="py-4" /> : null}
         {/* NOT_FOUND means live mode (no demo); anything else means the server isn't answering. */}

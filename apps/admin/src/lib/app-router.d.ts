@@ -1825,6 +1825,56 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
             meta: object;
         }>;
     }>>;
+    mfa: import("@trpc/server").TRPCBuiltRouter<{
+        ctx: {
+            user: {
+                id: string;
+                role: "client" | "preparer";
+                personId: string | null;
+            } | null;
+            client: {
+                ip: string;
+                userAgent: string;
+            };
+            surface: "portal" | "admin";
+        };
+        meta: object;
+        errorShape: import("@trpc/server").TRPCDefaultErrorShape;
+        transformer: false;
+    }, import("@trpc/server").TRPCDecorateCreateRouterOptions<{
+        methods: import("@trpc/server").TRPCQueryProcedure<{
+            input: void;
+            output: {
+                passkeys: {
+                    id: string;
+                    name: string;
+                    createdAt: string;
+                    lastUsedAt: string | null;
+                    synced: boolean;
+                }[];
+                authenticatorApp: boolean;
+                password: boolean;
+                recoveryCodesLeft: number | null;
+            };
+            meta: object;
+        }>;
+        removePasskey: import("@trpc/server").TRPCMutationProcedure<{
+            input: {
+                passkeyId: string;
+            };
+            output: {
+                removed: boolean;
+            };
+            meta: object;
+        }>;
+        newRecoveryCodes: import("@trpc/server").TRPCMutationProcedure<{
+            input: void;
+            output: {
+                codes: string[];
+            };
+            meta: object;
+        }>;
+    }>>;
     access: import("@trpc/server").TRPCBuiltRouter<{
         ctx: {
             user: {

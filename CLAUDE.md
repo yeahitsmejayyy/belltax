@@ -26,7 +26,12 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   Routes read the DB via `runtime()` (`src/db/client.ts`), never the tRPC context — keeps Bun types out of
   the `AppRouter` contract (`bun run --filter @app/server types:emit` refuses a leaky one). Sign-in (ticket 05):
   `src/auth/auth.ts` (sessions, one-time links, lockout), `src/rest/auth.ts` (`/api/auth/*`, httpOnly cookie
-  `btp_session_<surface>`), `auth.state` / `login.link` / `login.signOutEverywhere` (`src/routes/auth.ts`); every non-GET
+  `btp_session_<surface>`), `auth.state` / `login.link` / `login.signOutEverywhere` (`src/routes/auth.ts`). **MFA for
+  everyone** (ticket 05b, `docs/wisp.md` §5): `src/auth/mfa.ts` (passkeys via @simplewebauthn, RP ID = the page's host,
+  never an IP; recovery codes), `src/auth/totp.ts` (hand-rolled RFC 6238). Clients: a passkey, or password + app. Preparer:
+  passkey and password + app, plus recovery codes. Links (invite/reset, and "Lost your passkey?" `POST /api/auth/recover`)
+  set it up; a reset clears old factors. `mfa.*` for Settings; screens in `packages/ui` `mfa-cards.tsx` +
+  `sign-in-flows.tsx`, wired through `@app/ui/auth-client`. Tests use a software passkey (`src/test-auth.ts`); every non-GET
   must come from our own Origin (`fromOurPages`, `http.ts`); `bun run preparer:invite <email>` makes the preparer's first
   link (live). **Two listeners, both 127.0.0.1:** portal on `PORT` (3000, the only one a
   tunnel may forward; serves `apps/portal/dist`) and admin on `ADMIN_PORT` (3001; serves `apps/admin/dist`). Preparer

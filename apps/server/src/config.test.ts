@@ -32,7 +32,7 @@ describe("loadConfig", () => {
 
   test("live accepts a sibling dir that only shares a name prefix", () => {
     const cfg = loadConfig({ RUN_MODE: "live", LIVE_DATA_DIR: "/work/belltaxprep-live" }, repo);
-    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null, stripe: null, links: { portal: "http://127.0.0.1:3000", admin: "http://127.0.0.1:3001" }, email: { driver: "outbox", from: "Bell Tax <hello@belltax.example>" } });
+    expect(cfg).toEqual({ mode: "live", port: 3000, adminPort: 3001, dataDir: "/work/belltaxprep-live", publicDemo: null, stripe: null, links: { portal: "http://127.0.0.1:3000", admin: "http://localhost:3001" }, email: { driver: "outbox", from: "Bell Tax <hello@belltax.example>" } });
   });
 
   test("the admin gets its own port, never the portal's", () => {

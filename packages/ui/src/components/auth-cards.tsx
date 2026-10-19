@@ -1,4 +1,4 @@
-import { Check, CircleAlert, CircleDashed, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { Check, CircleAlert, CircleDashed, Eye, EyeOff, Fingerprint, ShieldCheck } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "../utils";
@@ -158,7 +158,24 @@ function PasswordInput({
   );
 }
 
-export function SetPasswordForm({ email, onSubmit, className }: { email: string; onSubmit: (password: string) => void | Promise<void>; className?: string }) {
+export function SetPasswordForm({
+  email,
+  onSubmit,
+  title = "Create a password",
+  step,
+  submitLabel = "Create account",
+  pendingLabel = "Creating your account…",
+  className,
+}: {
+  email: string;
+  onSubmit: (password: string) => void | Promise<void>;
+  title?: string;
+  /** "Step 2 of 3", when the password is one part of a longer setup (ticket 05b). */
+  step?: string;
+  submitLabel?: string;
+  pendingLabel?: string;
+  className?: string;
+}) {
   const id = React.useId();
   const [pw, setPw] = React.useState("");
   const [again, setAgain] = React.useState("");
@@ -201,8 +218,9 @@ export function SetPasswordForm({ email, onSubmit, className }: { email: string;
     <section data-slot="set-password-form" aria-labelledby={`${id}-title`} className={cn("grid w-full max-w-sm gap-6", className)}>
       <div className="grid gap-2">
         <h1 id={`${id}-title`} className="text-3xl font-semibold tracking-tight">
-          Create a password
+          {title}
         </h1>
+        {step ? <p className="text-sm font-medium">{step}</p> : null}
         <p className="text-pretty text-muted-foreground">
           You'll use it with <span className="break-all text-foreground">{email}</span> to sign in.
         </p>
@@ -245,7 +263,7 @@ export function SetPasswordForm({ email, onSubmit, className }: { email: string;
         </ul>
         {failed ? <Banner tone="danger" title={failed} /> : null}
         <Button type="submit" size="touch" disabled={pending}>
-          {pending ? "Creating your account…" : "Create account"}
+          {pending ? pendingLabel : submitLabel}
         </Button>
       </form>
     </section>
@@ -272,21 +290,28 @@ export function SessionExpired({ open, minutes = 30, onSignIn }: { open: boolean
   );
 }
 
-// Signing in with an email and password. If `onSubmit` throws, its message shows above the button; the server's
-// message is the same for a wrong password and an unknown email. `children` sits under the form (the demo picker).
+// Signing in. With `onPasskey` (ticket 05b) the passkey comes first and the password sits under it, as the fallback.
+// If a callback throws, its message shows; the server's message is the same for a wrong password and an unknown email.
+// `children` sits under the form (the demo picker).
 export function SignInForm({
   title = "Sign in",
   description,
   onSubmit,
+  onPasskey,
+  onLost,
   children,
   className,
 }: {
   title?: string;
   description?: React.ReactNode;
   onSubmit: (email: string, password: string) => Promise<void>;
+  onPasskey?: () => Promise<void>;
+  /** "Lost your passkey?" */
+  onLost?: () => void;
   children?: React.ReactNode;
   className?: string;
 }) {
+  const [passkeyPending, setPasskeyPending] = React.useState(false);
   const id = React.useId();
   const [email, setEmail] = React.useState("");
   const [pw, setPw] = React.useState("");
@@ -313,6 +338,34 @@ export function SignInForm({
         </h1>
         {description ? <p className="text-muted-foreground">{description}</p> : null}
       </div>
+      {onPasskey ? (
+        <>
+          <Button
+            size="touch"
+            disabled={passkeyPending}
+            aria-busy={passkeyPending}
+            onClick={async () => {
+              setPasskeyPending(true);
+              setFailed(null);
+              try {
+                await onPasskey();
+              } catch (err) {
+                setFailed(err instanceof Error ? err.message : "That didn't work. Try again.");
+              } finally {
+                setPasskeyPending(false);
+              }
+            }}
+          >
+            <Fingerprint aria-hidden="true" />
+            {passkeyPending ? "Waiting for your device…" : "Sign in with a passkey"}
+          </Button>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            or with your password
+            <span className="h-px flex-1 bg-border" />
+          </div>
+        </>
+      ) : null}
       <form className="grid gap-4" onSubmit={submit} noValidate>
         <div className="grid gap-2">
           <label htmlFor={`${id}-email`} className="text-sm font-medium">
@@ -329,10 +382,15 @@ export function SignInForm({
         {failed ? (
           <Banner tone="danger" title={failed} />
         ) : null}
-        <Button type="submit" size="touch" disabled={pending} aria-busy={pending}>
-          {pending ? "Signing in…" : "Sign in"}
+        <Button type="submit" size="touch" variant={onPasskey ? "outline" : "default"} disabled={pending} aria-busy={pending}>
+          {pending ? "Signing in…" : onPasskey ? "Continue" : "Sign in"}
         </Button>
       </form>
+      {onLost ? (
+        <Button variant="link" className="h-11 justify-self-start px-0" onClick={onLost}>
+          Lost your passkey?
+        </Button>
+      ) : null}
       {children}
     </section>
   );

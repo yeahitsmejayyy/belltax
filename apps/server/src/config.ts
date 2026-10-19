@@ -42,7 +42,8 @@ export type Links = { portal: string; admin: string };
 export function linksFor(env: Env, mode: RunMode, port: number, adminPort: number, publicDemo: boolean): Links {
   const trim = (s: string) => s.replace(/\/$/, "");
   const pub = env.PUBLIC_ORIGIN ? trim(env.PUBLIC_ORIGIN) : null;
-  if (mode === "live") return { portal: pub ?? `http://127.0.0.1:${port}`, admin: env.ADMIN_ORIGIN ? trim(env.ADMIN_ORIGIN) : `http://127.0.0.1:${adminPort}` };
+  // The admin is "localhost", not 127.0.0.1: browsers refuse passkeys on a bare IP address (ticket 05b).
+  if (mode === "live") return { portal: pub ?? `http://127.0.0.1:${port}`, admin: env.ADMIN_ORIGIN ? trim(env.ADMIN_ORIGIN) : `http://localhost:${adminPort}` };
   if (publicDemo && pub) return { portal: pub, admin: `${pub}/admin` };
   return { portal: pub ?? "http://localhost:5175", admin: env.ADMIN_ORIGIN ? trim(env.ADMIN_ORIGIN) : "http://localhost:5174" };
 }

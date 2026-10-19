@@ -5,15 +5,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@app/ui/components/tab
 import { LetterTab } from "@/components/settings/letter-tab";
 import { PracticeTab } from "@/components/settings/practice-tab";
 import { PricingTab } from "@/components/settings/pricing-tab";
+import { SignInTab } from "@/components/settings/sign-in-tab";
 import { usePageTitle } from "@/shell/header-slots";
 
-// Settings (admin 31/32/33-settings): Practice, Services & pricing, Engagement letter. The tab is the URL segment,
+// Settings (admin 31/32/33-settings): Practice, Services & pricing, Engagement letter, and Sign-in (ticket 05b). The tab is the URL segment,
 // so each one can be linked to and survives a reload.
 
 const TABS = [
   { id: "practice", label: "Practice" },
   { id: "pricing", label: "Services & pricing" },
   { id: "letter", label: "Engagement letter" },
+  { id: "sign-in", label: "Sign-in" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
 
@@ -41,6 +43,9 @@ export default function Settings() {
       </TabsContent>
       <TabsContent value="letter">
         <LetterTab />
+      </TabsContent>
+      <TabsContent value="sign-in">
+        <SignInTab />
       </TabsContent>
     </Tabs>
   );

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:tes
 import { hashToken } from "./auth/auth";
 import { useRuntime } from "./db/client";
 import { clearOutbox, emailHttp, outboxMessages, send } from "./email/email";
+import { appCode } from "./test-auth";
 import { demoWorld, ORIGIN } from "./test-harness";
 
 // Ticket 51: outgoing email. The outbox in dev and the demos; Resend (faked here) only in live mode with a key.
@@ -44,10 +45,14 @@ describe("invites and resets", () => {
   test("using a reset link tells the address on file that the password changed", async () => {
     const u = unactivated();
     const url = ((await w.call(w.preparerId, "login.link", { userId: u.id, purpose: "invite" }, "mutation")).data as { url: string }).url;
-    await w.portal(new Request(`${ORIGIN}/api/auth/link/${url.split("/invite/")[1]}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "an invented long password" }) }));
+    const setUp = async (token: string, password: string) => {
+      const opts = (await (await w.portal(new Request(`${ORIGIN}/api/auth/link/${token}/options`, { method: "POST" }))).json()) as { totp: { secret: string } };
+      return w.portal(new Request(`${ORIGIN}/api/auth/link/${token}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password, code: appCode(opts.totp.secret) }) }));
+    };
+    await setUp(url.split("/invite/")[1]!, "an invented long password");
     const reset = ((await w.call(w.preparerId, "login.link", { userId: u.id, purpose: "reset" }, "mutation")).data as { url: string }).url;
     clearOutbox();
-    const res = await w.portal(new Request(`${ORIGIN}/api/auth/link/${reset.split("/invite/")[1]}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: "another invented password" }) }));
+    const res = await setUp(reset.split("/invite/")[1]!, "another invented password");
     expect(res.status).toBe(204);
     expect(outboxMessages().map((m) => m.template)).toEqual(["sign-in-changed"]);
     expect(w.get<{ n: number }>("SELECT COUNT(*) AS n FROM invites WHERE token_hash = ? AND used_at IS NOT NULL", hashToken(reset.split("/invite/")[1]!)).n).toBe(1);
