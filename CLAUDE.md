@@ -71,9 +71,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   from `search.query` (server: word-prefix SQL, no index; never searches SSN digits). Invite client / Add without invite open `InviteClientDialog` (Household → Members → Filers → Send). Story fixtures live in `packages/ui/src/stories/fixtures.tsx`.
 - `apps/site` — the marketing site (ticket 14): React + Tailwind on `packages/ui`, dev on :5176. Two pages (ticket 53):
   the landing page (`pages/landing.tsx`) and a splash page (`pages/splash.tsx`, `sections/splash/`); `VITE_SITE_PAGE=splash|landing`
-  picks one per deploy (default landing), `?page=` previews the other (`lib/page.ts`). The splash's "Join the list"
-  (`WaitlistForm`) opens a pre-written email to the practice (`lib/join.ts`), never posts. `VITE_CONTACT_EMAIL` overrides the
-  practice's reply-to for every email link. **Design-system components only** (PJ): no one-off components in
+  picks one per deploy (default landing), `?page=` previews the other (`lib/page.ts`). The splash is a placeholder with
+  no call to action (invite-only, PJ 2026-10-20); `WaitlistForm` waits in packages/ui stories. `VITE_CONTACT_EMAIL` overrides the
+  practice's reply-to for the landing page's email links. **Design-system components only** (PJ): no one-off components in
   `apps/site`; a missing one is built in `packages/ui` with stories first (the portal mockups, `Float`, `PortalPhones` live there). Prices and
   the practice's details are read at load from the portal's `pricing.public` / `practice.public` (`src/lib/public.tsx`;
   the server lets any origin GET only those two, `SITE_READABLE` in `http.ts`), never copied; a deployed site sets

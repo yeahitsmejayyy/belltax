@@ -3,16 +3,15 @@ import { Check } from "lucide-react";
 import { Wordmark } from "@app/ui/components/logo";
 import { ModeToggle } from "@app/ui/components/mode-toggle";
 import { PortalPhones } from "@app/ui/components/portal-mockups";
-import { WaitlistForm } from "@app/ui/components/waitlist-form";
 
 import { bookingYear, stateName } from "@/components/marketing/practice";
-import { joinHref } from "@/lib/join";
 import { BRAND, useNames } from "@/lib/public";
 
-// The splash page (ticket 53, from PJ's design export): the wordmark, the promise, "Join the list", and three portal
-// phones. It speaks as the brand like the landing page, and takes the practice's city, state and email from useNames().
+// The splash page (ticket 53, from PJ's design export): a placeholder while the practice gets ready. The wordmark,
+// the promise and three portal phones, with no call to action: the practice is invite-only, so there's nothing to
+// sign up for (PJ, 2026-10-20). It speaks as the brand like the landing page; city and state come from useNames().
 
-// When the practice opens to new clients: the one date the splash states outright.
+// When the practice opens: the one date the splash states outright.
 export const OPENING = "January 2027";
 
 export function SplashHeader() {
@@ -25,7 +24,7 @@ export function SplashHeader() {
 }
 
 export function SplashHero() {
-  const { agent, city, state, email } = useNames();
+  const { agent, city, state } = useNames();
   const region = stateName(state);
   const year = bookingYear();
   const points = ["Flat, up-front pricing", `Federal and ${region ?? "state"} e-file`, ...(region === "California" ? ["IHSS caregivers welcome"] : [])];
@@ -39,22 +38,9 @@ export function SplashHero() {
         </span>
         <h1 className="text-5xl leading-[1.04] font-extrabold tracking-[-0.04em] text-balance md:text-[84px]">Taxes Made Easy.</h1>
         <p className="max-w-135 text-[17px] leading-relaxed text-pretty text-muted-foreground md:text-lg">
-          Federal and {region ?? "state"} returns, prepared and e-filed by our team. Join the list to hear first when booking opens for the {year} tax&nbsp;year.
+          Federal and {region ?? "state"} returns, prepared and e-filed by our team, with every step in one place on your&nbsp;phone.
         </p>
       </div>
-
-      {/* Joining writes to the practice (lib/join.ts). With no address to write to, there's no form at all. */}
-      {email ? (
-        <WaitlistForm
-          onJoin={(address, reminders) => {
-            window.location.href = joinHref(email, address, reminders, BRAND);
-          }}
-          confirmation={(address) => ({
-            title: "Almost there.",
-            body: `Your email app opened with a note asking us to add ${address}. Send it and you're on the list: we'll write when booking opens, and nothing else.`,
-          })}
-        />
-      ) : null}
 
       <ul className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
         {points.map((p) => (
@@ -71,20 +57,13 @@ export function SplashHero() {
 }
 
 export function SplashFooter() {
-  const { city, state, email } = useNames();
+  const { city, state } = useNames();
   const place = [city, state].filter(Boolean).join(", ");
   return (
     <footer className="border-t">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-x-6 gap-y-3 px-5 py-6 text-sm text-muted-foreground">
-        <span>
-          © {new Date().getFullYear()} {BRAND}
-          {place ? <> · {place}</> : null}
-        </span>
-        {email ? (
-          <a href={`mailto:${email}`} className="inline-flex min-h-11 items-center rounded-sm hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none md:ml-auto">
-            {email}
-          </a>
-        ) : null}
+      <div className="mx-auto max-w-[1200px] px-5 py-6 text-sm text-muted-foreground">
+        © {new Date().getFullYear()} {BRAND}
+        {place ? <> · {place}</> : null}
       </div>
     </footer>
   );
