@@ -8,7 +8,8 @@ Ticket 15. See [`two-data-worlds.md`](two-data-worlds.md) for the line this sits
 |---|---|---|
 | Portal | Render, Docker web service (`render.yaml`, `Dockerfile`), free plan | https://belltax-demo.onrender.com/ |
 | Admin | The same service, mounted at `/admin/` | https://belltax-demo.onrender.com/admin/ |
-| Site | Vercel, static (`vercel.json`) | https://belltaxprep.vercel.app/ |
+| Site | Vercel, static (`vercel.json`) | https://belltaxprep.vercel.app/ (landing page) |
+| Live site | Vercel project `btp-site`, the same repo and `vercel.json` (ticket 54) | https://belltaxprep.com/ → www, splash page |
 | Storybook | Chromatic (`.github/workflows/chromatic.yml`) | the Chromatic project's permalink |
 
 ## How the admin is exposed
@@ -78,3 +79,22 @@ docker run --rm -p 127.0.0.1:3900:3000 belltax-demo
 ```
 
 Portal at http://localhost:3900/, admin at http://localhost:3900/admin/.
+
+## The practice's own domain (ticket 54)
+
+belltaxprep.com and www.belltaxprep.com belong to a second Vercel project, `btp-site`, built from this same repo, so
+the demo site keeps its landing page while the real domain shows the splash. The apex redirects to www (Vercel's
+domain settings). DNS stays at the registrar; nothing there changed for the switch, and the Resend records
+(`send.` and `resend._domainkey`, ticket 51) are not Vercel's business. `portal.belltaxprep.com` is kept free for the
+live portal behind the tunnel (ticket 25).
+
+| `btp-site` → Production env | Value |
+|---|---|
+| `VITE_SITE_PAGE` | `splash` |
+| `VITE_CONTACT_EMAIL` | the inbox PJ reads (the landing page's email links) |
+| `VITE_PORTAL_ORIGIN` | unset until the tunnel exists; then the live portal, never the Render demo |
+
+No secret ever goes on Vercel: anything named `VITE_` is compiled into the public page, and sending email stays on
+the server. Every page carries the headers in `vercel.json`: a strict CSP (scripts from the site only, `connect-src`
+limited to the demo portal and `*.belltaxprep.com`, no framing, no form posts), nosniff, a referrer policy and a
+permissions policy. Settings are read at build time: change one, then redeploy.

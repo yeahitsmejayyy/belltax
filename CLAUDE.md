@@ -113,7 +113,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   After editing, run `bun run intake:doc` to regenerate `docs/intake-v1.md`; a test fails while it's stale.
 - `bun run storybook` (:6006) · `bun run storybook:build` · `bun run test:storybook` (stories + play functions in
   Chromium via Vitest 4; set `CHROMIUM_PATH` to use a Chromium already on the machine).
-- **Hosted demo** (ticket 15, `docs/demo-deploy.md`): portal https://belltax-demo.onrender.com/, admin https://belltax-demo.onrender.com/admin/, site https://belltaxprep.vercel.app/ (Render free plan; switch to Starter before sharing widely). `Dockerfile` + `render.yaml` (portal, admin at `/admin/` on the same
+- **Hosted demo** (ticket 15, `docs/demo-deploy.md`): portal https://belltax-demo.onrender.com/, admin https://belltax-demo.onrender.com/admin/, site https://belltaxprep.vercel.app/ (Render free plan; switch to Starter before sharing widely). The practice's own
+  domain, https://belltaxprep.com (→ www), is the Vercel project `btp-site` on this repo with `VITE_SITE_PAGE=splash` (ticket 54);
+  security headers for both live in `vercel.json`, never secrets in Vercel env. `Dockerfile` + `render.yaml` (portal, admin at `/admin/` on the same
   port via `withAdminMounted`, only with `DEMO_PUBLIC=1`, which live refuses), `vercel.json` (site), Chromatic in
   `.github/workflows/chromatic.yml` (needs the `CHROMATIC_PROJECT_TOKEN` secret). Public demo: uploads off (clients send a server-drawn sample instead, `POST /api/documents/sample`, `sampleDocument` in `rest/documents.ts`), re-seeded every
   `DEMO_RESET_HOURS`, and a front door (`demo.tour`; `DemoFrontDoor`, `DemoBar`, `TryThis` in `components/demo-tour.tsx`; `useDemoTour` in each app's `lib/demo-tour.ts`). Admin URLs go through `at()` (`apps/admin/src/lib/base.ts`) so the `ADMIN_BASE=/admin/` build works.

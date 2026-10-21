@@ -37,7 +37,8 @@ test card `4242 4242 4242 4242`. (Free hosting: the first visit can take up to a
 | | |
 |---|---|
 | **Demo** (portal + admin) | [belltax-demo.onrender.com](https://belltax-demo.onrender.com/sign-in) |
-| **Marketing site** | [belltaxprep.vercel.app](https://belltaxprep.vercel.app) |
+| **Marketing site** | [belltaxprep.vercel.app](https://belltaxprep.vercel.app) (the full landing page) |
+| **The practice, live** | [belltaxprep.com](https://belltaxprep.com) (splash page until opening) |
 | **Design system** | [Storybook](https://main--6acc3e31a2af6c6973a2ed80.chromatic.com), published by Chromatic on every push |
 | **Case study** | [docs/case-study.md](docs/case-study.md) |
 | **3-minute demo script** | [docs/demo-script.md](docs/demo-script.md) |
