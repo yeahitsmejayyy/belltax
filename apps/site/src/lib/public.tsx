@@ -38,7 +38,9 @@ export function PublicFixture({ value, children }: { value: Public; children: Re
 
 // What the copy calls things. The site speaks as the brand and pairs every client with "your tax agent": it never
 // names the preparer or presents the practice as one person (PJ, October 2026). Only where to reach the practice
-// (city, state, reply-to email) comes from the portal.
+// (city, state, reply-to email) comes from the portal. The email can be set per deploy instead (VITE_CONTACT_EMAIL,
+// ticket 53), so the live site has an address before the live portal is reachable.
+export const CONTACT_EMAIL = (import.meta.env.VITE_CONTACT_EMAIL as string | undefined)?.trim() || null;
 export const BRAND = "belltax.";
 export const AGENT = "your tax agent";
 export const Agent = "Your tax agent";
@@ -51,6 +53,6 @@ export function useNames() {
     Agent,
     city: practice?.city ?? null,
     state: practice?.state ?? null,
-    email: practice?.replyToEmail ?? null,
+    email: CONTACT_EMAIL ?? practice?.replyToEmail ?? null,
   };
 }

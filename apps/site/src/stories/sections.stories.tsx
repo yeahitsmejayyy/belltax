@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import App from "@/App";
+import Landing from "@/pages/landing";
 import { Cta } from "@/sections/cta";
 import { Faq } from "@/sections/faq";
 import { Features } from "@/sections/features";
@@ -20,7 +20,7 @@ const meta: Meta = { title: "Site/Sections", decorators: [withPublic], parameter
 export default meta;
 type Story = StoryObj;
 
-export const FullPage: Story = { name: "Full page", render: () => <App /> };
+export const FullPage: Story = { name: "Full page", render: () => <Landing /> };
 export const HeaderBar: Story = { name: "Header", render: () => <Header /> };
 export const HeroSection: Story = { name: "Hero", render: () => <Hero /> };
 export const ProblemSection: Story = { name: "Problem", render: () => <Problem /> };

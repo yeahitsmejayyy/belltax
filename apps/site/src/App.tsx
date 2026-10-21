@@ -1,34 +1,9 @@
-import { Cta } from "@/sections/cta";
-import { Faq } from "@/sections/faq";
-import { Features } from "@/sections/features";
-import { Footer } from "@/sections/footer";
-import { Header } from "@/sections/header";
-import { Hero } from "@/sections/hero";
-import { How } from "@/sections/how";
-import { Pricing } from "@/sections/pricing";
-import { Problem } from "@/sections/problem";
-import { Solution } from "@/sections/solution";
+import { sitePage } from "@/lib/page";
+import Landing from "@/pages/landing";
+import Splash from "@/pages/splash";
 
-// One page (marketing 01-16), in the design's order. Reviews (09) are left out until there are real,
-// consented quotes; the component waits in packages/ui stories.
+// One site, two pages (ticket 53): the landing page, or the splash page while the practice gets ready. Which one is
+// a deploy setting (VITE_SITE_PAGE), and ?page=… previews the other (lib/page.ts).
 export default function App() {
-  return (
-    <div className="site-root min-h-svh bg-background text-foreground">
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2">
-        Skip to content
-      </a>
-      <Header />
-      <main id="main">
-        <Hero />
-        <Problem />
-        <Solution />
-        <How />
-        <Features />
-        <Pricing />
-        <Faq />
-        <Cta />
-      </main>
-      <Footer />
-    </div>
-  );
+  return <div className="site-root min-h-svh bg-background text-foreground">{sitePage() === "splash" ? <Splash /> : <Landing />}</div>;
 }

@@ -49,6 +49,14 @@ PJ does these: each needs an account sign-in.
    `apps/site`). Add the environment variable `VITE_PORTAL_ORIGIN=https://<service>.onrender.com`, then
    deploy. The pricing section should show prices; if it says prices are unavailable, the origin is wrong
    or the Render service is asleep.
+
+   **Which page (ticket 53).** The site has two pages: the full landing page and a splash page ("Opening
+   January 2027", Join the list). `VITE_SITE_PAGE=splash` makes the splash the page a deploy shows; unset or
+   `landing` shows the landing page. Either way, `?page=landing` or `?page=splash` on the address previews the
+   other without a redeploy. `VITE_CONTACT_EMAIL` (optional) is the address the site's email links and "Join the
+   list" write to; without it they use the practice's reply-to email from the portal, and with neither the
+   splash shows no form. Joining only opens the visitor's mail app with a pre-written note: the site stores and
+   sends nothing. These are build-time settings: change one, then redeploy.
 3. **Chromatic.** Sign in at chromatic.com with GitHub, add this repo, copy the project token, and save it
    as the `CHROMATIC_PROJECT_TOKEN` repository secret (GitHub → Settings → Secrets and variables → Actions).
    The next push to `main` becomes the baseline; pull requests then get a "UI Tests" check.

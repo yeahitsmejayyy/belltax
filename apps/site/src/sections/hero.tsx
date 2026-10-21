@@ -2,8 +2,8 @@ import { ArrowRight, Check, Play, ShieldCheck } from "lucide-react";
 
 import { Button } from "@app/ui/components/button";
 
-import { Float } from "@/components/marketing/float";
-import { PhoneDocuments, PhoneFrame, PhoneHome, PhoneLetterSigned } from "@/components/marketing/portal-mockups";
+import { Float } from "@app/ui/components/float";
+import { PhoneDocuments, PhoneFrame, PhoneHome, PhoneLetterSigned } from "@app/ui/components/portal-mockups";
 import { bookingYear, stateName, useStartHref } from "@/components/marketing/practice";
 import { useNames } from "@/lib/public";
 

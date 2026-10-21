@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { cn } from "@app/ui/utils";
+import { cn } from "../utils";
 
 // A slow 6s drift for the hero's portal screens (the prototype's mk-float). Transform only, so nothing reflows,
 // and it never starts when the visitor asks for reduced motion.

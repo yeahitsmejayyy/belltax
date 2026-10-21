@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 
-import { DesktopHome } from "@/components/marketing/portal-mockups";
+import { DesktopHome } from "@app/ui/components/portal-mockups";
 import { bookingYear } from "@/components/marketing/practice";
 import { Section, SectionHeading } from "@/components/marketing/section";
 import { useNames } from "@/lib/public";

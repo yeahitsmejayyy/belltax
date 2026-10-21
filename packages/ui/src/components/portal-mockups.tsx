@@ -1,13 +1,14 @@
 import { Camera, Check, ChevronRight, Clock, Moon, Upload } from "lucide-react";
 import * as React from "react";
 
-import { Card } from "@app/ui/components/card";
-import { BellMark, Wordmark } from "@app/ui/components/logo";
-import { Money } from "@app/ui/components/money";
-import { Progress } from "@app/ui/components/progress";
-import { DocumentChip, StatusChip, type DocumentChipStatus } from "@app/ui/components/status-chip";
-import { StageTimeline } from "@app/ui/components/timeline";
-import { cn } from "@app/ui/utils";
+import { Card } from "./card";
+import { Float } from "./float";
+import { BellMark, Wordmark } from "./logo";
+import { Money } from "./money";
+import { Progress } from "./progress";
+import { DocumentChip, StatusChip, type DocumentChipStatus } from "./status-chip";
+import { StageTimeline } from "./timeline";
+import { cn } from "../utils";
 
 // The portal, drawn in HTML from the design system for the hero phones (marketing 01) and the solution
 // screenshot (04). Invented demo data only: "Jordan A. Example" is not a person.
@@ -73,6 +74,32 @@ export function PhoneFrame({ className, children }: { className?: string; childr
         <span className="h-5 w-20 rounded-full bg-muted" />
       </div>
       {children}
+    </div>
+  );
+}
+
+/**
+ * Three portal phones drifting side by side (the splash page, ticket 53): Documents, Home, a signed letter. On phones
+ * only the middle one shows. Decoration with invented data: hidden from assistive tech and never focusable.
+ */
+export function PortalPhones({ agent, year, className }: { agent: string; year: number; className?: string }) {
+  return (
+    <div aria-hidden="true" inert className={cn("flex w-full max-w-240 items-end justify-center gap-3 select-none sm:gap-7", className)}>
+      <Float delay={0} className="hidden w-[220px] shrink-0 sm:block">
+        <PhoneFrame>
+          <PhoneDocuments />
+        </PhoneFrame>
+      </Float>
+      <Float delay={1200} className="w-[230px] shrink-0 sm:w-[270px]">
+        <PhoneFrame>
+          <PhoneHome agent={agent} year={year} />
+        </PhoneFrame>
+      </Float>
+      <Float delay={2400} className="hidden w-[220px] shrink-0 sm:block">
+        <PhoneFrame>
+          <PhoneLetterSigned />
+        </PhoneFrame>
+      </Float>
     </div>
   );
 }
