@@ -19,6 +19,7 @@
     "live:check": "bun --filter @app/server live:check",
     "start": "bun --filter @app/server start",
     "purge": "bun --filter @app/server purge",
+    "season:close": "bun --filter @app/server season:close",
     "export": "bun --filter @app/server export",
     "export:open": "bun --filter @app/server export:open",
     "bench:seed": "bun --filter @app/server bench:seed",

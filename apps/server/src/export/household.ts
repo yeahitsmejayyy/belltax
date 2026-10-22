@@ -1,7 +1,7 @@
 import type { Database } from "bun:sqlite";
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { PRODUCT_NAME } from "@app/schema";
 import { isInside, REPO_ROOT } from "../config";
 import type { SessionUser } from "../identity";
@@ -53,6 +53,7 @@ export const HOUSEHOLD_SCOPE: Record<string, string> = {
   efile_submissions: `engagement_id IN (${E})`,
   payments: `invoice_id IN (${I})`,
   events: `household_id = ?1 OR engagement_id IN (${E})`,
+  household_exports: "household_id = ?1",
 };
 // The practice's own settings and bookkeeping: no client's record.
 // invites, sessions, passkeys, authenticator secrets and recovery codes are credentials: never exported.
@@ -72,6 +73,7 @@ const ORDER: Record<string, string> = {
   invoice_included: "invoice_id, price_code",
   signatures: "signed_at, id",
   reminder_preferences: "user_id, kind",
+  household_exports: "exported_at, id",
 };
 
 export function householdRows(db: Database, householdId: string): Record<string, Row[]> {
@@ -113,6 +115,7 @@ export type ExportRecord = {
     invoices: (Row & { lines: Row[]; included: Row[]; payments: Row[] })[];
   })[];
   personal_documents: DocOut[];
+  exports: Row[]; // earlier offline copies of this household (this one is recorded after it's written)
   events: Row[];
 };
 
@@ -142,6 +145,7 @@ export function buildRecord(rows: Record<string, Row[]>, meta: { exportedAt: str
       invoices: by("invoices", "engagement_id", e.id).map((i) => ({ ...i, lines: by("invoice_lines", "invoice_id", i.id), included: by("invoice_included", "invoice_id", i.id), payments: by("payments", "invoice_id", i.id) })),
     })),
     personal_documents: rows.documents!.filter((d) => d.engagement_id === null).map(doc),
+    exports: rows.household_exports!,
     events: rows.events!,
   };
 }
@@ -171,6 +175,7 @@ export function flattenRecord(r: ExportRecord): Record<string, Row[]> {
     invoice_included: returns.flatMap((e) => e.invoices.flatMap((i) => i.included)),
     invoice_lines: returns.flatMap((e) => e.invoices.flatMap((i) => i.lines)),
     payments: returns.flatMap((e) => e.invoices.flatMap((i) => i.payments)),
+    household_exports: r.exports,
     events: r.events,
   };
 }
@@ -205,23 +210,26 @@ record.json
                          invoices    each invoice with its lines, what it included at no charge,
                                      and its payments (amounts in cents)
   personal_documents   documents that belong to a person rather than a year (e.g. a photo ID)
+  exports              earlier offline copies of this household: when, the file's name and fingerprint
   events               the audit trail: every change and every view, who did it and when
 
 documents/
   The uploaded files under their original names, one folder per tax year ("personal" for the rest).
   Each document in record.json names its file and SHA-256 fingerprint, so a copy can be checked.
-  A document whose file is null was deleted under the retention policy; its record remains.
+  A document whose file is null was deleted under the retention policy; its record remains. A photo ID is
+  deleted as soon as it's verified, so its record says only that it was checked, when, and what kind it was.
+  A letter whose archived_at is set had its text moved out of the portal; an earlier export holds the text.
 
 Dates and times are UTC (ISO 8601). Money is in cents: 12500 means $125.00.
 `;
 
-export type ExportResult = { path: string; encrypted: boolean; documents: number; bytes: number };
+export type ExportResult = { path: string; encrypted: boolean; documents: number; bytes: number; sha256: string };
 
 export function schemaVersionOf(db: Database) {
   return (db.query("SELECT MAX(version) AS v FROM schema_migrations").get() as { v: number | null } | null)?.v ?? 0;
 }
 
-function writeFolder(db: Database, storage: Storage, householdId: string, parent: string, at: Date): { name: string; documents: number; bytes: number } {
+function writeFolder(db: Database, storage: Storage, householdId: string, parent: string, at: Date): { name: string; documents: number; bytes: number; recordSha256: string } {
   const rows = householdRows(db, householdId);
   if (!rows.households!.length) throw new Error(`no household ${householdId}`);
   const household = rows.households![0]!;
@@ -251,9 +259,10 @@ function writeFolder(db: Database, storage: Storage, householdId: string, parent
   };
 
   const record = buildRecord(rows, { exportedAt: at.toISOString(), schemaVersion: schemaVersionOf(db) }, files);
-  writeFileSync(join(root, "record.json"), `${JSON.stringify(record, null, 2)}\n`, { mode: 0o600 });
+  const json = `${JSON.stringify(record, null, 2)}\n`;
+  writeFileSync(join(root, "record.json"), json, { mode: 0o600 });
   writeFileSync(join(root, "README.txt"), README(record), { mode: 0o600 });
-  return { name, documents, bytes };
+  return { name, documents, bytes, recordSha256: new Bun.CryptoHasher("sha256").update(json).digest("hex") };
 }
 
 export function checkExportDir(dir: string, dataDir: string | undefined) {
@@ -285,23 +294,32 @@ export async function exportHousehold(opts: {
       const w = opts.db.transaction(() => writeFolder(opts.db, opts.storage, opts.householdId, staging, at))();
       const path = join(opts.outDir, `${w.name}${SEALED_EXT}`);
       await sealTar(["-czf", "-", "-C", staging, w.name], path, passphrase);
-      result = { path, encrypted: true, documents: w.documents, bytes: w.bytes };
+      const sealed = new Bun.CryptoHasher("sha256").update(await Bun.file(path).arrayBuffer()).digest("hex");
+      result = { path, encrypted: true, documents: w.documents, bytes: w.bytes, sha256: sealed };
     } finally {
       rmSync(staging, { recursive: true, force: true });
     }
   } else {
     const w = opts.db.transaction(() => writeFolder(opts.db, opts.storage, opts.householdId, opts.outDir, at))();
-    result = { path: join(opts.outDir, w.name), encrypted: false, documents: w.documents, bytes: w.bytes };
+    result = { path: join(opts.outDir, w.name), encrypted: false, documents: w.documents, bytes: w.bytes, sha256: w.recordSha256 };
   }
 
-  appendEvent(opts.db, {
-    actor: opts.actor,
-    type: "household.exported",
-    subjectType: "household",
-    subjectId: opts.householdId,
-    householdId: opts.householdId,
-    data: { encrypted: result.encrypted, documents: result.documents },
-  });
+  // Recorded only once the copy is on disk: this row is what lets a purge forget the household's files (live/purge.ts).
+  const exportId = Bun.randomUUIDv7();
+  opts.db.transaction(() => {
+    opts.db.run(
+      "INSERT INTO household_exports (id, household_id, exported_at, file_name, sha256, encrypted, documents) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [exportId, opts.householdId, at.toISOString(), basename(result.path), result.sha256, result.encrypted ? 1 : 0, result.documents],
+    );
+    appendEvent(opts.db, {
+      actor: opts.actor,
+      type: "household.exported",
+      subjectType: "household",
+      subjectId: opts.householdId,
+      householdId: opts.householdId,
+      data: { export_id: exportId, encrypted: result.encrypted, documents: result.documents },
+    });
+  })();
   return result;
 }
 

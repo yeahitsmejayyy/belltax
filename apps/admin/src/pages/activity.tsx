@@ -57,6 +57,7 @@ const WORDS: Record<string, string> = {
   "letter.viewed": "opened the engagement letter",
   "letter.signed": "signed the engagement letter",
   "letter.voided": "voided the engagement letter",
+  "letter.archived": "moved the signed letter's text to the offline record",
   "invoice.created": "created an invoice",
   "invoice.issued": "issued an invoice",
   "invoice.updated": "updated an invoice",

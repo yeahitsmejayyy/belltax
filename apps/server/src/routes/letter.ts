@@ -23,6 +23,7 @@ type LetterRow = {
   body_sha256: string;
   status: "draft" | "sent" | "signed" | "void";
   sent_at: string | null;
+  archived_at: string | null;
 };
 
 const notFound = () => new TRPCError({ code: "NOT_FOUND", message: "Letter not found." });
@@ -87,7 +88,8 @@ function toView(letter: LetterRow, user: SessionUser): LetterView {
             signedAt: s.signed_at,
             ip: s.ip,
             userAgent: s.user_agent,
-            hashMatches: s.body_sha256 === sha256(letter.body),
+            // An archived letter's text is in the offline record; the signature still names the hash the portal kept.
+            hashMatches: s.body_sha256 === (letter.archived_at ? letter.body_sha256 : sha256(letter.body)),
           }))
       : null;
   return {
@@ -99,6 +101,7 @@ function toView(letter: LetterRow, user: SessionUser): LetterView {
     body: letter.body,
     bodySha256: letter.body_sha256,
     sentAt: letter.sent_at,
+    archivedAt: letter.archived_at,
     engagementIds: coveredReturns(letter.id),
     consentText: CONSENT_TEXT,
     signers: signers.map((s) => ({ personId: s.person_id, name: s.name, signedAt: s.signed_at, isMe: s.person_id === user.personId })),

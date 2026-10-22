@@ -115,6 +115,7 @@ export const DocumentView = z.object({
   requestId: Id.nullable(),
   kind: z.string(),
   kindLabel: z.string(),
+  identity: z.boolean(), // a photo ID or similar: accepting it verifies it and deletes the file (ticket 49)
   status: DocumentStatus,
   rejectReason: z.string().nullable(),
   filename: z.string(),
@@ -122,6 +123,7 @@ export const DocumentView = z.object({
   sizeBytes: z.int().positive(),
   uploadedAt: Timestamp,
   mine: z.boolean(), // uploaded by the signed-in user (and so deletable while unreviewed)
+  deletedAt: Timestamp.nullable(), // the file is gone: a verified ID, kept as a note (ticket 49)
 });
 export type DocumentView = z.infer<typeof DocumentView>;
 
@@ -305,6 +307,7 @@ export const LetterView = z.object({
   body: z.string(),
   bodySha256: z.string(),
   sentAt: Timestamp.nullable(),
+  archivedAt: Timestamp.nullable(), // the text moved to the offline record; body is a note naming its fingerprint (ticket 49)
   engagementIds: z.array(Id),
   consentText: z.string(),
   signers: z.array(z.object({ personId: Id, name: z.string(), signedAt: Timestamp.nullable(), isMe: z.boolean() })),

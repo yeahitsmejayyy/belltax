@@ -142,7 +142,12 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   PDFs/HEIC, or an SSN not starting with 9). CI (`.github/workflows/ci.yml`) runs it on every push, then
   typecheck, tests and both app builds. The same four commands locally mean CI will pass.
 - Live only (see `docs/live-runbook.md`): `bun run start` · `bun run live:check` · `bun run backup` ·
-  `bun run backup:verify <file>` · `bun run restore <file> <empty-dir>` · `bun run purge [--confirm]`
+  `bun run backup:verify <file>` · `bun run restore <file> <empty-dir>` · `bun run season:close <year> [--confirm]` ·
+  `bun run purge [--confirm]`
+- **The portal is a mailbox, not a vault** (ticket 49, `src/live/purge.ts`, migration 012): `season:close` exports each
+  finished household and records it (`household_exports`); `purge` deletes uploads 30 days after filing and replaces
+  signed letters' text with a note, never without an export after the file arrived. Accepting a photo ID (identity
+  category) deletes it at once (`document.review`), leaving the row as the note (`deletedAt` on `DocumentView`).
 - `bun run export <householdId|--all> [--encrypt]` · `bun run export:open <file> <empty-dir>` — the offline client
   record (record.json + files + README) into `EXPORT_DIR`, outside the repo; `src/export/household.ts`. A new table must
   be added to `HOUSEHOLD_SCOPE` or `PRACTICE_WIDE` there (a test fails until it is).

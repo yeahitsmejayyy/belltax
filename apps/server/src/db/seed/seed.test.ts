@@ -182,8 +182,9 @@ describe("two data worlds", () => {
   });
 
   test("every uploaded file exists, matches its hash, and is stamped DEMO", () => {
-    const docs = all<{ storage_key: string; sha256: string; size_bytes: number }>("SELECT storage_key, sha256, size_bytes FROM documents");
-    expect(docs.length).toBe(summary.documents);
+    const docs = all<{ storage_key: string; sha256: string; size_bytes: number }>("SELECT storage_key, sha256, size_bytes FROM documents WHERE purged_at IS NULL");
+    const verifiedIds = all<{ n: number }>("SELECT COUNT(*) AS n FROM documents WHERE purged_at IS NOT NULL AND kind = 'photo_id' AND status = 'accepted'")[0]!.n;
+    expect(docs.length + verifiedIds).toBe(summary.documents); // a verified photo ID keeps no file (ticket 49)
     for (const d of docs) {
       const bytes = readFileSync(join(filesDir, d.storage_key));
       expect(bytes.byteLength).toBe(d.size_bytes);

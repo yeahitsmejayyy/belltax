@@ -57,7 +57,9 @@ export function DocumentsTab({ d, onRequest }: { d: Detail; onRequest: () => voi
                   <DocumentChip status={doc.status} />
                 </span>
                 <span className="truncate text-sm text-muted-foreground">
-                  {whoFor(d, doc.personId)} · Uploaded {formatDateTime(doc.uploadedAt)} · {doc.filename}
+                  {doc.deletedAt
+                    ? `${whoFor(d, doc.personId)} · Verified ${formatDateTime(doc.deletedAt)} · image deleted`
+                    : `${whoFor(d, doc.personId)} · Uploaded ${formatDateTime(doc.uploadedAt)} · ${doc.filename}`}
                 </span>
                 {doc.status === "rejected" && doc.rejectReason ? (
                   <span className="text-sm text-warning-foreground">Reason shown to the client: “{doc.rejectReason}”</span>

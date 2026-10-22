@@ -249,6 +249,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                         requestId: string | null;
                         kind: string;
                         kindLabel: string;
+                        identity: boolean;
                         status: "accepted" | "rejected" | "uploaded";
                         rejectReason: string | null;
                         filename: string;
@@ -256,6 +257,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                         sizeBytes: number;
                         uploadedAt: string;
                         mine: boolean;
+                        deletedAt: string | null;
                     } | null;
                 }[];
                 documents: {
@@ -265,6 +267,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     requestId: string | null;
                     kind: string;
                     kindLabel: string;
+                    identity: boolean;
                     status: "accepted" | "rejected" | "uploaded";
                     rejectReason: string | null;
                     filename: string;
@@ -272,6 +275,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     sizeBytes: number;
                     uploadedAt: string;
                     mine: boolean;
+                    deletedAt: string | null;
                 }[];
                 letter: {
                     id: string;
@@ -501,6 +505,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                         requestId: string | null;
                         kind: string;
                         kindLabel: string;
+                        identity: boolean;
                         status: "accepted" | "rejected" | "uploaded";
                         rejectReason: string | null;
                         filename: string;
@@ -508,6 +513,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                         sizeBytes: number;
                         uploadedAt: string;
                         mine: boolean;
+                        deletedAt: string | null;
                     } | null;
                 }[];
                 skipped: number;
@@ -556,6 +562,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     requestId: string | null;
                     kind: string;
                     kindLabel: string;
+                    identity: boolean;
                     status: "accepted" | "rejected" | "uploaded";
                     rejectReason: string | null;
                     filename: string;
@@ -563,6 +570,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     sizeBytes: number;
                     uploadedAt: string;
                     mine: boolean;
+                    deletedAt: string | null;
                 } | null;
             }[];
             meta: object;
@@ -611,6 +619,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     requestId: string | null;
                     kind: string;
                     kindLabel: string;
+                    identity: boolean;
                     status: "accepted" | "rejected" | "uploaded";
                     rejectReason: string | null;
                     filename: string;
@@ -618,6 +627,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                     sizeBytes: number;
                     uploadedAt: string;
                     mine: boolean;
+                    deletedAt: string | null;
                 } | null;
             };
             meta: object;
@@ -806,6 +816,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 requestId: string | null;
                 kind: string;
                 kindLabel: string;
+                identity: boolean;
                 status: "accepted" | "rejected" | "uploaded";
                 rejectReason: string | null;
                 filename: string;
@@ -813,6 +824,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 sizeBytes: number;
                 uploadedAt: string;
                 mine: boolean;
+                deletedAt: string | null;
             }[];
             meta: object;
         }>;
@@ -841,6 +853,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 requestId: string | null;
                 kind: string;
                 kindLabel: string;
+                identity: boolean;
                 status: "accepted" | "rejected" | "uploaded";
                 rejectReason: string | null;
                 filename: string;
@@ -848,6 +861,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 sizeBytes: number;
                 uploadedAt: string;
                 mine: boolean;
+                deletedAt: string | null;
             };
             meta: object;
         }>;
@@ -882,6 +896,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 body: string;
                 bodySha256: string;
                 sentAt: string | null;
+                archivedAt: string | null;
                 engagementIds: string[];
                 consentText: string;
                 signers: {
@@ -915,6 +930,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 body: string;
                 bodySha256: string;
                 sentAt: string | null;
+                archivedAt: string | null;
                 engagementIds: string[];
                 consentText: string;
                 signers: {
@@ -948,6 +964,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 body: string;
                 bodySha256: string;
                 sentAt: string | null;
+                archivedAt: string | null;
                 engagementIds: string[];
                 consentText: string;
                 signers: {
@@ -994,6 +1011,7 @@ export declare const appRouter: import("@trpc/server").TRPCBuiltRouter<{
                 body: string;
                 bodySha256: string;
                 sentAt: string | null;
+                archivedAt: string | null;
                 engagementIds: string[];
                 consentText: string;
                 signers: {

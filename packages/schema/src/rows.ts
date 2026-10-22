@@ -194,6 +194,18 @@ export const EngagementLetterRow = z.object({
   status: LetterStatus,
   created_at: Timestamp,
   sent_at: Timestamp.nullable(),
+  archived_at: Timestamp.nullable(), // the text moved to the offline record (ticket 49); body is a note, body_sha256 stays
+});
+
+// Each offline copy of a household (ticket 49): what a purge checks for before it forgets anything.
+export const HouseholdExportRow = z.object({
+  id: Id,
+  household_id: Id,
+  exported_at: Timestamp,
+  file_name: text,
+  sha256: Sha256,
+  encrypted: z.union([z.literal(0), z.literal(1)]),
+  documents: z.int().nonnegative(),
 });
 
 export const SignatureRow = z.object({
@@ -427,6 +439,7 @@ export const tables = {
   passkeys: PasskeyRow,
   totp_secrets: TotpSecretRow,
   recovery_codes: RecoveryCodeRow,
+  household_exports: HouseholdExportRow,
 } as const;
 
 export type TableName = keyof typeof tables;

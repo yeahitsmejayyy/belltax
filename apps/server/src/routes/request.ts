@@ -6,7 +6,7 @@ import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import type { SessionUser } from "../identity";
 import { authedProcedure, preparerProcedure, router } from "../trpc";
-import { DOCUMENT_COLUMNS, toDocumentView, type DocumentRow } from "./document";
+import { DOCUMENT_COLUMNS, SHOWN_DOCUMENT, toDocumentView, type DocumentRow } from "./document";
 
 type Row = {
   id: string;
@@ -23,7 +23,7 @@ type Row = {
 };
 
 export const LATEST_DOCUMENT_SQL = `SELECT ${DOCUMENT_COLUMNS} FROM documents d JOIN document_kinds k ON k.code = d.kind
-  WHERE d.request_id = ? AND d.purged_at IS NULL ORDER BY d.created_at DESC, d.id DESC LIMIT 1`;
+  WHERE d.request_id = ? AND ${SHOWN_DOCUMENT} ORDER BY d.created_at DESC, d.id DESC LIMIT 1`;
 
 export function listRequests(engagementId: string, user: SessionUser): RequestView[] {
   const { db } = runtime();

@@ -117,11 +117,20 @@ outside penetration test ✍️ `[decide at first annual review]`.
 - Collect only what preparing the return needs. The portal stores **last 4 of SSN only**, never bank account numbers;
   full values stay in ProSeries and on the uploaded documents ✅.
 - **Retention.** The preparer keeps a copy or list of returns prepared for at least 3 years
-  ([26 U.S.C. 6107(b)](https://www.law.cornell.edu/uscode/text/26/6107)); that record lives in ProSeries. Portal
-  uploads are disposed of **no later than two years after last used**, unless still needed for the business or
-  required by law ([314.4(c)(6)](https://www.law.cornell.edu/cfr/text/16/314.4)). Default: 730 days after the return
-  is complete ✅ (`bun run purge`, run each January after a backup ✍️). An individual document can be given an earlier
-  `purge_after` date.
+  ([26 U.S.C. 6107(b)](https://www.law.cornell.edu/uscode/text/26/6107)); that record lives in ProSeries.
+- **The portal is a mailbox, not a vault** (ticket 49). It holds client files only while a return needs them, well
+  inside the two-year limit of [314.4(c)(6)](https://www.law.cornell.edu/cfr/text/16/314.4). The lasting copy is the
+  encrypted offline client record ✅:
+  - **Season close:** every household whose returns for the year are all filed is copied to the offline vault
+    (`bun run season:close <year> --confirm`, sealed with the backup passphrase) and each copy is recorded
+    (`household_exports`: when, file name, fingerprint) ✅.
+  - **Uploads** are deleted **30 days after the return is filed**, and **never before an export of the household holds
+    them** ✅. A return whose e-file was rejected keeps its papers until it's resubmitted. `bun run purge`, after a
+    backup ✍️. A document can be given an earlier `purge_after` date; the export rule still applies.
+  - **Photo IDs** are deleted **as soon as the preparer verifies them** ✅. No copy is kept anywhere: the portal keeps
+    only the note (verified, when, what kind of document).
+  - **Signed engagement letters** go into the export; on the same terms as uploads, the portal replaces the text with
+    a note and keeps its SHA-256 fingerprint and the signing dates ✅. Signatures stay bound to that fingerprint.
 - **Disposal.** Portal files are deleted and the record kept as a tombstone, so the audit trail stays intact ✅. Paper
   is cross-cut shredded. Retired drives are wiped or destroyed (Attachment A).
 
@@ -228,8 +237,12 @@ Signed: ✍️ `[Owner name]`, Qualified Individual · Date: `[date]`
 
 ## Attachment A — Record retention and disposal
 - Returns (copy or list): at least 3 years, in ProSeries ([26 U.S.C. 6107(b)](https://www.law.cornell.edu/uscode/text/26/6107)).
-- Portal uploads: no longer than 2 years after last use unless needed or legally required. `bun run purge --confirm`
-  deletes the file and keeps a dated tombstone and a system event, so the audit trail stays whole.
+- Offline client record: an encrypted export of each household at season close (`bun run season:close`), kept with
+  the backups for at least 3 years.
+- Portal uploads: 30 days after the return is filed, and only once the household's export holds them. Photo IDs: the
+  moment they're verified. Signed letters' text: on the same terms as uploads, leaving the fingerprint and dates.
+  `bun run purge --confirm` deletes each file and keeps a dated tombstone and a system event, so the audit trail
+  stays whole.
 - Paper: cross-cut shred. Drives: wipe (encrypted-disk erase) or physically destroy at end of life.
 
 ## Attachment B — Rules of behavior ([Pub 5708](https://www.irs.gov/pub/irs-pdf/p5708.pdf); NISTIR 7621 §4)

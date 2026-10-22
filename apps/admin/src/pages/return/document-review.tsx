@@ -27,9 +27,10 @@ export function useDocumentReview() {
 
   const accept = async (doc: Doc) => {
     try {
-      await review.mutateAsync({ documentId: doc.id, decision: "accept" });
+      const done = await review.mutateAsync({ documentId: doc.id, decision: "accept" });
       await utils.invalidate();
-      toast.success(`${doc.kindLabel} accepted`);
+      if (done.deletedAt) toast.success(`${doc.kindLabel} verified`, { description: "The image is deleted. A note stays: verified, when, and what kind." });
+      else toast.success(`${doc.kindLabel} accepted`);
     } catch (e) {
       toast.error(errorText(e));
     }
@@ -106,6 +107,7 @@ export function useDocumentReview() {
 const size = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 function FileView({ doc }: { doc: Doc }) {
+  if (doc.deletedAt) return <p className="text-sm text-muted-foreground">Verified on {formatDateTime(doc.deletedAt)}. The image was deleted then; this note is all the portal keeps.</p>;
   const src = at(`/api/documents/${doc.id}/file`);
   if (doc.mimeType === "application/pdf") return <iframe title={doc.filename} src={src} className="h-[70vh] w-full rounded-md border bg-card" />;
   if (doc.mimeType.startsWith("image/") && doc.mimeType !== "image/heic") return <img src={src} alt={`${doc.kindLabel}: ${doc.filename}`} className="max-h-[70vh] max-w-full rounded-md border object-contain" />;
@@ -139,7 +141,14 @@ export function DocumentReview({ d, doc, onBack }: { d: Detail; doc: Doc; onBack
           ...(doc.status === "rejected" && doc.rejectReason ? [{ label: "Reason shown to the client", value: `“${doc.rejectReason}”` }] : []),
         ]}
       >
-        <FileView doc={doc} />
+        <div className="grid w-full gap-3">
+          {doc.identity && doc.status === "uploaded" ? (
+            <Banner tone="info" title="Accepting verifies this ID and deletes the image">
+              Right away, with no copy kept. The portal keeps a note: verified, when, and what kind.
+            </Banner>
+          ) : null}
+          <FileView doc={doc} />
+        </div>
       </DocumentViewer>
       {dialog}
     </>

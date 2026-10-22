@@ -5,6 +5,7 @@ import { documentFor, engagementFor } from "../access";
 import { runtime } from "../db/client";
 import { appendEvent } from "../events";
 import type { SessionUser } from "../identity";
+import { purgeDocuments } from "../live/purge";
 import { authedProcedure, preparerProcedure, router } from "../trpc";
 
 export type DocumentRow = {
@@ -14,6 +15,7 @@ export type DocumentRow = {
   request_id: string | null;
   kind: string;
   kind_label: string;
+  kind_category: string;
   status: DocumentView["status"];
   reject_reason: string | null;
   filename: string;
@@ -21,10 +23,14 @@ export type DocumentRow = {
   size_bytes: number;
   created_at: string;
   uploaded_by: string;
+  purged_at: string | null;
 };
 
-export const DOCUMENT_COLUMNS = `d.id, d.engagement_id, d.person_id, d.request_id, d.kind, k.label AS kind_label, d.status,
-  d.reject_reason, d.filename, d.mime_type, d.size_bytes, d.created_at, d.uploaded_by`;
+export const DOCUMENT_COLUMNS = `d.id, d.engagement_id, d.person_id, d.request_id, d.kind, k.label AS kind_label, k.category AS kind_category, d.status,
+  d.reject_reason, d.filename, d.mime_type, d.size_bytes, d.created_at, d.uploaded_by, d.purged_at`;
+
+// What a list shows: files still held, and verified IDs, whose file is deleted on verifying but whose note stays (ticket 49).
+export const SHOWN_DOCUMENT = "(d.purged_at IS NULL OR (d.status = 'accepted' AND k.category = 'identity'))";
 
 export const toDocumentView = (r: DocumentRow, user: SessionUser): DocumentView => ({
   id: r.id,
@@ -33,6 +39,7 @@ export const toDocumentView = (r: DocumentRow, user: SessionUser): DocumentView 
   requestId: r.request_id,
   kind: r.kind,
   kindLabel: r.kind_label,
+  identity: r.kind_category === "identity",
   status: r.status,
   rejectReason: r.reject_reason,
   filename: r.filename,
@@ -40,17 +47,18 @@ export const toDocumentView = (r: DocumentRow, user: SessionUser): DocumentView 
   sizeBytes: r.size_bytes,
   uploadedAt: r.created_at,
   mine: r.uploaded_by === user.id,
+  deletedAt: r.purged_at,
 });
 
 // Two halves so each uses its own index: by return, and by the people on it (person-level documents).
 // As one OR, SQLite scanned every document without a return (ticket 35). The + keeps it off that index.
 export const LIST_DOCUMENTS_SQL = `SELECT ${DOCUMENT_COLUMNS}
          FROM documents d JOIN document_kinds k ON k.code = d.kind
-        WHERE d.engagement_id = ? AND d.purged_at IS NULL
+        WHERE d.engagement_id = ? AND ${SHOWN_DOCUMENT}
        UNION ALL
        SELECT ${DOCUMENT_COLUMNS}
          FROM return_people rp JOIN documents d ON d.person_id = rp.person_id JOIN document_kinds k ON k.code = d.kind
-        WHERE rp.engagement_id = ? AND +d.engagement_id IS NULL AND d.purged_at IS NULL
+        WHERE rp.engagement_id = ? AND +d.engagement_id IS NULL AND ${SHOWN_DOCUMENT}
         ORDER BY created_at DESC, id DESC`;
 
 export function listDocuments(engagementId: string, user: SessionUser): DocumentView[] {
@@ -103,11 +111,12 @@ export const documentRouter = router({
     }),
 
   // Accept a document (its request is fulfilled) or reject it with a reason the client will read.
+  // Accepting a photo ID (any identity document) is verifying it: its file is deleted at once (ticket 49).
   review: preparerProcedure
     .input(DocumentReviewInput)
     .output(DocumentView)
     .mutation(({ ctx, input }) => {
-      const { db } = runtime();
+      const { db, storage } = runtime();
       const doc = documentFor(ctx.user, input.documentId);
       if (doc.status !== "uploaded") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "This document has already been reviewed." });
       const at = now();
@@ -133,6 +142,9 @@ export const documentRouter = router({
           data: { request_id: requestId },
         });
       })();
+      // After the accept commits: if this fails, the ID stays accepted with its file and the next purge takes it.
+      const identity = db.query<{ c: string }, [string]>("SELECT category AS c FROM document_kinds WHERE code = ?").get(doc.kind)?.c === "identity";
+      if (input.decision === "accept" && identity && doc.storage_key) purgeDocuments(db, storage, [{ id: doc.id, storageKey: doc.storage_key, reason: "id_verified" }]);
       const row = db.query<DocumentRow, [string]>(`SELECT ${DOCUMENT_COLUMNS} FROM documents d JOIN document_kinds k ON k.code = d.kind WHERE d.id = ?`).get(doc.id)!;
       return toDocumentView(row, ctx.user);
     }),

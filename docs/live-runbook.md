@@ -168,18 +168,21 @@ a scratch folder you delete afterward. Write the date of both drills in the WISP
   second place (a drive kept elsewhere).
 - **Backup passphrase:** yearly, or at once if you think it leaked. Old backups keep needing the old passphrase,
   so keep it in the password manager until those backups have rotated out.
-- **Uploads past retention:** portal documents are purged two years after last use (WISP, Attachment A).
-  Every January, after a backup:
+- **The portal forgets after filing** (WISP §V.1, Attachment A). Close the season first (below), then, monthly
+  through the spring and after a backup:
 
   ```bash
   bun run purge            # lists what would go: nothing is deleted
   bun run purge --confirm  # deletes those files; each row stays as a dated tombstone with a system event
   ```
 
-  "Last use" means the return has been complete for 730 days (`RETENTION_DAYS` to change it), or the document's
-  own `purge_after` date has passed. Documents on any return that isn't complete are never aged out. A photo ID
-  stays until every return its person is on is complete and two years old. The purge also removes any stray file
-  a previous run left behind.
+  A file goes 30 days after its return was filed (`DAYS_AFTER_FILING` to change it), and only if an export of the
+  household was made after the file arrived. No export, nothing goes. A return whose latest e-file for a jurisdiction
+  was rejected keeps its files until the resubmission. A person's own files go once every return they're on
+  qualifies. A signed letter's text is replaced by a note (fingerprint and dates stay) on the same terms. A
+  document's own `purge_after` date lets it go early, still only after an export. Photo IDs don't wait: accepting
+  one in the admin verifies it and deletes the image at once; the purge catches any that slipped through. The
+  purge also removes any stray file a previous run left behind.
 
 ## Open the new season (before January)
 
@@ -189,6 +192,20 @@ document requests. Skipped, with the reason: archived households, returns not ye
 now in another household, and anyone already on a next-year return. Dependents who've left are dropped and named.
 `season.rollover({ fromYear, householdIds? })` does it, one household per transaction, and reports created, skipped
 and failed. Running it again creates nothing new. Back up first.
+
+## Close the season (the offline copy of every finished household)
+
+Once the year's returns are filed, copy each finished household (every return for that year filed or complete) to
+the offline vault. Each copy is recorded (`household_exports`), and that record is what lets `bun run purge` forget
+the household's files.
+
+```bash
+bun run season:close 2026            # lists who needs a copy: nothing is written
+EXPORT_DIR=/Volumes/Exports bun run season:close 2026 --confirm   # sealed with BACKUP_PASSPHRASE, always, in live mode
+```
+
+Run it again whenever more returns are filed: a household is copied again only if it has no copy since filing, or a
+file arrived after its last one. Move the copies to the vault and keep them with the backups.
 
 ## Export client records (the offline copy)
 
@@ -204,7 +221,8 @@ EXPORT_DIR=/Volumes/Exports bun run export --all --encrypt
   folders; only do that onto an encrypted disk.
 - One household: `bun run export <householdId>`. The admin can do the same (`household.export`).
 - Open a sealed one: `bun run export:open <file> <empty-folder>`.
-- Each export is recorded in the activity feed as `household.exported`.
+- Each export is recorded in `household_exports` (when, file name, SHA-256) and in the activity feed as
+  `household.exported`. Any export counts for the purge, so seal it unless the disk is encrypted.
 
 Do it at the end of each season, and keep the copies with the backups.
 

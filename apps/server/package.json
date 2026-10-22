@@ -14,6 +14,7 @@
     "restore": "bun src/live/cli.ts restore",
     "live:check": "bun src/live/cli.ts check",
     "purge": "bun src/live/purge-cli.ts",
+    "season:close": "bun src/live/season-close.ts",
     "export": "bun src/export/cli.ts",
     "export:open": "bun src/export/cli.ts open",
     "bench:seed": "bun src/bench/cli.ts seed",
