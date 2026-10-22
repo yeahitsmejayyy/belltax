@@ -84,7 +84,7 @@ relationships, signatures, IP addresses and payment records in the portal; full 
 | Malicious file upload | Medium | File type checked from the bytes (PDF/JPEG/PNG/WebP/HEIC only), 15 MB limit, stored outside the web root, downloaded with `nosniff` ✅ |
 | Ransomware / disk failure | Medium | Encrypted, versioned backups ✅; daily schedule and a restore drill ✍️ (docs/live-runbook.md) |
 | Vendor breach (Intuit, Stripe, email, tunnel) | Low–medium | Vendor oversight (§V.7); least data shared |
-| Portal exposed to the internet | High once live | Admin never public; portal only through an outbound tunnel with HTTPS 🔧; sign-in, sessions and lockout 🔧 ticket 05 |
+| Portal exposed to the internet | High once live | Admin never public; portal only through an outbound Cloudflare Tunnel with HTTPS ✅ (ticket 25; `live:check` reads its config and fails unless only the portal is routed); sign-in, sessions and lockout 🔧 ticket 05 |
 
 **Small-practice note.** Institutions holding information on fewer than 5,000 consumers are exempt from the
 *written* risk assessment, penetration testing, the written incident response plan and the annual report
@@ -169,7 +169,7 @@ approves equivalent or stronger controls in writing.
 - Router firmware current, default admin password changed, WPA3 (or WPA2-AES) Wi-Fi, guest network for visitors and
   smart devices ✍️.
 - Never work on client data over public Wi-Fi without a VPN ✍️.
-- Firewall on; no inbound ports opened. The portal is reached through an outbound-only tunnel 🔧.
+- Firewall on; no inbound ports opened. The portal is reached through an outbound-only Cloudflare Tunnel at portal.belltaxprep.com ✅ (setup: `docs/live-runbook.md`).
 - The IRS "Security Six": anti-virus, firewall, two-factor authentication, backups, drive encryption, VPN
   ([IRS](https://www.irs.gov/newsroom/tax-security-2-0-a-taxes-security-together-checklist-step-1)).
 
@@ -180,7 +180,7 @@ Choose providers able to protect client information, require it contractually, a
 |---|---|---|
 | Intuit (ProSeries) | Full return data | Review their security terms; MFA on the account |
 | Stripe (🔧 ticket 09) | Name, email, amount, card data (held by Stripe, never by us) | Review their security documentation; test mode until go-live |
-| Tunnel: Cloudflare or Tailscale (🔧 decision pending) | Encrypted traffic metadata | Review terms; lock the tunnel to the portal only |
+| Tunnel and DNS: Cloudflare (decided 2026-10-22) | Traffic to the portal passes its edge (TLS ends there); belltaxprep.com DNS | Review terms; MFA on the account; the tunnel routes the portal only, all else 404 (checked by `live:check`) |
 | Email: your mailbox `[name]` | Anything clients email | MFA; ask clients to use the portal instead |
 | Resend (practice's outgoing mail) | Recipient address, first name, sign-in links | Sending-only API key; verified domain with SPF, DKIM, DMARC; MFA on the account |
 | Backup storage `[name]` | Encrypted blobs only | Encryption key never stored with the backup |

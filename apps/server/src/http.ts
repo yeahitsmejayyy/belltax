@@ -10,6 +10,7 @@ import { stripeWebhook } from "./rest/stripe";
 import { resolveUser, type Surface } from "./identity";
 import { routeOf, type RequestLog } from "./request-log";
 import { createContext } from "./trpc";
+import { clientIp } from "./client-ip";
 
 // One handler per listener (portal or admin): /trpc for the API, /api for files, /health for a quick
 // look, and that surface's built app (apps/portal/dist or apps/admin/dist) for every other path.
@@ -157,7 +158,8 @@ export function createFetchHandler({ surface, webDist, devOrigin, log }: Options
     }
 
     if (pathname.startsWith("/api/auth/")) {
-      const res = await authRoute(req, surface, pathname, socketIp);
+      // The sign-in throttle counts by the real client, not the tunnel's 127.0.0.1 (ticket 25).
+      const res = await authRoute(req, surface, pathname, clientIp(req, socketIp));
       if (res) return cors(res, req);
     }
 

@@ -135,6 +135,27 @@ describe("signing in", () => {
     expect((await post("portal", "/api/auth/sign-in", { email: c.email, password: PASSWORD, code: codeOf(c) })).status).toBe(204);
   });
 
+  // Ticket 25: behind the tunnel every request arrives from 127.0.0.1, so the throttle counts by the client the tunnel
+  // names (cf-connecting-ip). One noisy client mustn't lock out the rest; a forged header from outside counts for nothing.
+  test("behind the tunnel, the throttle is per real client", async () => {
+    const via = (client: string, socket = "127.0.0.1") =>
+      w.portal(
+        new Request(`${ORIGIN}/api/auth/sign-in`, {
+          method: "POST",
+          headers: { "content-type": "application/json", origin: ORIGIN, "cf-connecting-ip": client },
+          body: JSON.stringify({ email: "nobody@example.test", password: "guess guess guess" }),
+        }),
+        socket,
+      );
+    let last = 0;
+    for (let i = 0; i < 31; i++) last = (await via("203.0.113.7")).status;
+    expect(last).toBe(429);
+    expect((await via("198.51.100.4")).status).toBe(401); // someone else, through the same tunnel
+    // From another machine the header is ignored: the socket address is the client, and it isn't throttled yet.
+    expect((await via("198.51.100.4", "192.0.2.50")).status).toBe(401);
+    resetSignInThrottle();
+  });
+
   test("many failures from one address are slowed down, whatever the email", async () => {
     let last = 0;
     for (let i = 0; i < 31; i++) last = (await post("portal", "/api/auth/sign-in", { email: `spray-${i}@example.test`, password: "guess guess guess" }, { "x-test": "1" })).status;

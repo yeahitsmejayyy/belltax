@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import type { Config } from "./config";
 import { DEMO_USER_HEADER } from "./identity";
-import { adminServerOptions, checkHost, serverOptions } from "./live/hardening";
+import { adminServerOptions, checkHost, checkTunnelConfig, serverOptions } from "./live/hardening";
 import { demoPdf } from "./db/seed/pdf";
 import { demoWorld, ORIGIN } from "./test-harness";
 
@@ -93,6 +93,29 @@ describe("configuration and the tunnel check", () => {
     expect(tunnel(3000).status).toBe("ok");
     expect(tunnel(3001)).toMatchObject({ status: "fail", detail: expect.stringContaining("never the admin") });
     expect(tunnel(undefined).status).toBe("warn");
+  });
+
+  // Ticket 25: the real cloudflared config, read from disk, decides; every route must reach the portal only.
+  test("the cloudflared config: portal only, everything else refused", () => {
+    const check = (yaml: string, origin?: string) => checkTunnelConfig(yaml, config, origin);
+    const good = `tunnel: belltax-live
+credentials-file: /Users/pj/.cloudflared/abc.json
+ingress:
+  - hostname: portal.belltaxprep.com
+    service: http://127.0.0.1:${config.port}
+  - service: http_status:404
+`;
+    expect(check(good, "https://portal.belltaxprep.com")).toMatchObject({ status: "ok", detail: expect.stringContaining("portal.belltaxprep.com") });
+    expect(check(good.replace("127.0.0.1", "localhost")).status).toBe("ok");
+    expect(check(good.replace(`:${config.port}`, `:${config.adminPort}`))).toMatchObject({ status: "fail", detail: expect.stringContaining("admin") });
+    expect(check(good.replace(`http://127.0.0.1:${config.port}`, "http://192.168.1.20:3000")).status).toBe("fail"); // another machine
+    expect(check(good.replace("  - service: http_status:404\n", "  - service: http://127.0.0.1:" + config.port + "\n")).detail).toContain("http_status:404"); // no catch-all refusal
+    expect(check("ingress: []").status).toBe("fail");
+    expect(check("ingress: [nope").status).toBe("fail");
+    expect(check(good, "https://portal.example.com").status).toBe("warn"); // PUBLIC_ORIGIN doesn't match
+    // In checkHost, the config file wins over TUNNEL_TARGET_PORT.
+    const viaHost = checkHost(config, { probe: () => "on", tunnelTargetPort: config.port, tunnelConfig: { path: "/tmp/config.yml", text: good.replace(`:${config.port}`, `:${config.adminPort}`) } });
+    expect(viaHost.find((c) => c.name === "tunnel target")!.status).toBe("fail");
   });
 });
 

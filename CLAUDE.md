@@ -39,7 +39,11 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   must come from our own Origin (`fromOurPages`, `http.ts`); `bun run preparer:invite <email>` makes the preparer's first
   link (live). **Two listeners, both 127.0.0.1:** portal on `PORT` (3000, the only one a
   tunnel may forward; serves `apps/portal/dist`) and admin on `ADMIN_PORT` (3001; serves `apps/admin/dist`). Preparer
-  procedures are 404 on the portal and a preparer identity is ignored there (`src/identity.ts`, `src/trpc.ts`).
+  procedures are 404 on the portal and a preparer identity is ignored there (`src/identity.ts`, `src/trpc.ts`). Live, the
+  portal is on the internet only through a Cloudflare Tunnel at https://portal.belltaxprep.com (ticket 25, `docs/live-runbook.md`):
+  `live:check` reads `~/.cloudflared/config.yml` and fails unless every hostname goes to :3000 and the rest get 404.
+  The real client is `clientIp` (`src/client-ip.ts`, cf-connecting-ip, believed only from this machine); the
+  sign-in throttle counts by it.
 - **Access:** every client-facing procedure goes through `src/access.ts` (`engagementFor`, `documentFor`).
   Denials are NOT_FOUND. **The portal is send-only for clients** (ticket 52, `docs/wisp.md`): `GET /api/documents/:id/file` is
   404 for a client; submitted intake answers (`intake.get`) and answered questions' `response` (`request.list`) come back

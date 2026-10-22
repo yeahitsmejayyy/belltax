@@ -4,14 +4,14 @@ import { loadConfig, REPO_ROOT } from "./config";
 import { runtime, useRuntime } from "./db/client";
 import { bootDatabase } from "./db/open";
 import { createFetchHandler, withAdminMounted } from "./http";
-import { adminServerOptions, assertLiveReady, serverOptions } from "./live/hardening";
+import { adminServerOptions, assertLiveReady, readTunnelConfig, serverOptions } from "./live/hardening";
 import { createRequestLog } from "./request-log";
 import { createStorage } from "./storage";
 
 const config = loadConfig();
 if (config.mode === "live") {
   const tunnelTargetPort = process.env.TUNNEL_TARGET_PORT ? Number(process.env.TUNNEL_TARGET_PORT) : undefined;
-  for (const c of assertLiveReady(config, { backupDir: process.env.BACKUP_DIR, tunnelTargetPort })) {
+  for (const c of assertLiveReady(config, { backupDir: process.env.BACKUP_DIR, tunnelTargetPort, tunnelConfig: readTunnelConfig(), publicOrigin: process.env.PUBLIC_ORIGIN })) {
     if (c.status !== "ok") console.warn(`! ${c.name}: ${c.detail}`);
   }
 }

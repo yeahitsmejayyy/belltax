@@ -1,0 +1,11 @@
+# The live portal's tunnel (ticket 25): ~/.cloudflared/config.yml on the practice machine. No secrets here: the
+# credentials file it points at stays in ~/.cloudflared, never in this repo. `bun run live:check` reads the real file.
+tunnel: belltax-live
+credentials-file: /Users/<you>/.cloudflared/<tunnel-id>.json
+
+ingress:
+  # The portal, and only the portal (PORT, 3000). Never the admin (3001).
+  - hostname: portal.belltaxprep.com
+    service: http://127.0.0.1:3000
+  # Anything else that reaches the tunnel is refused.
+  - service: http_status:404

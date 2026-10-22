@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, existsSync, readdirSync, statSync } from "node:fs";
+import { chmodSync, existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { isInside, REPO_ROOT, type Config } from "../config";
 import { latestBackup } from "./backup";
@@ -53,9 +54,56 @@ export function tightenPermissions(dataDir: string): string[] {
   return changed;
 }
 
+// ---------- The tunnel (ticket 25) ----------
+// Cloudflare Tunnel (cloudflared) carries the portal to the internet: outbound only, no open ports, HTTPS at
+// Cloudflare. Its config file says where each public hostname goes; read it rather than trust a setting.
+
+/** Where cloudflared's config lives: CLOUDFLARED_CONFIG, or cloudflared's own default. */
+export const cloudflaredConfigPath = (env: NodeJS.ProcessEnv = process.env) => env.CLOUDFLARED_CONFIG ?? join(homedir(), ".cloudflared", "config.yml");
+
+/** The tunnel config's text, if the file exists. */
+export function readTunnelConfig(path = cloudflaredConfigPath()): { path: string; text: string } | null {
+  return existsSync(path) ? { path, text: readFileSync(path, "utf8") } : null;
+}
+
+type IngressRule = { hostname?: string; service?: string; path?: string };
+
+/**
+ * Every route in the tunnel must reach the portal listener on this machine (and nothing else: never the admin,
+ * another port or another host), and the last rule must refuse every other hostname with a 404.
+ */
+export function checkTunnelConfig(text: string, config: Pick<Config, "port" | "adminPort">, publicOrigin?: string): Check {
+  const fail = (detail: string): Check => ({ name: "tunnel target", status: "fail", detail });
+  let doc: { ingress?: IngressRule[] };
+  try {
+    doc = (Bun.YAML.parse(text) ?? {}) as { ingress?: IngressRule[] };
+  } catch {
+    return fail("the cloudflared config isn't valid YAML");
+  }
+  const rules = Array.isArray(doc.ingress) ? doc.ingress : [];
+  if (!rules.length) return fail("the cloudflared config has no ingress rules");
+  const portal = new RegExp(`^https?://(localhost|127\\.0\\.0\\.1):${config.port}/?$`);
+  const routes = rules.filter((r) => r.hostname);
+  for (const r of routes) {
+    if (!portal.test(r.service ?? "")) {
+      const admin = (r.service ?? "").includes(`:${config.adminPort}`);
+      return fail(`${r.hostname} goes to ${r.service ?? "nothing"}: ${admin ? "that's the admin, which must never be on the internet" : `it must go to the portal, http://127.0.0.1:${config.port}`}`);
+    }
+  }
+  const last = rules.at(-1)!;
+  if (last.hostname || last.service !== "http_status:404") return fail("the last ingress rule must be `- service: http_status:404`, so any other hostname is refused");
+  if (!routes.length) return fail("no hostname is routed to the portal");
+  const hosts = routes.map((r) => r.hostname!);
+  if (publicOrigin) {
+    const want = new URL(publicOrigin).host;
+    if (!hosts.includes(want)) return { name: "tunnel target", status: "warn", detail: `PUBLIC_ORIGIN is ${want}, but the tunnel serves ${hosts.join(", ")}` };
+  }
+  return { name: "tunnel target", status: "ok", detail: `${hosts.join(", ")} → the portal (:${config.port}) only; every other hostname gets 404` };
+}
+
 export function checkHost(
   config: Config,
-  opts: { probe?: DiskProbe; backupDir?: string; now?: Date; fixPermissions?: boolean; tunnelTargetPort?: number } = {},
+  opts: { probe?: DiskProbe; backupDir?: string; now?: Date; fixPermissions?: boolean; tunnelTargetPort?: number; tunnelConfig?: { path: string; text: string } | null; publicOrigin?: string } = {},
 ): Check[] {
   const checks: Check[] = [];
   const add = (name: string, status: Check["status"], detail: string) => checks.push({ name, status, detail });
@@ -63,13 +111,17 @@ export function checkHost(
   const bound = [serverOptions(config), adminServerOptions(config)].every((o) => o.hostname === BIND_HOST);
   add("bind address", bound ? "ok" : "fail", `portal :${config.port} and admin :${config.adminPort}, both on ${BIND_HOST} only`);
 
-  // The tunnel is configured outside this app; TUNNEL_TARGET_PORT records where it points so this can check.
+  // The tunnel: its own config file when there is one (the truth); otherwise TUNNEL_TARGET_PORT, a note of where
+  // it points.
   const target = opts.tunnelTargetPort;
-  add(
+  if (opts.tunnelConfig) {
+    const c = checkTunnelConfig(opts.tunnelConfig.text, config, opts.publicOrigin);
+    add(c.name, c.status, `${c.detail} (${opts.tunnelConfig.path})`);
+  } else add(
     "tunnel target",
     target === undefined ? "warn" : target === config.port ? "ok" : "fail",
     target === undefined
-      ? `set TUNNEL_TARGET_PORT to the port your tunnel forwards; it must be ${config.port}, never ${config.adminPort}`
+      ? `no cloudflared config found (CLOUDFLARED_CONFIG or ~/.cloudflared/config.yml); set up the tunnel per docs/live-runbook.md`
       : target === config.port
         ? `forwards the portal (:${target}) only`
         : `forwards :${target} — it must forward the portal (:${config.port}), never the admin (:${config.adminPort})`,

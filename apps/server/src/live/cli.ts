@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { loadConfig } from "../config";
 import { DB_FILE, connect } from "../db/open";
 import { createBackup, restoreBackup, rotateBackups, verifyBackup } from "./backup";
-import { checkHost } from "./hardening";
+import { checkHost, readTunnelConfig } from "./hardening";
 
 // bun run backup                        encrypted snapshot of the current RUN_MODE's data, then rotate
 // bun run backup:verify <file>          decrypt and check a backup without restoring it
@@ -45,7 +45,7 @@ async function main() {
     }
     case "check": {
       const tunnel = process.env.TUNNEL_TARGET_PORT ? Number(process.env.TUNNEL_TARGET_PORT) : undefined;
-      const checks = checkHost(config, { backupDir, tunnelTargetPort: tunnel });
+      const checks = checkHost(config, { backupDir, tunnelTargetPort: tunnel, tunnelConfig: readTunnelConfig(), publicOrigin: process.env.PUBLIC_ORIGIN });
       checks.push(practiceCheck(join(config.dataDir, DB_FILE)));
       for (const c of checks) console.log(`${c.status === "ok" ? "✔" : c.status === "warn" ? "!" : "✖"} ${c.name.padEnd(22)} ${c.detail}`);
       if (checks.some((c) => c.status === "fail")) process.exitCode = 1;

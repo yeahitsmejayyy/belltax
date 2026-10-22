@@ -22,7 +22,7 @@ chose for it (see the WISP, §IV). Nothing in this file, and no command in it, e
    BACKUP_KEEP=30
    PORT=3000               # the portal: the only port the tunnel forwards
    ADMIN_PORT=3001         # the admin: this machine only, never forwarded
-   TUNNEL_TARGET_PORT=3000 # where your tunnel points; live:check fails if it's the admin port
+   PUBLIC_ORIGIN=https://portal.belltaxprep.com  # where clients reach the portal (the tunnel)
    ```
 
    Load it into the shell before any live command: `set -a; source ~/BellTaxPrep/live.env; set +a`.
@@ -30,6 +30,44 @@ chose for it (see the WISP, §IV). Nothing in this file, and no command in it, e
    `BACKUP_PASSPHRASE="$(op read op://Private/btp-backup/password)" bun run backup`.
 5. **Create the database:** `bun run migrate`.
 6. **Check the machine:** `bun run live:check`. Every line should be ✔ before real data goes in.
+
+## The tunnel: the portal on the internet (ticket 25)
+
+Clients reach the portal at **https://portal.belltaxprep.com** through a **Cloudflare Tunnel**: `cloudflared` on this
+machine dials *out* to Cloudflare, so no port is ever opened on your router, HTTPS ends at Cloudflare, and only the
+portal (:3000) is reachable. The admin (:3001) is never in the tunnel. The address is permanent: clients' passkeys
+are tied to it.
+
+**Once: put belltaxprep.com's DNS on Cloudflare** (free plan).
+1. Cloudflare dashboard → Add a domain → `belltaxprep.com` → Free. It imports the current records.
+2. Check the imported list against GoDaddy's before switching, record by record. These must be there, all **DNS only
+   (grey cloud)**: the site (`belltaxprep.com` A `76.76.21.21` and `www` CNAME `cname.vercel-dns.com`, or whatever
+   Vercel's Domains page shows), Resend's sending records (`send` MX and TXT, `resend._domainkey` TXT), and any
+   MX for receiving mail.
+3. GoDaddy → the domain → Nameservers → Change → enter the two Cloudflare gives you. It takes minutes to hours.
+4. When Cloudflare says Active: open https://belltaxprep.com (the splash) and run `bun run email:test` (email still
+   sends). Vercel's Domains page should still say Valid Configuration.
+
+**Once: create the tunnel** (on this machine).
+```bash
+brew install cloudflared
+cloudflared tunnel login                 # opens the browser; pick belltaxprep.com
+cloudflared tunnel create belltax-live   # writes ~/.cloudflared/<tunnel-id>.json (a secret: never in the repo)
+cloudflared tunnel route dns belltax-live portal.belltaxprep.com
+```
+Write `~/.cloudflared/config.yml` from `docs/examples/cloudflared-config.yml` (your tunnel id and home folder), then
+`chmod 600 ~/.cloudflared/*`. `bun run live:check` reads that file and fails unless every hostname goes to the portal
+(`http://127.0.0.1:3000`) and everything else gets `http_status:404`.
+
+**Run it:** `cloudflared tunnel run belltax-live` while the portal runs; to keep it up across restarts,
+`sudo cloudflared service install`. Stop it (`Ctrl+C`, or `sudo launchctl stop com.cloudflare.cloudflared`) and the
+portal is off the internet at once; the admin never was on it.
+
+**In Cloudflare, for portal.belltaxprep.com:** SSL/TLS mode **Full**; **Always Use HTTPS** on; a rate-limiting rule on
+`/api/auth/*` (the server throttles too, but this stops floods before your laptop sees them).
+
+The server already trusts Cloudflare's `cf-connecting-ip` header for the client's address, but only on requests that
+reach it from this machine (cloudflared), never from anywhere else (`clientIp` in `apps/server/src/trpc.ts`).
 
 ## Start and stop
 
