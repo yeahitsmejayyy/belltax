@@ -22,6 +22,8 @@ const meta: Meta<typeof DocumentViewer> = { parameters: { fill: true },
     onReject,
   },
 };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { DocumentViewer } from \"@app/ui/components/document-viewer\";" };
 export default meta;
 type Story = StoryObj<typeof DocumentViewer>;
 
@@ -30,7 +32,7 @@ export const Review: Story = {
 export const ReviewTest: Story = {
   ...Review,
   name: "Review · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "Accept" }));
@@ -47,7 +49,7 @@ export const Decided: Story = {
 export const DecidedTest: Story = {
   ...Decided,
   name: "Decided · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).queryByRole("button", { name: "Accept" })).toBeNull();
   },

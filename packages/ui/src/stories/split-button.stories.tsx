@@ -17,6 +17,8 @@ const meta: Meta<typeof SplitButton> = {
     items: [{ label: "Add client without invite", description: "Set up the household now; invite them later.", onSelect: addWithout }],
   },
 };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { SplitButton } from \"@app/ui/components/split-button\";" };
 export default meta;
 type Story = StoryObj<typeof SplitButton>;
 
@@ -27,7 +29,7 @@ export const InviteClient: Story = {
 export const InviteClientTest: Story = {
   ...InviteClient,
   name: "Invite client · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     await step("the main part runs the primary action", async () => {

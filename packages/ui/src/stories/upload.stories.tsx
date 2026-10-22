@@ -2,12 +2,16 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, fn, userEvent, waitFor, within } from "storybook/test";
 
 import { FileDropzone, UploadList, useUploads, type Uploader } from "../components/file-dropzone";
+import { fnSource } from "./fixtures";
+import raw from "./upload.stories?raw";
 
 // Portal 13-documents and 23-desktop-d-documents. Drop or choose files and watch each one: preview,
 // progress, Uploaded (or what went wrong, with a retry). The upload here is simulated; the app's real
 // uploader posts to /api/documents.
 
 const meta: Meta = { title: "Admin/FileDropzone" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { FileDropzone, UploadList, useUploads } from \"@app/ui/components/file-dropzone\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -45,12 +49,12 @@ function Uploads() {
 }
 
 export const Default: Story = {
-  render: () => <Uploads />
+  render: () => <Uploads />, parameters: { docs: { source: { code: fnSource(raw, "Uploads") } } }
 };
 export const DefaultTest: Story = {
   ...Default,
   name: "Default · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const c = within(canvasElement);
     const input = canvasElement.querySelector("input[type=file]") as HTMLInputElement;

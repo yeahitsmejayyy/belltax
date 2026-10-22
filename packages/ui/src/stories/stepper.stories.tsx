@@ -6,8 +6,12 @@ import { Button } from "../components/button";
 import { Field } from "../components/field";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "../components/sheet";
 import { StepFooter, Stepper } from "../components/stepper";
+import { fnSource } from "./fixtures";
+import raw from "./stepper.stories?raw";
 
 const meta: Meta = { title: "Admin/Stepper" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { Button } from \"@app/ui/components/button\";\nimport { Field } from \"@app/ui/components/field\";\nimport { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from \"@app/ui/components/sheet\";\nimport { StepFooter, Stepper } from \"@app/ui/components/stepper\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -35,12 +39,12 @@ function AddSomeone() {
 
 export const AddSomeoneSheet: Story = {
   name: "Multi-step sheet (portal)",
-  render: () => <AddSomeone />
+  render: () => <AddSomeone />, parameters: { docs: { source: { code: fnSource(raw, "AddSomeone") } } }
 };
 export const AddSomeoneSheetTest: Story = {
   ...AddSomeoneSheet,
   name: "Multi-step sheet (portal) · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Add someone" }));
     const sheet = within(await screen.findByRole("dialog"));

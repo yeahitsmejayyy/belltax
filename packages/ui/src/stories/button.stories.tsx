@@ -12,6 +12,8 @@ const meta = {
     variant: { control: "select", options: ["default", "outline", "secondary", "ghost", "link", "destructive"] },
     size: { control: "select", options: ["sm", "default", "lg", "touch", "icon", "icon-touch"] },
   },
+  // What a page imports to use it (shown at the top of the Docs page, ticket 56).
+  parameters: { usage: 'import { Button } from "@app/ui/components/button";' },
 } satisfies Meta<typeof Button>;
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -22,7 +24,7 @@ export const Primary: Story = {
 export const PrimaryTest: Story = {
   ...Primary,
   name: "Primary · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, args }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Upload document" }));
     await expect(args.onClick).toHaveBeenCalledOnce();
@@ -42,7 +44,7 @@ export const Disabled: Story = {
 export const DisabledTest: Story = {
   ...Disabled,
   name: "Disabled · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, args }) => {
     const button = within(canvasElement).getByRole("button", { name: "Pay invoice" });
     await expect(button).toBeDisabled();
@@ -59,7 +61,7 @@ export const Touch: Story = {
 export const TouchTest: Story = {
   ...Touch,
   name: "Touch · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const button = within(canvasElement).getByRole("button", { name: "Sign the letter" });
     await expect(button.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
@@ -72,7 +74,7 @@ export const IconTouch: Story = {
 export const IconTouchTest: Story = {
   ...IconTouch,
   name: "Icon Touch · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const { width, height } = within(canvasElement).getByRole("button", { name: "Add" }).getBoundingClientRect();
     await expect(Math.min(width, height)).toBeGreaterThanOrEqual(44);

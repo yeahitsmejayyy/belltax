@@ -5,10 +5,13 @@ import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 import { useCommandShortcut } from "../components/app-header";
 import { Button } from "../components/button";
 import { CommandPalette, InlineSearch } from "../components/command-search";
-import { searchGroups } from "./fixtures";
+import { searchGroups, fnSource } from "./fixtures";
+import raw from "./search.stories?raw";
 
 // Two ways into the same results: type in the header field and pick from the dropdown, or ⌘K for the palette.
 const meta: Meta = { title: "Admin/Search" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { useCommandShortcut } from \"@app/ui/components/app-header\";\nimport { Button } from \"@app/ui/components/button\";\nimport { CommandPalette, InlineSearch } from \"@app/ui/components/command-search\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -35,12 +38,12 @@ function PaletteDemo() {
     </>
   );
 }
-export const Palette: Story = { name: "⌘K palette", render: () => <PaletteDemo /> };
+export const Palette: Story = { name: "⌘K palette", render: () => <PaletteDemo />, parameters: { docs: { source: { code: fnSource(raw, "PaletteDemo") } } } };
 
 export const InlineTest: Story = {
   ...Inline,
   name: "Header field · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const c = within(canvasElement);
     const input = c.getByRole("combobox", { name: "Search clients, returns, invoices" });
@@ -86,7 +89,7 @@ export const InlineTest: Story = {
 export const PaletteTest: Story = {
   ...Palette,
   name: "⌘K palette · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async () => {
     await userEvent.keyboard("{Meta>}k{/Meta}");
     const dialog = await screen.findByRole("dialog");

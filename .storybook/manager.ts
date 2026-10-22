@@ -42,3 +42,10 @@ addons.register("btp/theme-sync", (api) => {
   api.on(SET_GLOBALS, ({ globals }: { globals: Record<string, unknown> }) => apply(globals));
   api.on(GLOBALS_UPDATED, ({ globals }: { globals: Record<string, unknown> }) => apply(globals));
 });
+
+// Phone and tablet viewports (ticket 56): Storybook pins the device frame to the top-left of the canvas; centre it
+// both ways. Only the column that holds the preview iframe is touched, so full-width stories stay full width.
+const centre = document.createElement("style");
+centre.textContent = `#storybook-preview-wrapper > div:has(> div > div > iframe#storybook-preview-iframe) { justify-content: center; align-items: center; }
+#storybook-preview-wrapper > div:has(> div > div > iframe#storybook-preview-iframe) > div { max-width: 100%; }`;
+document.head.appendChild(centre);

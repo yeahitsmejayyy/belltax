@@ -11,6 +11,8 @@ import { Switch } from "../components/switch";
 import { Textarea } from "../components/textarea";
 
 const meta: Meta = { title: "Primitives/Form controls" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { Checkbox } from \"@app/ui/components/checkbox\";\nimport { Input } from \"@app/ui/components/input\";\nimport { Label } from \"@app/ui/components/label\";\nimport { RadioCard, RadioGroup, RadioGroupItem } from \"@app/ui/components/radio-group\";\nimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from \"@app/ui/components/select\";\nimport { Switch } from \"@app/ui/components/switch\";\nimport { Textarea } from \"@app/ui/components/textarea\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -39,7 +41,7 @@ export const TextArea: Story = {
 export const TextAreaTest: Story = {
   ...TextArea,
   name: "Textarea · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await userEvent.type(within(canvasElement).getByLabelText("Why is this moving back?"), "Corrected W-2");
     await expect(onReason).toHaveBeenLastCalledWith("Corrected W-2");
@@ -64,7 +66,7 @@ export const Checkboxes: Story = {
 export const CheckboxesTest: Story = {
   ...Checkboxes,
   name: "Checkboxes · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     const box = c.getByLabelText("Covered California (1095-A)");
@@ -107,7 +109,7 @@ export const ChoiceCards: Story = {
 export const ChoiceCardsTest: Story = {
   ...ChoiceCards,
   name: "Radio cards (portal) · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("radio", { name: /Married, filing together/ }));
@@ -145,7 +147,7 @@ export const SelectMenu: Story = {
 export const SelectMenuTest: Story = {
   ...SelectMenu,
   name: "Select · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const trigger = within(canvasElement).getByRole("combobox", { name: "Document type" });
     await userEvent.click(trigger);
@@ -167,7 +169,7 @@ export const Switches: Story = {
 export const SwitchesTest: Story = {
   ...Switches,
   name: "Switch · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const sw = within(canvasElement).getByRole("switch", { name: /Amended/ });
     await userEvent.click(sw);

@@ -1,6 +1,6 @@
 import {
   flexRender, getCoreRowModel, getSortedRowModel, useReactTable,
-  type ColumnDef, type RowSelectionState, type SortingState,
+  type ColumnDef as TanstackColumnDef, type RowSelectionState, type SortingState,
 } from "@tanstack/react-table"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import * as React from "react"
@@ -12,19 +12,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 // Sortable columns, bulk select, sticky header: the pipeline table, clients and invoices
 // (admin 06-pipeline-table, 27-clients, 29-invoices). Data comes in already filtered; this only shows it.
 
-export type { ColumnDef }
+/** A column: the field it reads (`accessorKey`), its `header`, and optionally `cell` and `enableSorting` (TanStack Table's ColumnDef). */
+export type ColumnDef<T, V = unknown> = TanstackColumnDef<T, V>
 
 type DataTableProps<T> = {
+  /** One entry per column: the field it reads (`accessorKey`), its `header`, and optionally `cell` (how it draws) and `enableSorting`. */
   columns: ColumnDef<T, any>[]
+  /** The rows, in your page's own shape. Already filtered: the table only shows and sorts them. */
   data: T[]
+  /** A stable id for each row, used for selection and as the React key. */
   getRowId: (row: T) => string
+  /** Adds a checkbox column and a "Select all" header checkbox. */
   selectable?: boolean
+  /** Called with the selected row ids whenever the selection changes. */
   onSelectionChange?: (ids: string[]) => void
+  /** Makes rows clickable (the row's checkbox doesn't trigger it). */
   onRowClick?: (row: T) => void
+  /** Shown in place of the body when there are no rows: usually an EmptyState. */
   empty?: React.ReactNode
+  /** Sort the table starts with, e.g. `[{ id: "days", desc: true }]`. */
   initialSorting?: SortingState
   className?: string
-  label: string // what the table is, for screen readers
+  /** What the table is, for screen readers ("Returns"). */
+  label: string
 }
 
 export function DataTable<T>({ columns, data, getRowId, selectable, onSelectionChange, onRowClick, empty, initialSorting = [], className, label }: DataTableProps<T>) {

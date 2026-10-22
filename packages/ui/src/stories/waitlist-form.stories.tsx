@@ -6,6 +6,8 @@ import { WaitlistForm } from "../components/waitlist-form";
 // "Join the list" (the splash page, ticket 53). What joining does is the page's business (the site opens an email to
 // the practice); the form checks the address, asks about reminders and confirms. Invented addresses only.
 const meta: Meta = { title: "Site/Waitlist form" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { WaitlistForm } from \"@app/ui/components/waitlist-form\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -14,7 +16,7 @@ export const Join: Story = { render: () => <WaitlistForm onJoin={(email, reminde
 export const JoinTest: Story = {
   ...Join,
   name: "Join · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const c = within(canvasElement);
     const field = () => c.getByLabelText("Email address");

@@ -45,3 +45,15 @@ export const searchGroups = (go: (to: string) => void): SearchGroup[] => [
     items: [{ id: "g-settings", label: "Settings", icon: Settings, onSelect: () => go("settings") }],
   },
 ];
+
+/**
+ * A story-local component's own source, for its story's Show code (ticket 56): a story that wraps a component in
+ * state (open/closed, the current step…) shows that wrapper, which is the real usage, instead of `<Demo />`.
+ * `raw` is the story file imported with `?raw`; `name` is the function to cut out.
+ */
+export function fnSource(raw: string, name: string) {
+  const start = raw.indexOf(`function ${name}(`);
+  if (start < 0) return undefined;
+  const end = raw.indexOf("\n}\n", start);
+  return raw.slice(start, end < 0 ? undefined : end + 2);
+}

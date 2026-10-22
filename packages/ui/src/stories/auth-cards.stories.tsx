@@ -5,10 +5,14 @@ import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 import { InviteWelcome, LinkGone, SessionExpired, SetPasswordForm, SignInForm } from "../components/auth-cards";
 import { CopyLink } from "../components/copy-link";
 import { Button } from "../components/button";
+import { fnSource } from "./fixtures";
+import raw from "./auth-cards.stories?raw";
 
 // The way in (portal 01-access-invite, 02-access-setpw, 04-access-expired; wired by ticket 05): sign in, an invite or
 // reset link, a link that no longer works, and the one-time link the preparer copies. Invented people only.
 const meta: Meta = { title: "Admin/Auth" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { InviteWelcome, LinkGone, SessionExpired, SetPasswordForm, SignInForm } from \"@app/ui/components/auth-cards\";\nimport { CopyLink } from \"@app/ui/components/copy-link\";\nimport { Button } from \"@app/ui/components/button\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -23,7 +27,7 @@ export const Invite: Story = {
 export const InviteTest: Story = {
   ...Invite,
   name: "Invite · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getByRole("heading", { name: "Morgan Hale invited you to set up your account" })).toBeInTheDocument();
@@ -44,7 +48,7 @@ export const SetPassword: Story = {
 export const SetPasswordTest: Story = {
   ...SetPassword,
   name: "Create a password · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const c = within(canvasElement);
     const pw = () => c.getByLabelText("Password");
@@ -112,7 +116,7 @@ export const SetPasswordFails: Story = {
 export const SetPasswordFailsTest: Story = {
   ...SetPasswordFails,
   name: "When creating the account fails · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.type(c.getByLabelText("Password"), "copper-lantern-river");
@@ -142,11 +146,11 @@ function Expired() {
     </>
   );
 }
-export const SignedOut: Story = { name: "Signed out", render: () => <Expired /> };
+export const SignedOut: Story = { name: "Signed out", render: () => <Expired />, parameters: { docs: { source: { code: fnSource(raw, "Expired") } } } };
 export const SignedOutTest: Story = {
   ...SignedOut,
   name: "Signed out · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async () => {
     const d = within(await screen.findByRole("alertdialog"));
     await expect(d.getByRole("heading", { name: "You've been signed out" })).toBeInTheDocument();
@@ -174,7 +178,7 @@ export const SignIn: Story = {
 export const SignInTest: Story = {
   ...SignIn,
   name: "Sign in · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "Sign in" }));
@@ -191,7 +195,7 @@ export const LinkNoLongerWorks: Story = { render: () => <LinkGone preparerName="
 export const LinkNoLongerWorksTest: Story = {
   ...LinkNoLongerWorks,
   name: "Link no longer works · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getByRole("heading", { name: "This link no longer works" })).toBeInTheDocument();
@@ -210,7 +214,7 @@ export const OneTimeLink: Story = {
 export const OneTimeLinkTest: Story = {
   ...OneTimeLink,
   name: "One-time link · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getByLabelText("Invite link for jo@example.test")).toHaveValue(URL_);

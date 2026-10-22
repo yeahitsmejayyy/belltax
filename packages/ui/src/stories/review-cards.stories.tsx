@@ -14,6 +14,8 @@ const meta: Meta = {
     },
   },
 };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { ReviewCards } from \"@app/ui/components/review-cards\";" };
 export default meta;
 
 // Invented samples. Nothing here is real, and none of it goes on the site.
@@ -34,7 +36,7 @@ export const Samples: StoryObj = {
 export const SamplesTest: StoryObj = {
   ...Samples,
   name: "Samples · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const figures = [...canvasElement.querySelectorAll('[data-slot="review-cards"] figure')];
     await expect(figures).toHaveLength(SAMPLE_QUOTES.length);

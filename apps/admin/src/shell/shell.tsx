@@ -1,19 +1,14 @@
-import { Activity, CalendarPlus, ChevronRight, FileText, Inbox, LayoutDashboard, LayoutGrid, Mail, Receipt, Settings, User, UserPlus, Users, Workflow } from "lucide-react";
+import { Activity, CalendarPlus, ChevronRight, FileText, Inbox, LayoutDashboard, Mail, Receipt, Settings, User, Users, Workflow } from "lucide-react";
 import * as React from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
-import { AppHeader } from "@app/ui/components/app-header";
-import { AppSidebar, type NavItem } from "@app/ui/components/app-sidebar";
-import { BottomTabs } from "@app/ui/components/bottom-tabs";
-import { Button } from "@app/ui/components/button";
+import { AdminShell } from "@app/ui/components/admin-shell";
+import type { NavItem } from "@app/ui/components/app-sidebar";
 import type { SearchGroup } from "@app/ui/components/command-search";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@app/ui/components/dropdown-menu";
-import { InviteClientDialog, type InviteDraft } from "@app/ui/components/invite-client-dialog";
-import { SidebarInset, SidebarProvider } from "@app/ui/components/sidebar";
-import { Skeleton } from "@app/ui/components/skeleton";
-import { SplitButton } from "@app/ui/components/split-button";
 import { DemoBar } from "@app/ui/components/demo-tour";
+import { InviteClientDialog, type InviteDraft } from "@app/ui/components/invite-client-dialog";
+import { Skeleton } from "@app/ui/components/skeleton";
 import { clearDemoUser, setDemoUser } from "@app/ui/demo";
 
 import { useTaxYear } from "@/lib/tax-year";
@@ -23,8 +18,8 @@ import { trpc } from "@/lib/trpc";
 import { useHeaderTitle } from "./header-slots";
 import { InviteContext } from "./invite";
 
-// The admin's frame (every .assets/screens/admin/desktop/ screen): the sidebar with live counts and the tax-year
-// switcher, and the header with the page title, search (header field and ⌘K), the theme toggle and Invite client.
+// The admin's frame: data and routing for AdminShell (packages/ui, ticket 56), which draws the sidebar, header, phone
+// tabs and More button. What it shows is the design system's; what it knows (counts, user, tax year, search) is here.
 
 // Demo "Fill sample data" in the invite dialog: invented, and only offered in demo mode.
 const SAMPLE: Omit<InviteDraft, "mode"> = {
@@ -108,8 +103,7 @@ export function Shell() {
 
   return (
     <InviteContext.Provider value={(m = "invite") => setInvite(m)}>
-    <SidebarProvider>
-      <AppSidebar
+      <AdminShell
         items={items}
         active={active}
         taxYears={years}
@@ -117,6 +111,9 @@ export function Shell() {
         onTaxYearChange={setTaxYear}
         user={{ name: practice?.preparerName ?? "Preparer", email: practice?.replyToEmail ?? "" }}
         mode={mode}
+        title={heading}
+        search={{ groups, onQueryChange: setQ, filter: false }}
+        onInvite={setInvite}
         onSettings={() => navigate("/settings")}
         onLogout={async () => {
           await signOut();
@@ -124,109 +121,68 @@ export function Shell() {
           utils.invalidate();
           navigate("/login");
         }}
-        renderLink={(item, children) => (
-          <NavLink to={`/${item.key}`} aria-current={item.key === active ? "page" : undefined}>
-            {children}
-          </NavLink>
-        )}
-      />
-      <SidebarInset className="min-w-0">
-        {tour?.client ? (
-          <DemoBar
-            viewingAs="agent"
-            onSwitch={() => {
-              setDemoUser("portal", tour.client!.id);
-              location.assign("/");
-            }}
-          />
-        ) : null}
-        <AppHeader
-          title={heading}
-          search={{ groups, onQueryChange: setQ, filter: false }}
-          action={
-            <SplitButton
-              label={<><UserPlus /> <span className="max-sm:sr-only">Invite client</span></>}
-              onClick={() => setInvite("invite")}
-              menuLabel="More ways to add a client"
-              items={[{ label: "Add client without invite", description: "Set them up now. Send the portal invite later.", onSelect: () => setInvite("add") }]}
-            />
-          }
-        />
-        <main className="min-w-0 flex-1 p-4 pb-40 md:p-6 lg:p-8">
-          <React.Suspense fallback={<Skeleton aria-label="Loading" className="h-64 rounded-xl" />}>
-            <Outlet />
-          </React.Suspense>
-        </main>
-        <PhoneNav active={active} items={items} onInvite={() => setInvite("invite")} />
-      </SidebarInset>
-      <InviteClientDialog
-        open={invite !== null}
-        onOpenChange={(o) => {
-          if (!o) setInvite(null);
-        }}
-        mode={invite ?? "invite"}
-        taxYear={taxYear ?? new Date().getFullYear() - 1}
-        preparerName={practice?.preparerName ?? "Your preparer"}
-        sample={mode === "demo" ? SAMPLE : undefined}
-        onSubmit={async (d) => {
-          const r = await onboard.mutateAsync({
-            mode: d.mode,
-            taxYear: taxYear ?? new Date().getFullYear() - 1,
-            surname: d.surname,
-            email: d.email || null,
-            phone: d.phone || null,
-            members: d.members,
-            filing: d.filing,
-            filers: d.filers,
-          });
-          setCreated(r.engagementIds[0] ?? null);
-          await utils.invalidate();
-          toast.success(d.mode === "invite" ? `Invite ready for ${d.email}` : `${d.surname} household added`);
-          return { inviteUrl: r.inviteUrl, inviteEmailed: r.inviteEmailed };
-        }}
-        onOpenReturn={
-          created
-            ? () => {
-                setInvite(null);
-                navigate(`/returns/${created}`);
-              }
-            : undefined
-        }
-      />
-    </SidebarProvider>
-    </InviteContext.Provider>
-  );
-}
-
-// Phones (admin 34-37): five tabs at the bottom and a round button above them for everything else.
-function PhoneNav({ active, items, onInvite }: { active: string; items: NavItem[]; onInvite: () => void }) {
-  const navigate = useNavigate();
-  const tabs = items.filter((i) => i.key !== "activity").map((i) => ({ key: i.key, label: i.label, icon: i.icon, badge: i.count || undefined }));
-  return (
-    <>
-      <BottomTabs
-        tabs={tabs}
-        active={active}
+        more={[
+          { label: "Activity", icon: Activity, onSelect: () => navigate("/activity") },
+          { label: "Settings", icon: Settings, onSelect: () => navigate("/settings") },
+          { label: "New season", icon: CalendarPlus, onSelect: () => navigate("/season") },
+        ]}
         renderLink={(t, children, className) => (
-          <NavLink to={`/${t.key}`} className={className} aria-current={t.key === active ? "page" : undefined}>
+          <NavLink to={`/${t.key}`} className={className} aria-current={t.current ? "page" : undefined}>
             {children}
           </NavLink>
         )}
-      />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button size="icon" aria-label="More" className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg md:hidden [&_svg:not([class*='size-'])]:size-6">
-            <LayoutGrid />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="top" align="end" className="w-56">
-          <DropdownMenuItem onSelect={onInvite}><UserPlus /> Invite client</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => navigate("/activity")}><Activity /> Activity</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => navigate("/settings")}><Settings /> Settings</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => navigate("/season")}><CalendarPlus /> New season</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+        banner={
+          tour?.client ? (
+            <DemoBar
+              viewingAs="agent"
+              onSwitch={() => {
+                setDemoUser("portal", tour.client!.id);
+                location.assign("/");
+              }}
+            />
+          ) : null
+        }
+        overlay={
+          <InviteClientDialog
+            open={invite !== null}
+            onOpenChange={(o) => {
+              if (!o) setInvite(null);
+            }}
+            mode={invite ?? "invite"}
+            taxYear={taxYear ?? new Date().getFullYear() - 1}
+            preparerName={practice?.preparerName ?? "Your preparer"}
+            sample={mode === "demo" ? SAMPLE : undefined}
+            onSubmit={async (d) => {
+              const r = await onboard.mutateAsync({
+                mode: d.mode,
+                taxYear: taxYear ?? new Date().getFullYear() - 1,
+                surname: d.surname,
+                email: d.email || null,
+                phone: d.phone || null,
+                members: d.members,
+                filing: d.filing,
+                filers: d.filers,
+              });
+              setCreated(r.engagementIds[0] ?? null);
+              await utils.invalidate();
+              toast.success(d.mode === "invite" ? `Invite ready for ${d.email}` : `${d.surname} household added`);
+              return { inviteUrl: r.inviteUrl, inviteEmailed: r.inviteEmailed };
+            }}
+            onOpenReturn={
+              created
+                ? () => {
+                    setInvite(null);
+                    navigate(`/returns/${created}`);
+                  }
+                : undefined
+            }
+          />
+        }
+      >
+        <React.Suspense fallback={<Skeleton aria-label="Loading" className="h-64 rounded-xl" />}>
+          <Outlet />
+        </React.Suspense>
+      </AdminShell>
+    </InviteContext.Provider>
   );
 }

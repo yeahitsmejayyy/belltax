@@ -10,6 +10,10 @@ return itself (ProSeries owns that). Read `.docs/belltaxprep-portal.md` for the 
 - **Two data worlds** — read `docs/two-data-worlds.md`. Nothing real ever enters this repo, a
   commit, a log, or this session. Demo data is seeded only.
 - **Never run `git commit`** and never add a co-author line. PJ commits and pushes.
+- **Components are data-driven and configurable** (PJ, 2026-10-21). Data in through props and config arrays,
+  behaviour out through callbacks and render props (`renderLink`), no hard-coded content or app wiring inside. Apps keep
+  only fetching and routing and render design-system components; Storybook shows those same components, so its
+  "Show code" is code worth copying.
 
 ## Finishing a command-center ticket
 
@@ -41,14 +45,17 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   404 for a client; submitted intake answers (`intake.get`) and answered questions' `response` (`request.list`) come back
   empty to clients; letter signature evidence is preparer-only. Never add a client path that reads back what they sent. Identity comes from `src/identity.ts`: a session first, then (demo mode only) the demo header/cookie.
 - `apps/portal` — the client portal: React 19 + Vite + Tailwind v4 on `packages/ui`, phone first (402px), top nav
-  from `md` (ticket 12). Dev on :5175, proxied to the portal listener (:3000, override with `PORTAL_API_PORT`, never
+  from `md` (ticket 12). Its frame is `PortalShell` and its Home is `ClientHome` (NeedsCard, InvoiceCard, StageProgress)
+  from packages/ui (ticket 56); `src/shell/shell.tsx` and `pages/home.tsx` only wire data and routes (`lib/needs.ts` decides
+  what's waiting on the client). Dev on :5175, proxied to the portal listener (:3000, override with `PORTAL_API_PORT`, never
   `PORT`, which launchers set for Vite itself). Screens are `src/pages/*` (lazy per route) inside `src/shell/shell.tsx`
   (header, account menu, bottom tabs / top nav with counts, offline banner). `useReturn()` (`lib/return.tsx`) is the
   return being shown (newest by default, remembered per device). A 401 anywhere clears the demo identity and goes to
   sign-in (both apps, `main.tsx`): the demo re-seeds on every boot. Intake renders `INTAKE_V1` (`components/intake`),
   autosaves drafts and sends emptied answers as `clear`. Auth screens (sign in, invite, set password, link gone, expired) are
   `packages/ui` `auth-cards.tsx`; `/invite/:token` in both apps.
-- `apps/admin` — the preparer admin: React 19 + Vite from skelly-admin (ticket 13). Dev on :5174, proxied to :3001.
+- `apps/admin` — the preparer admin: React 19 + Vite from skelly-admin (ticket 13). Its frame is `AdminShell` from
+  packages/ui (ticket 56); `src/shell/shell.tsx` only wires data, routes and the invite dialog. Dev on :5174, proxied to :3001.
   Screens are `src/pages/*` (lazy-loaded per route; the return is `pages/return/`, one file per tab) inside
   `src/shell/shell.tsx` (sidebar, header, phone bottom tabs + More button). Shared hooks: `usePageTitle`
   (`shell/header-slots`), `useTaxYear` (`lib/tax-year`), `useInvite` (`shell/invite`), `useStageMove`
@@ -67,7 +74,12 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   `packages/ui/src/components` (shadcn primitives plus the product pieces: StagePill, StatusChip, DataTable, Chart, Logo,
   Banner, EmptyState, FileDropzone, Stepper, StatCard, Board, Timeline, DocumentViewer, BottomTabs; money/dates in `format.ts`); apps import
   `@app/ui/components/<name>`, never copy them. Every component gets stories in `packages/ui/src/stories` (Storybook sections: Principles, Tokens, Primitives, Admin, Site); interaction tests go in a hidden `<Name>Test` twin
-  (`tags: ["!dev"]`), never on the visible story. The admin shell is `AppSidebar` + `AppHeader` (on shadcn's `sidebar`). Search is `InlineSearch` (header field with a results dropdown) + `CommandPalette` (⌘K), both fed the same `SearchGroup[]`,
+  (`tags: ["!dev"]`), never on the visible story. The app frames are design-system components (ticket 56): `AdminShell` (`AppSidebar` + `AppHeader` on shadcn's
+  `sidebar`, phone bottom tabs and More) and `PortalShell`; both apps render them, so their stories ("Admin/App shell",
+  "Portal/App shell") are the apps. Stories render real components, never story-local copies of app layouts.
+  Storybook: every component has a Docs page (autodocs) with a "Use it" import line (`parameters.usage` in the story
+  file), Show code per story and the props table; test twins are `tags: ["!dev", "!autodocs"]`. Phone viewports are
+  today's phones (iPhone 16 Pro 402 × 874 is `phone`), centred in the canvas (`.storybook/manager.ts`). Search is `InlineSearch` (header field with a results dropdown) + `CommandPalette` (⌘K), both fed the same `SearchGroup[]`,
   from `search.query` (server: word-prefix SQL, no index; never searches SSN digits). Invite client / Add without invite open `InviteClientDialog` (Household → Members → Filers → Send). Story fixtures live in `packages/ui/src/stories/fixtures.tsx`.
 - `apps/site` — the marketing site (ticket 14): React + Tailwind on `packages/ui`, dev on :5176. Two pages (ticket 53):
   the landing page (`pages/landing.tsx`) and a splash page (`pages/splash.tsx`, `sections/splash/`); `VITE_SITE_PAGE=splash|landing`
@@ -111,7 +123,7 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - `bun run sync:types` · `bun run seed` · `bun run migrate [--status]` · `bun test` · `bun run typecheck`
 - Intake questions live in `packages/schema/src/intake/v1.ts` (the portal imports it; the server validates with it).
   After editing, run `bun run intake:doc` to regenerate `docs/intake-v1.md`; a test fails while it's stale.
-- `bun run storybook` (:6006) · `bun run storybook:build` · `bun run test:storybook` (stories + play functions in
+- `bun run storybook` (:6006; the launcher in `.claude/launch.json` runs it on :6007, since another project uses 6006) · `bun run storybook:build` · `bun run test:storybook` (stories + play functions in
   Chromium via Vitest 4; set `CHROMIUM_PATH` to use a Chromium already on the machine).
 - **Hosted demo** (ticket 15, `docs/demo-deploy.md`): portal https://belltax-demo.onrender.com/, admin https://belltax-demo.onrender.com/admin/, site https://belltaxprep.vercel.app/ (Render free plan; switch to Starter before sharing widely). The practice's own
   domain, https://belltaxprep.com (→ www), is the Vercel project `btp-site` on this repo with `VITE_SITE_PAGE=splash` (ticket 54);

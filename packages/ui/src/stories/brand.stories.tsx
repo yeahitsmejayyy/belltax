@@ -7,6 +7,8 @@ import { BellMark, Logo, MarkLoader, Wordmark as WordmarkSvg } from "../componen
 // is the accent. Toggle Light / Dark in the toolbar to see both.
 
 const meta: Meta = { title: "Admin/Brand" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { BellMark, Logo, MarkLoader, Wordmark as WordmarkSvg } from \"@app/ui/components/logo\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -22,7 +24,7 @@ export const Wordmark: Story = {
 export const WordmarkTest: Story = {
   ...Wordmark,
   name: "Wordmark · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getAllByRole("img", { name: "belltax." })).toHaveLength(3);
   },
@@ -50,7 +52,7 @@ export const Loader: Story = {
 export const LoaderTest: Story = {
   ...Loader,
   name: "Loader · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole("status")).toHaveTextContent("Signing you in");
   },

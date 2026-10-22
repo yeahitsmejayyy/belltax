@@ -7,6 +7,8 @@ import { DesktopHome, PhoneDocuments, PhoneFrame, PhoneHome, PhoneLetterSigned, 
 // data. They're pictures of the portal, not the portal: decorative on the page, and built from the design system's
 // pieces. Moved here from apps/site (ticket 53) so every site page uses design-system components only.
 const meta: Meta = { title: "Site/Portal mockups" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { Float } from \"@app/ui/components/float\";\nimport { DesktopHome, PhoneDocuments, PhoneFrame, PhoneHome, PhoneLetterSigned, PortalPhones } from \"@app/ui/components/portal-mockups\";" };
 export default meta;
 type Story = StoryObj;
 

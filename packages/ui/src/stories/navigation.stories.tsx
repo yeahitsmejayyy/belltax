@@ -7,8 +7,12 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Button } from "../components/button";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandShortcut } from "../components/command";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/tabs";
+import { fnSource } from "./fixtures";
+import raw from "./navigation.stories?raw";
 
 const meta: Meta = { title: "Primitives/Navigation" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from \"@app/ui/components/breadcrumb\";\nimport { Button } from \"@app/ui/components/button\";\nimport { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandShortcut } from \"@app/ui/components/command\";\nimport { Tabs, TabsContent, TabsList, TabsTrigger } from \"@app/ui/components/tabs\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -31,7 +35,7 @@ export const ReturnTabs: Story = {
 export const ReturnTabsTest: Story = {
   ...ReturnTabs,
   name: "Tabs · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("tab", { name: "Documents" }));
@@ -100,12 +104,12 @@ function Palette() {
 
 export const CommandPalette: Story = {
   name: "Command palette (⌘K)",
-  render: () => <Palette />
+  render: () => <Palette />, parameters: { docs: { source: { code: fnSource(raw, "Palette") } } }
 };
 export const CommandPaletteTest: Story = {
   ...CommandPalette,
   name: "Command palette (⌘K) · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async () => {
     await userEvent.keyboard("{Meta>}k{/Meta}");
     const input = await screen.findByPlaceholderText("Search clients, returns, invoices");

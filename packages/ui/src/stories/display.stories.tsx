@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { formatDate, formatDateTime } from "../format";
 
 const meta: Meta = { title: "Primitives/Display" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { Avatar, AvatarFallback } from \"@app/ui/components/avatar\";\nimport { Badge } from \"@app/ui/components/badge\";\nimport { Money } from \"@app/ui/components/money\";\nimport { Progress } from \"@app/ui/components/progress\";\nimport { Separator } from \"@app/ui/components/separator\";\nimport { Skeleton } from \"@app/ui/components/skeleton\";\nimport { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from \"@app/ui/components/table\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -58,7 +60,7 @@ export const ProgressBar: Story = {
 export const ProgressBarTest: Story = {
   ...ProgressBar,
   name: "Progress · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole("progressbar", { name: "Season progress" })).toHaveAttribute("aria-valuenow", "49");
   },
@@ -105,7 +107,7 @@ export const MoneyAndDates: Story = {
 export const MoneyAndDatesTest: Story = {
   ...MoneyAndDates,
   name: "Money and dates · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByText("$2,770.00")).toBeInTheDocument();
   },

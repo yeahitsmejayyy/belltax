@@ -9,6 +9,8 @@ import { HealthCheckRow, StatCard } from "../components/stat-card";
 
 // Admin 03-dashboard-dashboard. Invented numbers.
 const meta: Meta = { parameters: { fill: true }, title: "Admin/Dashboard" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { Button } from \"@app/ui/components/button\";\nimport { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from \"@app/ui/components/chart\";\nimport { Money } from \"@app/ui/components/money\";\nimport { HealthCheckRow, StatCard } from \"@app/ui/components/stat-card\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -38,7 +40,7 @@ export const HealthChecks: Story = {
 export const HealthChecksTest: Story = {
   ...HealthChecks,
   name: "Health checks · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const rows = canvasElement.querySelectorAll("[data-slot='health-check']");
     await expect(rows).toHaveLength(4);
@@ -79,7 +81,7 @@ export const FilingsPerWeek: Story = {
 export const FilingsPerWeekTest: Story = {
   ...FilingsPerWeek,
   name: "Chart: filings per week · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     // Recharts draws after it measures its box, which can take a frame or two on a slower runner (Chromatic): wait.
     await expect(await within(canvasElement).findByText("This season", {}, { timeout: 5000 })).toBeInTheDocument();

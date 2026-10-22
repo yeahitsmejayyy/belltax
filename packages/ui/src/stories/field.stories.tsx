@@ -3,8 +3,12 @@ import { expect, userEvent, within } from "storybook/test";
 
 import { Button } from "../components/button";
 import { Field, useFieldValidation, type Validate } from "../components/field";
+import { fnSource } from "./fixtures";
+import raw from "./field.stories?raw";
 
 const meta: Meta<typeof Field> = { title: "Primitives/Field", component: Field };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { Button } from \"@app/ui/components/button\";\nimport { Field, useFieldValidation } from \"@app/ui/components/field\";" };
 export default meta;
 type Story = StoryObj<typeof Field>;
 
@@ -36,12 +40,12 @@ function Demo() {
 
 export const ValidationTiming: Story = {
   name: "Validation timing",
-  render: () => <Demo />
+  render: () => <Demo />, parameters: { docs: { source: { code: fnSource(raw, "Demo") } } }
 };
 export const ValidationTimingTest: Story = {
   ...ValidationTiming,
   name: "Validation timing · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const canvas = within(canvasElement);
     const input = canvas.getByLabelText("Last four of your SSN");

@@ -9,6 +9,8 @@ import { PageHeader, SectionHeader } from "../components/page-header";
 import { SplitButton } from "../components/split-button";
 
 const meta: Meta = { title: "Admin/Layout" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { Banner } from \"@app/ui/components/banner\";\nimport { Button } from \"@app/ui/components/button\";\nimport { EmptyState } from \"@app/ui/components/empty-state\";\nimport { PageHeader, SectionHeader } from \"@app/ui/components/page-header\";\nimport { SplitButton } from \"@app/ui/components/split-button\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -27,7 +29,7 @@ export const Headers: Story = {
 export const HeadersTest: Story = {
   ...Headers,
   name: "Headers · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole("heading", { level: 1 })).toHaveTextContent("Pipeline");
   },
@@ -60,7 +62,7 @@ export const Banners: Story = {
 export const BannersTest: Story = {
   ...Banners,
   name: "Banners · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getByRole("alert")).toHaveTextContent("Your payment didn't go through"); // only the failure interrupts

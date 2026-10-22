@@ -1,130 +1,170 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Activity, Inbox, LayoutDashboard, Receipt, UserPlus, Users, Workflow } from "lucide-react";
+import { Activity, CalendarPlus, Inbox, LayoutDashboard, Mail, Receipt, Settings, Users, Workflow } from "lucide-react";
 import { useState } from "react";
 import { expect, screen, userEvent, waitFor, within } from "storybook/test";
 
-import { AppHeader } from "../components/app-header";
-import { AppSidebar, type NavItem } from "../components/app-sidebar";
-import { SidebarInset, SidebarProvider } from "../components/sidebar";
-import { Skeleton } from "../components/skeleton";
-import { SplitButton } from "../components/split-button";
+import { AdminShell } from "../components/admin-shell";
+import type { NavItem } from "../components/app-sidebar";
+import { DemoBar } from "../components/demo-tour";
 import { InviteClientDialog, type InviteDraft } from "../components/invite-client-dialog";
+import { Money } from "../components/money";
+import { Skeleton } from "../components/skeleton";
+import { StatCard } from "../components/stat-card";
 import { ThemeProvider } from "../components/theme-provider";
 import { SAMPLE, searchGroups } from "./fixtures";
 
-// The admin shell, as in every .assets/screens/admin/desktop/ screen: the sidebar, and the header with the
-// trigger, a divider, the page title, search (⌘K), the theme toggle and Invite client. ⌘B collapses the
-// sidebar to icons; on a phone it's a sheet. Counts: plain totals (Pipeline), waiting on you (Inbox),
-// problems (Invoices).
-const meta: Meta = { title: "Admin/App shell", parameters: { shell: true } };
+// The admin's frame, AdminShell: the same component apps/admin renders (ticket 56), so what you see here is the app.
+// The sidebar with counts and the tax-year switcher; the header with the page title, search (⌘K), the theme toggle and
+// Invite client (icon-only on a phone); on a phone, bottom tabs and the round More button. ⌘B collapses the sidebar to
+// icons. Counts: plain totals (Pipeline), waiting on you (Inbox), problems (Invoices). Invented data.
+const USAGE = `import { AdminShell } from "@app/ui/components/admin-shell";
+
+<AdminShell
+  items={items}                     // NavItem[]: key, label, icon, count, countTone
+  active="pipeline"
+  title="Pipeline"
+  user={{ name: "Morgan Hale", email: "morgan@belltax.example" }}
+  mode="demo"
+  taxYears={[2026, 2025]} taxYear={2026} onTaxYearChange={setYear}
+  search={{ groups }}
+  onInvite={(mode) => openInvite(mode)}
+  more={[{ label: "Settings", icon: Settings, onSelect: () => navigate("/settings") }]}
+  renderLink={(t, children, className) => (
+    <NavLink to={\`/\${t.key}\`} className={className} aria-current={t.current ? "page" : undefined}>{children}</NavLink>
+  )}
+>
+  <Outlet />
+</AdminShell>`;
+const meta: Meta<typeof AdminShell> = {
+  title: "Admin/App shell",
+  component: AdminShell,
+  parameters: { shell: true, docs: { source: { code: USAGE, language: "tsx" }, story: { inline: false, height: "720px" } } },
+};
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { AdminShell } from \"@app/ui/components/admin-shell\";" };
 export default meta;
 type Story = StoryObj;
 
 const ITEMS: NavItem[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "pipeline", label: "Pipeline", icon: Workflow, count: 27 },
-  { key: "inbox", label: "Inbox", icon: Inbox, count: 11, countTone: "brand" },
+  { key: "inbox", label: "Inbox", icon: Inbox, count: 19, countTone: "brand" },
   { key: "clients", label: "Clients", icon: Users },
-  { key: "invoices", label: "Invoices", icon: Receipt, count: 3, countTone: "danger" },
+  { key: "invoices", label: "Invoices", icon: Receipt, count: 1, countTone: "danger" },
   { key: "activity", label: "Activity", icon: Activity },
+  { key: "outbox", label: "Outbox", icon: Mail },
 ];
 
-function Shell({ defaultOpen = true, loading = false }: { defaultOpen?: boolean; loading?: boolean }) {
-  const [active, setActive] = useState("pipeline");
+// State for the story only (which page, which year, which dialog); everything drawn is AdminShell.
+function Demo({ defaultOpen = true, loading = false, tour = false }: { defaultOpen?: boolean; loading?: boolean; tour?: boolean }) {
+  const [active, setActive] = useState("dashboard");
   const [year, setYear] = useState(2026);
   const [last, setLast] = useState("");
   const [invite, setInvite] = useState<InviteDraft["mode"] | null>(null);
   const title = active === "settings" ? "Settings" : ITEMS.find((i) => i.key === active)?.label;
   return (
     <ThemeProvider storageKey={null}>
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar
-          items={ITEMS}
-          active={active}
-          taxYears={[2026, 2025, 2024]}
-          taxYear={year}
-          onTaxYearChange={setYear}
-          user={{ name: "Morgan Hale", email: "morgan@belltax.example" }}
-          mode="demo"
-          onSettings={() => setActive("settings")}
-          onLogout={() => {}}
-          renderLink={(item, children) => (
-            <a
-              href={`#${item.key}`}
-              aria-current={item.key === active ? "page" : undefined}
-              onClick={(e) => {
-                e.preventDefault();
-                setActive(item.key);
-              }}
-            >
-              {children}
-            </a>
-          )}
-        />
-        <SidebarInset>
-          <AppHeader
-            title={title}
-            search={{ groups: searchGroups((to) => setActive(to.startsWith("client") ? "clients" : to.startsWith("invoice") ? "invoices" : to === "settings" ? "settings" : "pipeline")) }}
-            action={
-              <SplitButton
-                label={<><UserPlus /> Invite client</>}
-                onClick={() => { setLast("invite"); setInvite("invite"); }}
-                menuLabel="More ways to add a client"
-                items={[{ label: "Add client without invite", description: "Set up the household now; invite them later.", onSelect: () => { setLast("add"); setInvite("add"); } }]}
-              />
-            }
+      <AdminShell
+        defaultOpen={defaultOpen}
+        items={ITEMS}
+        active={active}
+        title={title}
+        taxYears={[2026, 2025, 2024]}
+        taxYear={year}
+        onTaxYearChange={setYear}
+        user={{ name: "Morgan Hale", email: "morgan@belltax.example" }}
+        mode="demo"
+        search={{ groups: searchGroups((to) => setActive(to.startsWith("client") ? "clients" : to.startsWith("invoice") ? "invoices" : to === "settings" ? "settings" : "pipeline")) }}
+        onInvite={(m) => {
+          setLast(m);
+          setInvite(m);
+        }}
+        onSettings={() => setActive("settings")}
+        onLogout={() => {}}
+        more={[
+          { label: "Activity", icon: Activity, onSelect: () => setActive("activity") },
+          { label: "Settings", icon: Settings, onSelect: () => setActive("settings") },
+          { label: "New season", icon: CalendarPlus, onSelect: () => {} },
+        ]}
+        renderLink={(t, children, className) => (
+          <a
+            href={`#${t.key}`}
+            className={className}
+            aria-current={t.current ? "page" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              setActive(t.key);
+            }}
+          >
+            {children}
+          </a>
+        )}
+        banner={tour ? <DemoBar viewingAs="agent" onSwitch={() => {}} /> : null}
+        overlay={
+          <InviteClientDialog
+            open={invite !== null}
+            onOpenChange={(o) => !o && setInvite(null)}
+            mode={invite ?? "invite"}
+            taxYear={year}
+            preparerName="Morgan Hale"
+            sample={SAMPLE}
+            onSubmit={() => new Promise((r) => setTimeout(r, 300))}
           />
-          <main className="flex-1 p-6" data-testid="page" data-last={last}>
-            {loading ? (
-              // .assets/screens/admin/desktop/02-access-loading.png
-              <div className="grid gap-5" aria-busy="true" aria-label="Loading the pipeline">
-                <Skeleton className="h-7 w-64" />
-                <Skeleton className="h-9 w-full max-w-3xl" />
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                  {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-96 rounded-xl" />)}
-                </div>
+        }
+      >
+        <div data-testid="page" data-last={last} className="grid gap-4">
+          {loading ? (
+            // .assets/screens/admin/desktop/02-access-loading.png
+            <div className="grid gap-5" aria-busy="true" aria-label="Loading the pipeline">
+              <Skeleton className="h-7 w-64" />
+              <Skeleton className="h-9 w-full max-w-3xl" />
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-96 rounded-xl" />
+                ))}
               </div>
-            ) : (
-              <div className="grid h-full place-items-center text-sm text-muted-foreground">
-                {active} · TY {year}
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Showing {active} · TY {year}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <StatCard label="Returns filed" value="6 of 27" progress={22} detail="3 complete · 3 waiting on IRS and FTB" />
+                <StatCard label="Collected" value={<Money cents={120750} />} progress={44} detail="of $2,750.00 billed · $1,542.50 outstanding" />
+                <StatCard label="Waiting on you" value="25" detail="6 returns to prepare · 19 in Inbox" />
+                <StatCard label="Avg. days in stage" value="6" detail="8 returns over 7 days" detailTone="warning" />
               </div>
-            )}
-          </main>
-        </SidebarInset>
-        <InviteClientDialog
-          open={invite !== null}
-          onOpenChange={(o) => !o && setInvite(null)}
-          mode={invite ?? "invite"}
-          taxYear={year}
-          preparerName="Morgan Hale"
-          sample={SAMPLE}
-          onSubmit={() => new Promise((r) => setTimeout(r, 300))}
-        />
-      </SidebarProvider>
+            </>
+          )}
+        </div>
+      </AdminShell>
     </ThemeProvider>
   );
 }
 
-export const Expanded: Story = { render: () => <Shell /> };
-export const Loading: Story = { name: "Loading a page", render: () => <Shell loading /> };
-export const Collapsed: Story = { name: "Collapsed to icons", render: () => <Shell defaultOpen={false} /> };
-export const Phone: Story = { render: () => <Shell />, globals: { viewport: { value: "mobile1", isRotated: false } } };
+export const Expanded: Story = { name: "Desktop", render: () => <Demo /> };
+export const Loading: Story = { name: "Loading a page", render: () => <Demo loading /> };
+export const Collapsed: Story = { name: "Collapsed to icons", render: () => <Demo defaultOpen={false} /> };
+export const Phone: Story = { name: "Phone (402)", render: () => <Demo />, globals: { viewport: { value: "phone", isRotated: false } } };
+export const SmallPhone: Story = { name: "Phone (iPhone SE, 375)", render: () => <Demo />, globals: { viewport: { value: "phoneSmall", isRotated: false } } };
+export const PhoneDemoTour: Story = { name: "Phone · demo tour", render: () => <Demo tour />, globals: { viewport: { value: "phone", isRotated: false } } };
 
 export const ExpandedTest: Story = {
   name: "Expanded · test",
-  tags: ["!dev"],
-  render: () => <Shell />,
+  tags: ["!dev", "!autodocs"],
+  render: () => <Demo />,
   play: async ({ canvasElement, step }) => {
     const c = within(canvasElement);
     const page = () => c.getByTestId("page");
     await step("links navigate, mark the page and title the header", async () => {
-      await userEvent.click(c.getByRole("link", { name: "Inbox" }));
+      await userEvent.click(c.getAllByRole("link", { name: "Inbox" })[0]!);
       await expect(page()).toHaveTextContent("inbox");
-      await expect(c.getByRole("link", { name: "Inbox" })).toHaveAttribute("aria-current", "page");
+      await expect(c.getAllByRole("link", { name: "Inbox" })[0]).toHaveAttribute("aria-current", "page");
       await expect(c.getByRole("heading", { level: 1 })).toHaveTextContent("Inbox");
     });
     await step("counts are read with their meaning", async () => {
-      await expect(c.getByLabelText("3 invoices")).toHaveTextContent("3");
+      await expect(c.getByLabelText("1 invoices")).toHaveTextContent("1");
     });
     await step("the tax year switches", async () => {
       await userEvent.click(c.getByRole("combobox", { name: "Tax year" }));
@@ -170,16 +210,34 @@ export const ExpandedTest: Story = {
 // Collapsed, the icons, the settings cog and the avatar all sit on the b. mark's axis (principles.md rule 13).
 export const CollapsedTest: Story = {
   name: "Collapsed to icons · test",
-  tags: ["!dev"],
-  render: () => <Shell defaultOpen={false} />,
+  tags: ["!dev", "!autodocs"],
+  render: () => <Demo defaultOpen={false} />,
   play: async ({ canvasElement }) => {
     const visible = (el: Element) => el.getBoundingClientRect().width > 0;
     const cx = (el: Element) => { const r = el.getBoundingClientRect(); return r.left + r.width / 2; };
     await waitFor(() => {
       const mark = [...canvasElement.querySelectorAll('[data-sidebar="header"] svg[viewBox="0 0 128 128"]')].find(visible)!;
       const buttons = [...canvasElement.querySelectorAll('[data-sidebar="menu-button"]')].filter(visible);
-      expect(buttons).toHaveLength(8); // six nav items, Settings, the user
+      expect(buttons).toHaveLength(9); // seven nav items, Settings, the user
       for (const b of buttons) expect(Math.abs(cx(b) - cx(mark))).toBeLessThan(1);
     });
+  },
+};
+
+// On a phone: the page title, the icon-only invite button, bottom tabs with counts, and More for the rest.
+export const PhoneTest: Story = {
+  name: "Phone · test",
+  tags: ["!dev", "!autodocs"],
+  render: () => <Demo />,
+  globals: { viewport: { value: "phone", isRotated: false } },
+  play: async ({ canvasElement }) => {
+    const c = within(canvasElement);
+    const tabs = within(canvasElement.querySelector('[data-slot="bottom-tabs"]') as HTMLElement);
+    await expect(tabs.getAllByRole("link").map((l) => l.textContent?.replace(/\d+/g, ""))).toEqual(["Dashboard", "Pipeline", "Inbox", "Clients", "Invoices", "Outbox"]);
+    await userEvent.click(tabs.getByRole("link", { name: /Pipeline/ }));
+    await expect(c.getByRole("heading", { level: 1 })).toHaveTextContent("Pipeline");
+    await userEvent.click(c.getByRole("button", { name: "More" }));
+    await expect((await screen.findAllByRole("menuitem")).map((m) => m.textContent?.trim())).toEqual(["Invite client", "Activity", "Settings", "New season"]);
+    await userEvent.keyboard("{Escape}");
   },
 };

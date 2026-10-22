@@ -4,6 +4,8 @@ import { expect, within } from "storybook/test";
 import { ActivityTimeline, StageTimeline } from "../components/timeline";
 
 const meta: Meta = { title: "Admin/Timeline" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { ActivityTimeline, StageTimeline } from \"@app/ui/components/timeline\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -15,7 +17,7 @@ export const ClientProgress: Story = {
 export const ClientProgressTest: Story = {
   ...ClientProgress,
   name: "Client progress · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const current = within(canvasElement).getAllByRole("listitem").find((li) => li.getAttribute("aria-current") === "step");
     await expect(current).toHaveTextContent("Send your documents");

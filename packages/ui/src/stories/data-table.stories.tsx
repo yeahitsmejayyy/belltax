@@ -1,44 +1,63 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type { Stage } from "@app/schema";
 import { Inbox } from "lucide-react";
 import { expect, fn, userEvent, within } from "storybook/test";
 
-import { DataTable, type ColumnDef } from "../components/data-table";
+import { DataTable } from "../components/data-table";
 import { EmptyState } from "../components/empty-state";
-import { Money } from "../components/money";
-import { StagePill } from "../components/stage-pill";
+import { columns, rows, type Row } from "./data-table.fixtures";
+import fixtures from "./data-table.fixtures?raw";
 
-// Admin 06-pipeline-pipeline-table: sortable columns, bulk select. Invented households.
+// Admin 06-pipeline-pipeline-table: sortable columns, bulk select. The rows and the columns are both data, passed in
+// (./data-table.fixtures.tsx); the Docs page shows them as their own blocks, then how they reach the table.
 
-type Row = { id: string; household: string; filers: string; stage: Stage; days: number; balance: number };
-const rows: Row[] = [
-  { id: "1", household: "Marigold", filers: "Dana & Sam", stage: "preparing", days: 4, balance: 34000 },
-  { id: "2", household: "Kestrel", filers: "Sidney", stage: "review", days: 9, balance: 22500 },
-  { id: "3", household: "Wren", filers: "Toni", stage: "documents", days: 12, balance: 0 },
-  { id: "4", household: "Birchwood", filers: "Chris & Taylor", stage: "invited", days: 2, balance: 0 },
-];
-const columns: ColumnDef<Row>[] = [
-  { accessorKey: "household", header: "Household", cell: ({ row }) => <span className="font-medium">{row.original.household}</span> },
-  { accessorKey: "filers", header: "Filers" },
-  { accessorKey: "stage", header: "Stage", cell: ({ row }) => <StagePill stage={row.original.stage} />, enableSorting: false },
-  { accessorKey: "days", header: "Days in stage", cell: ({ row }) => <span className="tabular-nums">{row.original.days}</span> },
-  { accessorKey: "balance", header: "Balance", cell: ({ row }) => <Money cents={row.original.balance} /> },
-];
+// The fixtures file, split at its "// --- " headings into the Docs page's code blocks.
+const section = (name: string) => fixtures.split(`// --- ${name}\n`)[1]!.split("\n// --- ")[0]!.trim();
 
 const onSelection = fn();
 const onOpen = fn();
 
-const meta: Meta<typeof DataTable<Row>> = { parameters: { fill: true }, title: "Primitives/DataTable" };
+const meta: Meta<typeof DataTable<Row>> = {
+  title: "Primitives/DataTable",
+  component: DataTable,
+  parameters: {
+    fill: true,
+    usage: 'import { DataTable, type ColumnDef } from "@app/ui/components/data-table";',
+    snippets: [
+      { title: "Sample data", description: "Rows in your page's own shape, each with a stable id.", code: section("Sample data") },
+      { title: "Columns", description: "What each column reads, its header, and how its cells draw. Data too: build them from config.", code: section("Columns") },
+      {
+        title: "Pass them in",
+        code: `<DataTable
+  label="Returns"
+  columns={columns}
+  data={rows}
+  getRowId={(row) => row.id}
+  selectable
+  onSelectionChange={setSelected}
+  onRowClick={(row) => openReturn(row.id)}
+  empty={<EmptyState icon={Inbox} title="No returns yet" />}
+/>`,
+      },
+    ],
+  },
+};
 export default meta;
 type Story = StoryObj<typeof DataTable<Row>>;
 
 export const Pipeline: Story = {
-  render: () => <DataTable label="Returns" columns={columns} data={rows} getRowId={(r) => r.id} selectable onSelectionChange={onSelection} onRowClick={(r) => onOpen(r.id)} />
+  render: () => <DataTable label="Returns" columns={columns} data={rows} getRowId={(r) => r.id} selectable onSelectionChange={onSelection} onRowClick={(r) => onOpen(r.id)} />,
+  parameters: {
+    docs: {
+      source: {
+        code: `<DataTable label="Returns" columns={columns} data={rows} getRowId={(row) => row.id} selectable onSelectionChange={setSelected} onRowClick={(row) => openReturn(row.id)} />`,
+      },
+    },
+  },
 };
 export const PipelineTest: Story = {
   ...Pipeline,
   name: "Pipeline · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const c = within(canvasElement);
     const households = () => c.getAllByRole("row").slice(1).map((r) => r.querySelector("td:nth-child(2)")?.textContent);
@@ -73,4 +92,17 @@ export const Empty: Story = {
       empty={<EmptyState icon={Inbox} title="No returns yet" description="Invite your first client to start the season." className="border-0" />}
     />
   ),
+  parameters: {
+    docs: {
+      source: {
+        code: `<DataTable
+  label="Returns"
+  columns={columns}
+  data={[]}
+  getRowId={(row) => row.id}
+  empty={<EmptyState icon={Inbox} title="No returns yet" description="Invite your first client to start the season." />}
+/>`,
+      },
+    },
+  },
 };

@@ -11,6 +11,8 @@ const meta: Meta<typeof ModeToggle> = {
   // Starts from the toolbar's theme and remembers nothing, so every story (and test) begins in step with the canvas.
   decorators: [(Story, ctx) => <ThemeProvider storageKey={null} defaultTheme={ctx.globals.theme === "dark" ? "dark" : "light"}><Story /></ThemeProvider>],
 };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { ModeToggle } from \"@app/ui/components/mode-toggle\";\nimport { ThemeProvider } from \"@app/ui/components/theme-provider\";" };
 export default meta;
 type Story = StoryObj<typeof ModeToggle>;
 
@@ -22,7 +24,7 @@ const dark = () => document.documentElement.classList.contains("dark");
 
 export const IconTest: Story = {
   name: "Icon · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   args: { variant: "icon" },
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
@@ -35,7 +37,7 @@ export const IconTest: Story = {
 
 export const SlideTest: Story = {
   name: "Slide toggle · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   args: { variant: "switch" },
   play: async ({ canvasElement }) => {
     const sw = within(canvasElement).getByRole("switch", { name: "Dark mode" });
@@ -49,7 +51,7 @@ export const SlideTest: Story = {
 
 export const MenuTest: Story = {
   name: "Menu · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   args: { variant: "menu" },
   play: async ({ canvasElement }) => {
     const choose = async (label: "Dark" | "Light") => {

@@ -53,12 +53,15 @@
     },
     {
       "name": "storybook",
-      "runtimeExecutable": "bun",
+      "runtimeExecutable": "bunx",
       "runtimeArgs": [
-        "run",
-        "storybook"
+        "storybook",
+        "dev",
+        "-p",
+        "6007",
+        "--no-open"
       ],
-      "port": 6006
+      "port": 6007
     },
     {
       "name": "storybook-static",

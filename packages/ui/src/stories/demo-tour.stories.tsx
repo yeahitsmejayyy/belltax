@@ -5,6 +5,8 @@ import { DemoBar, DemoFrontDoor, TryThis } from "../components/demo-tour";
 
 // The hosted public demo's guide (ticket 45): the front door, the strip across the top, and "Try this" hints.
 const meta: Meta = { title: "Admin/Demo tour" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { DemoBar, DemoFrontDoor, TryThis } from \"@app/ui/components/demo-tour\";" };
 export default meta;
 
 const CLIENT_TIPS = [
@@ -24,7 +26,7 @@ export const FrontDoor: StoryObj<typeof DemoFrontDoor> = {
 export const FrontDoorTest: StoryObj<typeof DemoFrontDoor> = {
   ...FrontDoor,
   name: "Front door · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, args }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: /See it as a client/ }));
@@ -37,12 +39,13 @@ export const FrontDoorTest: StoryObj<typeof DemoFrontDoor> = {
   },
 };
 
-export const BarAsClient: StoryObj<typeof DemoBar> = { render: (args) => <DemoBar {...args} />, args: { viewingAs: "client", onSwitch: fn() } };
-export const BarAsAgent: StoryObj<typeof DemoBar> = { render: (args) => <DemoBar {...args} />, args: { viewingAs: "agent", onSwitch: fn() } };
+// The bar runs full width across the top of the window, above each app's header, as in the apps.
+export const BarAsClient: StoryObj<typeof DemoBar> = { render: (args) => <DemoBar {...args} />, args: { viewingAs: "client", onSwitch: fn() }, parameters: { edge: "top" } };
+export const BarAsAgent: StoryObj<typeof DemoBar> = { render: (args) => <DemoBar {...args} />, args: { viewingAs: "agent", onSwitch: fn() }, parameters: { edge: "top" } };
 export const BarTest: StoryObj<typeof DemoBar> = {
   ...BarAsClient,
   name: "Bar · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, args }) => {
     const c = within(canvasElement);
     await expect(c.getByRole("region", { name: "Demo" })).toHaveTextContent("Public demo · invented data");
@@ -55,7 +58,7 @@ export const Tips: StoryObj<typeof TryThis> = { render: (args) => <TryThis {...a
 export const TipsTest: StoryObj<typeof TryThis> = {
   ...Tips,
   name: "Tips · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, args }) => {
     const c = within(canvasElement);
     await expect(c.getAllByRole("link")).toHaveLength(3);

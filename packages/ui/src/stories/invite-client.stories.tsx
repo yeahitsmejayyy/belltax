@@ -5,11 +5,14 @@ import { expect, fn, screen, userEvent, waitFor, within } from "storybook/test";
 
 import { InviteClientDialog, type InviteDraft } from "../components/invite-client-dialog";
 import { SplitButton } from "../components/split-button";
-import { SAMPLE } from "./fixtures";
+import { SAMPLE, fnSource } from "./fixtures";
+import raw from "./invite-client.stories?raw";
 
 // Admin 24/25-dialogs-and-sheets-dlg-invite: Invite client, or Add client without invite, from the header's
 // split button. Invented people only.
 const meta: Meta = { title: "Admin/InviteClientDialog" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { InviteClientDialog } from \"@app/ui/components/invite-client-dialog\";\nimport { SplitButton } from \"@app/ui/components/split-button\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -44,8 +47,8 @@ function Demo({ fail = false }: { fail?: boolean }) {
   );
 }
 
-export const Invite: Story = { name: "Invite client", render: () => <Demo /> };
-export const SaveFails: Story = { name: "When saving fails", render: () => <Demo fail /> };
+export const Invite: Story = { name: "Invite client", render: () => <Demo />, parameters: { docs: { source: { code: fnSource(raw, "Demo") } } } };
+export const SaveFails: Story = { name: "When saving fails", render: () => <Demo fail />, parameters: { docs: { source: { code: fnSource(raw, "Demo") } } } };
 
 const open = async (canvasElement: HTMLElement, add = false) => {
   const c = within(canvasElement);
@@ -61,7 +64,7 @@ const open = async (canvasElement: HTMLElement, add = false) => {
 export const InviteTest: Story = {
   ...Invite,
   name: "Invite client · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const d = await open(canvasElement);
     const cont = () => d.getByRole("button", { name: "Continue" });
@@ -121,7 +124,7 @@ export const InviteTest: Story = {
 export const AddWithoutInviteTest: Story = {
   ...Invite,
   name: "Add without invite · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const d = await open(canvasElement, true);
     await expect(d.getByLabelText("Email (optional for now)")).toBeInTheDocument();
@@ -140,7 +143,7 @@ export const AddWithoutInviteTest: Story = {
 export const SaveFailsTest: Story = {
   ...SaveFails,
   name: "When saving fails · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const d = await open(canvasElement);
     await userEvent.click(d.getByRole("button", { name: "Fill sample data" }));

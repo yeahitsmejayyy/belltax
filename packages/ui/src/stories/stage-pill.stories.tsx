@@ -10,6 +10,8 @@ const meta: Meta<typeof StagePill> = {
   args: { stage: "preparing" },
   argTypes: { stage: { control: "select", options: Stage.options } },
 };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { STAGE_META, StagePill, WAITING_LABEL, WAITING_TONE } from \"@app/ui/components/stage-pill\";" };
 export default meta;
 type Story = StoryObj<typeof StagePill>;
 

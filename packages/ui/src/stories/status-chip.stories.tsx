@@ -7,6 +7,8 @@ import {
 } from "../components/status-chip";
 
 const meta: Meta = { title: "Admin/StatusChip" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { DOCUMENT_STATUS, DocumentChip, INVOICE_STATUS, InvoiceChip, PAYMENT_STATUS, PaymentChip } from \"@app/ui/components/status-chip\";" };
 export default meta;
 
 const Row = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -35,7 +37,7 @@ export const All: StoryObj = {
 export const AllTest: StoryObj = {
   ...All,
   name: "All · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const chips = [...canvasElement.querySelectorAll('[data-slot="status-chip"]')];
     await expect(chips).toHaveLength(Object.keys(DOCUMENT_STATUS).length + Object.keys(INVOICE_STATUS).length + Object.keys(PAYMENT_STATUS).length);

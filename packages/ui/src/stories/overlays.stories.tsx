@@ -11,8 +11,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/popover";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "../components/sheet";
 import { Textarea } from "../components/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/tooltip";
+import { fnSource } from "./fixtures";
+import raw from "./overlays.stories?raw";
 
 const meta: Meta = { title: "Primitives/Overlays" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from \"@app/ui/components/alert-dialog\";\nimport { Button } from \"@app/ui/components/button\";\nimport { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from \"@app/ui/components/dialog\";\nimport { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from \"@app/ui/components/dropdown-menu\";\nimport { Label } from \"@app/ui/components/label\";\nimport { Popover, PopoverContent, PopoverTrigger } from \"@app/ui/components/popover\";\nimport { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from \"@app/ui/components/sheet\";\nimport { Textarea } from \"@app/ui/components/textarea\";\nimport { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from \"@app/ui/components/tooltip\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -44,12 +48,12 @@ function MoveBack() {
 
 export const DialogWithReason: Story = {
   name: "Dialog: reason required",
-  render: () => <MoveBack />
+  render: () => <MoveBack />, parameters: { docs: { source: { code: fnSource(raw, "MoveBack") } } }
 };
 export const DialogWithReasonTest: Story = {
   ...DialogWithReason,
   name: "Dialog: reason required · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Move back to Documents" }));
     const dialog = await screen.findByRole("dialog", { name: "Move back to Documents?" });
@@ -99,7 +103,7 @@ export const Confirm: Story = {
 export const ConfirmTest: Story = {
   ...Confirm,
   name: "AlertDialog: irreversible · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Void invoice" }));
     const dialog = await screen.findByRole("alertdialog");
@@ -127,7 +131,7 @@ export const SideSheet: Story = {
 export const SideSheetTest: Story = {
   ...SideSheet,
   name: "Sheet · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await userEvent.click(within(canvasElement).getByRole("button", { name: "Request a document" }));
     await expect(await screen.findByRole("dialog", { name: "Request a document" })).toBeInTheDocument();
@@ -155,7 +159,7 @@ export const Menu: Story = {
 export const MenuTest: Story = {
   ...Menu,
   name: "Dropdown menu · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     within(canvasElement).getByRole("button", { name: "Dana Marigold" }).focus();
     await userEvent.keyboard("{Enter}");
@@ -185,7 +189,7 @@ export const PopoverAndTooltip: Story = {
 export const PopoverAndTooltipTest: Story = {
   ...PopoverAndTooltip,
   name: "Popover and tooltip · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "What's a 1095-A?" }));

@@ -8,6 +8,8 @@ import { LinkSetupSteps, SignInSteps } from "../components/sign-in-flows";
 // the preparer's recovery codes; "Lost your passkey?"; passkeys in Settings. The secret and codes are the RFCs' public
 // examples and invented strings, never real ones.
 const meta: Meta = { title: "Admin/Auth/MFA" };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { AuthenticatorSetup, CodeStep, LostPasskey, PasskeyList, PasskeySetup, RecoveryCodes } from \"@app/ui/components/mfa-cards\";\nimport { LinkSetupSteps, SignInSteps } from \"@app/ui/components/sign-in-flows\";" };
 export default meta;
 type Story = StoryObj;
 
@@ -28,7 +30,7 @@ export const SetUpPasskey: Story = { name: "Set up a passkey", render: () => <Pa
 export const SetUpPasskeyTest: Story = {
   ...SetUpPasskey,
   name: "Set up a passkey · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getByRole("heading", { name: "Sign in with your face or fingerprint" })).toBeInTheDocument();
@@ -62,7 +64,7 @@ export const AuthenticatorApp: Story = { name: "Add an authenticator app", rende
 export const AuthenticatorAppTest: Story = {
   ...AuthenticatorApp,
   name: "Add an authenticator app · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getByRole("img", { name: "QR code for your authenticator app" })).toBeInTheDocument();
@@ -84,7 +86,7 @@ export const EnterCodePreparer: Story = { name: "Sign in · code or recovery cod
 export const EnterCodePreparerTest: Story = {
   ...EnterCodePreparer,
   name: "Sign in · code or recovery code · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "No phone? Use a recovery code" }));
@@ -100,7 +102,7 @@ export const Lost: Story = { name: "Lost your passkey?", render: () => <LostPass
 export const LostTest: Story = {
   ...Lost,
   name: "Lost your passkey? · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "Email me a link" }));
@@ -136,7 +138,7 @@ export const SignInWithMfa: Story = {
 export const SignInWithMfaTest: Story = {
   ...SignInWithMfa,
   name: "Sign in · passkey or password + code · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement, step }) => {
     const c = within(canvasElement);
     await step("The passkey comes first", async () => {
@@ -184,7 +186,7 @@ export const ClientLink: Story = {
 export const ClientLinkTest: Story = {
   ...ClientLink,
   name: "Invite link · client · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "Set up my account" }));
@@ -212,7 +214,7 @@ export const SaveRecoveryCodes: Story = { name: "Recovery codes", render: () => 
 export const SaveRecoveryCodesTest: Story = {
   ...SaveRecoveryCodes,
   name: "Recovery codes · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getAllByRole("listitem")).toHaveLength(10);
@@ -230,7 +232,7 @@ export const Passkeys: Story = { name: "Settings · passkeys", render: () => <Pa
 export const PasskeysTest: Story = {
   ...Passkeys,
   name: "Settings · passkeys · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await userEvent.click(c.getByRole("button", { name: "Remove Mac" }));

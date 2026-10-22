@@ -4,6 +4,8 @@ import { expect, within } from "storybook/test";
 import { ModeBadge } from "../components/mode-badge";
 
 const meta: Meta<typeof ModeBadge> = { title: "Admin/ModeBadge", component: ModeBadge };
+// What a page imports to use these (shown at the top of the Docs page, ticket 56).
+meta.parameters = { ...meta.parameters, usage: "import { ModeBadge } from \"@app/ui/components/mode-badge\";" };
 export default meta;
 type Story = StoryObj<typeof ModeBadge>;
 
@@ -13,7 +15,7 @@ export const Demo: Story = {
 export const DemoTest: Story = {
   ...Demo,
   name: "Demo · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole("status")).toHaveTextContent("Demo · sample data");
   },
@@ -25,7 +27,7 @@ export const Live: Story = {
 export const LiveTest: Story = {
   ...Live,
   name: "Live · test",
-  tags: ["!dev"],
+  tags: ["!dev", "!autodocs"],
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole("status")).toHaveTextContent("Live · client data");
   },

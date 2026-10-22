@@ -20,24 +20,36 @@ import { STAGE_META, StagePill } from "./stage-pill";
 // The board is controlled but optimistic. `onMove` may return a promise: the card sits in its new column
 // while it's pending, stays there if it resolves true, and goes back if it resolves false (refused, cancelled).
 
+/** One return on the board: which column it's in and what its card shows. */
 export type BoardCardData = {
+  /** Stable id, passed back to onMove and onOpen. */
   id: string;
+  /** The column it sits in. */
   stage: Stage;
   household: string;
+  /** Who files, as shown under the household ("Dana & Sam"). */
   filers: string;
   filingStatus?: string | null;
+  /** Documents still to come; shown as a count when above 0. */
   missingDocuments?: number;
+  /** Shows an "Unpaid" flag. */
   unpaid?: boolean;
+  /** Days in this stage; past `staleAfterDays` it turns amber. */
   daysInStage: number;
 };
 
 type PipelineBoardProps = {
+  /** Every card, each in the column its `stage` names. The board is controlled: update `stage` after a move. */
   cards: BoardCardData[];
+  /** Which columns to show, in order. Default: all eight stages. */
   stages?: readonly Stage[];
+  /** A card was dropped on another column (or moved from its menu). Return a promise to keep it there until it resolves true; false sends it back. */
   onMove: (id: string, from: Stage, to: Stage) => void | Promise<boolean>;
-  // Which columns a card may be dropped on; others fade while it's held. Default: any other column.
+  /** Which columns a card may be dropped on; the rest fade while it's held. Default: any other column. */
   canMove?: (card: BoardCardData, to: Stage) => boolean;
+  /** A card was clicked (or Enter pressed on it). */
   onOpen?: (id: string) => void;
+  /** Days after which a card's age turns amber. Default 7. */
   staleAfterDays?: number;
   className?: string;
 };
