@@ -106,7 +106,7 @@ export function AdminShell({
             <Button
               size="icon"
               aria-label="More"
-              className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg md:hidden [&_svg:not([class*='size-'])]:size-6"
+              className="fixed right-4 bottom-[calc(4.5rem+max(env(safe-area-inset-bottom),var(--safe-bottom,0px)))] z-40 size-14 rounded-full shadow-lg md:hidden [&_svg:not([class*='size-'])]:size-6"
             >
               <LayoutGrid />
             </Button>

@@ -1,46 +1,79 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import type * as React from "react";
-import { FileText, Inbox, LayoutDashboard, Search, UserPlus, Workflow } from "lucide-react";
+import { Inbox, LayoutDashboard, Mail, Receipt, Search, UserPlus, Users, Workflow } from "lucide-react";
+import { useState } from "react";
 import { expect, fn, userEvent, waitFor, within } from "storybook/test";
 
-import { BottomTabs } from "../components/bottom-tabs";
+import { BoardCard } from "../components/board";
+import { BottomTabs, type BottomTab } from "../components/bottom-tabs";
+import { DeviceFrame } from "../components/device-frame";
 import { FloatingActionMenu } from "../components/floating-action-menu";
+import { cards } from "./pipeline.fixtures";
+import { fnSource } from "./fixtures";
+import raw from "./phone.stories?raw";
 
-// Phone navigation (admin 34-37, marketing 14), each in a 402 × 874 phone frame (an iPhone 16 Pro) centred on the canvas (ticket 56). On a
-// real page both are fixed to the bottom of the screen; the frame's transform makes it their screen here, so they sit
-// where they would on a phone. Both hide from md up, so the stories force them on with md:flex.
-const meta: Meta = { title: "Admin/Phone navigation" };
-
-function PhoneScreen({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative h-[874px] max-h-[calc(100svh-4rem)] w-[402px] max-w-full transform-gpu overflow-hidden rounded-[2.5rem] border-[3px] border-border bg-background shadow-2xl">
-      <div className="absolute top-2.5 left-1/2 h-7 w-28 -translate-x-1/2 rounded-full bg-foreground/15" />
-      {children}
-    </div>
-  );
-}
-// What a page imports to use these (shown at the top of the Docs page, ticket 56).
-meta.parameters = { ...meta.parameters, usage: "import { BottomTabs } from \"@app/ui/components/bottom-tabs\";\nimport { FloatingActionMenu } from \"@app/ui/components/floating-action-menu\";" };
+// Phone navigation (admin 34-37, marketing 14), each on a real phone: DeviceFrame, an iPhone 16 Pro (402 × 874),
+// centred on the canvas. On a page both are fixed to the bottom of the screen; the frame's screen is their screen here,
+// and it keeps the home-bar strip clear the way iOS does, so the tabs sit above the curve of the corners. Both hide from
+// md up, so the stories force them on with md:flex. The tabs are the admin's own (Dashboard … Outbox, with counts).
+const meta: Meta = {
+  title: "Admin/Phone navigation",
+  parameters: { usage: 'import { BottomTabs, type BottomTab } from "@app/ui/components/bottom-tabs";\nimport { FloatingActionMenu } from "@app/ui/components/floating-action-menu";\nimport { DeviceFrame } from "@app/ui/components/device-frame"; // to show them on a phone' },
+};
 export default meta;
 type Story = StoryObj;
 
+const ADMIN_TABS: BottomTab[] = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "pipeline", label: "Pipeline", icon: Workflow, badge: 27 },
+  { key: "inbox", label: "Inbox", icon: Inbox, badge: 19 },
+  { key: "clients", label: "Clients", icon: Users },
+  { key: "invoices", label: "Invoices", icon: Receipt, badge: 1 },
+  { key: "outbox", label: "Outbox", icon: Mail },
+];
+
+// The admin's phone navigation, live: tap a tab and the screen follows. Story state only; everything drawn is the
+// design system's (BottomTabs on a DeviceFrame).
+function AdminTabs() {
+  const [active, setActive] = useState("pipeline");
+  const tab = ADMIN_TABS.find((t) => t.key === active)!;
+  return (
+    <DeviceFrame>
+      <div className="grid gap-3 p-4 pb-32">
+        <h1 className="text-2xl font-semibold tracking-tight">{tab.label}</h1>
+        {active === "pipeline" ? (
+          cards.map((c) => <BoardCard key={c.id} {...c} />)
+        ) : (
+          <p className="text-muted-foreground">
+            {tab.badge ? `${tab.badge} waiting here.` : "Nothing waiting here."} Tap another tab to move around.
+          </p>
+        )}
+      </div>
+      <BottomTabs
+        className="md:block"
+        active={active}
+        tabs={ADMIN_TABS}
+        renderLink={(t, children, className) => (
+          <a
+            href={`#${t.key}`}
+            aria-current={t.key === active ? "page" : undefined}
+            className={className}
+            onClick={(e) => {
+              e.preventDefault();
+              setActive(t.key);
+            }}
+          >
+            {children}
+          </a>
+        )}
+      />
+    </DeviceFrame>
+  );
+}
+
 export const Tabs: Story = {
   name: "Bottom tabs",
-  render: () => (
-    <PhoneScreen>
-      <BottomTabs
-        className="md:flex"
-        active="pipeline"
-        tabs={[
-          { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-          { key: "pipeline", label: "Pipeline", icon: Workflow },
-          { key: "inbox", label: "Inbox", icon: Inbox, badge: 11 },
-          { key: "returns", label: "Returns", icon: FileText },
-        ]}
-        renderLink={(t, children, cls) => <a href={`#${t.key}`} aria-current={t.key === "pipeline" ? "page" : undefined} className={cls}>{children}</a>}
-      />
-    </PhoneScreen>
-  )
+  render: () => <AdminTabs />,
+  parameters: { docs: { source: { code: fnSource(raw, "AdminTabs") } } },
 };
 export const TabsTest: Story = {
   ...Tabs,
@@ -49,6 +82,9 @@ export const TabsTest: Story = {
   play: async ({ canvasElement }) => {
     const c = within(canvasElement);
     await expect(c.getByRole("link", { name: /Pipeline/ })).toHaveAttribute("aria-current", "page");
+    await userEvent.click(c.getByRole("link", { name: /Inbox/ }));
+    await expect(c.getByRole("link", { name: /Inbox/ })).toHaveAttribute("aria-current", "page");
+    await expect(c.getByRole("heading", { name: "Inbox" })).toBeInTheDocument();
     for (const link of c.getAllByRole("link")) await expect(link.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
   },
 };
@@ -58,7 +94,11 @@ const onSelect = fn();
 export const QuickJump: Story = {
   name: "Floating action menu",
   render: () => (
-    <PhoneScreen>
+    <DeviceFrame>
+      <div className="grid gap-3 p-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Taxes Made Easy.</h1>
+        <p className="text-muted-foreground">On a phone, the site's sections sit behind one round menu button.</p>
+      </div>
       <FloatingActionMenu
         className="md:flex"
         items={[
@@ -66,7 +106,7 @@ export const QuickJump: Story = {
           { label: "Search", icon: Search, onSelect: () => onSelect("search") },
         ]}
       />
-    </PhoneScreen>
+    </DeviceFrame>
   )
 };
 export const QuickJumpTest: Story = {

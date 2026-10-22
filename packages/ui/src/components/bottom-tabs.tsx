@@ -9,8 +9,8 @@ export type BottomTab = { key: string; label: string; icon: LucideIcon; badge?: 
 
 export function BottomTabs({ tabs, active, renderLink, className }: { tabs: BottomTab[]; active: string; renderLink: (tab: BottomTab, children: React.ReactNode, className: string) => React.ReactNode; className?: string }) {
   return (
-    <nav aria-label="Main" data-slot="bottom-tabs" className={cn("fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden", className)}>
-      <ul className="grid" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+    <nav aria-label="Main" data-slot="bottom-tabs" className={cn("fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[max(env(safe-area-inset-bottom),var(--safe-bottom,0px))] backdrop-blur md:hidden", className)}>
+      <ul className="grid px-3" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
         {tabs.map((t) => {
           const on = t.key === active;
           return (

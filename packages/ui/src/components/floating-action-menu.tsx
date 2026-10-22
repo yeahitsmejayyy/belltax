@@ -26,7 +26,7 @@ export function FloatingActionMenu({ items, label = "Quick actions", icon: Icon 
   }, [open]);
 
   return (
-    <div data-slot="floating-action-menu" className={cn("fixed right-4 bottom-20 z-40 flex flex-col items-end gap-3 md:hidden", className)}>
+    <div data-slot="floating-action-menu" className={cn("fixed right-4 bottom-[calc(5rem+max(env(safe-area-inset-bottom),var(--safe-bottom,0px)))] z-40 flex flex-col items-end gap-3 md:hidden", className)}>
       {open ? (
         <ul id={menuId} role="menu" aria-label={label} className="grid min-w-48 animate-page gap-1 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-lg">
           {items.map((item) => (
