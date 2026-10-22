@@ -63,11 +63,11 @@ Write `~/.cloudflared/config.yml` from `docs/examples/cloudflared-config.yml` (y
 `sudo cloudflared service install`. Stop it (`Ctrl+C`, or `sudo launchctl stop com.cloudflare.cloudflared`) and the
 portal is off the internet at once; the admin never was on it.
 
-**In Cloudflare, for portal.belltaxprep.com:** SSL/TLS mode **Full**; **Always Use HTTPS** on; a rate-limiting rule on
-`/api/auth/*` (the server throttles too, but this stops floods before your laptop sees them).
+**In Cloudflare, for portal.belltaxprep.com:** SSL/TLS mode **Full**; **Always Use HTTPS** on; a rate-limiting rule ("Portal sign-in flood": host portal.belltaxprep.com and path starting `/api/auth/`, 20 requests per 10s per IP, block 10s; the Free plan allows one)
+(the server throttles too, but this stops floods before your laptop sees them).
 
 The server already trusts Cloudflare's `cf-connecting-ip` header for the client's address, but only on requests that
-reach it from this machine (cloudflared), never from anywhere else (`clientIp` in `apps/server/src/trpc.ts`).
+reach it from this machine (cloudflared), never from anywhere else (`clientIp` in `apps/server/src/client-ip.ts`).
 
 ## Start and stop
 
