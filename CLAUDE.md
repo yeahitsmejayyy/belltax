@@ -131,6 +131,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   port via `withAdminMounted`, only with `DEMO_PUBLIC=1`, which live refuses), `vercel.json` (site), Chromatic in
   `.github/workflows/chromatic.yml` (needs the `CHROMATIC_PROJECT_TOKEN` secret). Public demo: uploads off (clients send a server-drawn sample instead, `POST /api/documents/sample`, `sampleDocument` in `rest/documents.ts`), re-seeded every
   `DEMO_RESET_HOURS`, and a front door (`demo.tour`; `DemoFrontDoor`, `DemoBar`, `TryThis` in `components/demo-tour.tsx`; `useDemoTour` in each app's `lib/demo-tour.ts`). Admin URLs go through `at()` (`apps/admin/src/lib/base.ts`) so the `ADMIN_BASE=/admin/` build works.
+- `bun run audit` — fails on any high or critical vulnerability in an installed package: npm's advisory service
+  (retried, 60s per try), and if that's down, OSV for every name@version in `bun.lock` (`scripts/audit.ts`). An audit
+  that couldn't reach either fails and says so. CI runs it. Red CI is never left alone: find the cause and fix it.
 - `bun run check:data` — fails if anything tracked looks like real data (databases, backups, uploads, `.env`,
   PDFs/HEIC, or an SSN not starting with 9). CI (`.github/workflows/ci.yml`) runs it on every push, then
   typecheck, tests and both app builds. The same four commands locally mean CI will pass.

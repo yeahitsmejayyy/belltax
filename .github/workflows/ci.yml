@@ -36,9 +36,10 @@ jobs:
       - name: No real data in the repo
         run: bun run check:data
 
-      # Known vulnerabilities in any installed package: fail on high or critical.
+      # Known vulnerabilities in any installed package: fail on high or critical. npm's advisory service first,
+      # retried; if it's down, OSV (osv.dev) for the same packages. Fails, saying why, if neither can be reached.
       - name: Dependency audit
-        run: bun audit --audit-level=high
+        run: bun run audit
 
       - name: Typecheck (server, schema, ui, portal, admin)
         run: bun run typecheck

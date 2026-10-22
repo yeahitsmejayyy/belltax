@@ -28,6 +28,7 @@
     "dev:admin": "bun --filter @app/admin dev",
     "build": "bun --filter @app/portal build && bun --filter @app/admin build && bun --filter @app/site build",
     "check:data": "bun scripts/check-no-real-data.ts",
+    "audit": "bun scripts/audit.ts",
     "intake:doc": "bun scripts/intake-doc.ts",
     "storybook": "storybook dev -p 6006 --no-open",
     "storybook:build": "storybook build -o storybook-static",
