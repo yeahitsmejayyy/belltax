@@ -32,8 +32,6 @@ export const isMissing = (r: PipelineRow) => r.openRequests > 0;
 export const isUnpaid = (r: PipelineRow) => r.balanceCents > 0;
 export const isStale = (r: PipelineRow, days: number) => r.daysInStage > days;
 
-export const activeFilterCount = (f: PipelineFilters) => [f.q.trim(), f.stage, f.missing, f.unpaid, f.staleDays].filter(Boolean).length;
-
 export function applyFilters(rows: PipelineRow[], f: PipelineFilters) {
   const q = f.q.trim().toLowerCase();
   return rows.filter(

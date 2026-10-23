@@ -1,32 +1,40 @@
 import { Download, FolderCheck } from "lucide-react";
 import * as React from "react";
-import { toast } from "sonner";
 
-import { Banner } from "@app/ui/components/banner";
-import { Button } from "@app/ui/components/button";
-import { Checkbox } from "@app/ui/components/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@app/ui/components/dialog";
-import { Label } from "@app/ui/components/label";
+import { Banner } from "./banner";
+import { Button } from "./button";
+import { Checkbox } from "./checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./dialog";
+import { Label } from "./label";
 
-import { trpc, type RouterOutputs } from "@/lib/trpc";
+// Export a household (ticket 33; no mockup, the dialog pattern of admin 19), the dialog apps/admin renders and Storybook
+// shows (ticket 58): the offline copy goes to the practice's export folder on this machine, and only where it went
+// comes back. The app does the export through `onExport` (and any toast); the dialog shows pending, the result and errors.
 
-// Export a household (ticket 33; no mockup, the dialog pattern of admin 19): writes the offline copy to the
-// practice's export folder on this machine. Only the path comes back; the contents never reach the browser.
+/** What an export reports back: where it was written, never its contents. */
+export type ExportResult = { path: string; documents: number; bytes: number; encrypted: boolean };
 
-type Result = RouterOutputs["household"]["export"];
-
-const size = (bytes: number) =>
+export const fileSize = (bytes: number) =>
   bytes < 1024 ? `${bytes} B` : bytes < 1024 ** 2 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 ** 2).toFixed(1)} MB`;
 
-export function ExportHouseholdDialog({ householdId, name }: { householdId: string; name: string }) {
+export type ExportHouseholdDialogProps = {
+  /** The household's name, for the title. */
+  name: string;
+  /** Runs the export. Resolve with the result; throw (an Error's message is shown) when it didn't finish. */
+  onExport: (options: { encrypt: boolean }) => Promise<ExportResult>;
+  /** Whether "Encrypt with the backup passphrase" starts ticked. */
+  defaultEncrypt?: boolean;
+};
+
+export function ExportHouseholdDialog({ name, onExport, defaultEncrypt = true }: ExportHouseholdDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const [encrypt, setEncrypt] = React.useState(true);
-  const [result, setResult] = React.useState<Result | null>(null);
+  const [encrypt, setEncrypt] = React.useState(defaultEncrypt);
+  const [result, setResult] = React.useState<ExportResult | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const run = trpc.household.export.useMutation();
+  const [pending, setPending] = React.useState(false);
 
   const onOpenChange = (o: boolean) => {
-    if (run.isPending) return;
+    if (pending) return;
     setOpen(o);
     if (o) {
       setResult(null);
@@ -36,12 +44,13 @@ export function ExportHouseholdDialog({ householdId, name }: { householdId: stri
 
   const go = async () => {
     setError(null);
+    setPending(true);
     try {
-      const r = await run.mutateAsync({ householdId, encrypt });
-      setResult(r);
-      toast.success(`${name} exported`);
+      setResult(await onExport({ encrypt }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "The export didn't finish.");
+    } finally {
+      setPending(false);
     }
   };
 
@@ -70,7 +79,7 @@ export function ExportHouseholdDialog({ householdId, name }: { householdId: stri
               <dt>Documents</dt>
               <dd className="tabular-nums">{result.documents}</dd>
               <dt>Size</dt>
-              <dd className="tabular-nums">{size(result.bytes)}</dd>
+              <dd className="tabular-nums">{fileSize(result.bytes)}</dd>
               <dt>Encrypted</dt>
               <dd>{result.encrypted ? "Yes, with the backup passphrase" : "No"}</dd>
             </dl>
@@ -95,11 +104,11 @@ export function ExportHouseholdDialog({ householdId, name }: { householdId: stri
             </Button>
           ) : (
             <>
-              <Button variant="ghost" onClick={() => setOpen(false)} disabled={run.isPending}>
+              <Button variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
                 Cancel
               </Button>
-              <Button onClick={go} disabled={run.isPending}>
-                {run.isPending ? "Exporting…" : "Export"}
+              <Button onClick={go} disabled={pending}>
+                {pending ? "Exporting…" : "Export"}
               </Button>
             </>
           )}

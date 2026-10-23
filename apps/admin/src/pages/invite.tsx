@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { AdminAuthPage } from "@app/ui/components/admin-auth-pages";
 import { LinkGone } from "@app/ui/components/auth-cards";
 import { MarkLoader } from "@app/ui/components/logo";
 import { LinkSetupSteps } from "@app/ui/components/sign-in-flows";
@@ -21,7 +22,7 @@ export default function Invite() {
   const loadOptions = React.useCallback(() => auth.linkOptions(token), [token]);
 
   return (
-    <main className="grid min-h-svh place-items-center bg-muted/40 p-4">
+    <AdminAuthPage>
       {info === undefined ? (
         <MarkLoader label="Checking your link" />
       ) : info === null ? (
@@ -40,6 +41,6 @@ export default function Invite() {
           onSignIn={() => navigate("/login")}
         />
       )}
-    </main>
+    </AdminAuthPage>
   );
 }

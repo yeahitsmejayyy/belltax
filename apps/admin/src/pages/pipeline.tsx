@@ -1,16 +1,11 @@
 import { Stage } from "@app/schema";
-import { SearchX, UserPlus, Workflow } from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 
 import { PipelineBoard, type BoardCardData } from "@app/ui/components/board";
-import { Button } from "@app/ui/components/button";
-import { EmptyState } from "@app/ui/components/empty-state";
-import { Skeleton } from "@app/ui/components/skeleton";
+import { PipelineEmpty, PipelineLoading, PipelineNoMatch, PipelineTable, PipelineToolbar, type PipelineChip, type PipelineTableRow } from "@app/ui/components/pipeline";
 
-import { applyFilters, householdTitle, STALE_DAYS, usePipelineFilters, type PipelineRow } from "@/components/pipeline/filters";
-import { PipelineTable } from "@/components/pipeline/table";
-import { PipelineToolbar } from "@/components/pipeline/toolbar";
+import { applyFilters, householdTitle, isMissing, isStale, isUnpaid, STALE_DAYS, usePipelineFilters, type PipelineFilters, type PipelineRow, type SetPipelineFilters } from "@/components/pipeline/filters";
 import { useStageMove } from "@/components/stage-move";
 import { FILING_SHORT } from "@/lib/labels";
 import { useTaxYear } from "@/lib/tax-year";
@@ -32,22 +27,30 @@ const toCard = (r: PipelineRow): BoardCardData => ({
   daysInStage: r.daysInStage,
 });
 
-function Loading() {
-  return (
-    <div className="grid gap-6" aria-busy="true" aria-label="Loading the pipeline">
-      <div className="flex flex-wrap gap-3">
-        <Skeleton className="h-9 w-32" />
-        <Skeleton className="h-9 w-64 max-w-full" />
-        <Skeleton className="hidden h-9 w-96 md:block" />
-      </div>
-      <div className="flex gap-3 overflow-hidden">
-        {[0, 1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-96 w-72 shrink-0 rounded-xl" />
-        ))}
-      </div>
-    </div>
-  );
-}
+const toTableRow = (r: PipelineRow): PipelineTableRow => ({
+  id: r.engagementId,
+  household: householdTitle(r),
+  filers: r.filers.length,
+  filing: r.filingStatus ? FILING_SHORT[r.filingStatus] : null,
+  stage: r.stage,
+  daysInStage: r.daysInStage,
+  openRequests: r.openRequests,
+  balanceCents: r.balanceCents,
+  efile: r.efile,
+});
+
+// The three quick filters, with how many of the year's returns each matches.
+const chipsFor = (rows: PipelineRow[], f: PipelineFilters, setFilters: SetPipelineFilters): PipelineChip[] => [
+  { id: "missing", label: "Missing documents", on: !!f.missing, count: rows.filter(isMissing).length, onToggle: () => setFilters({ missing: f.missing ? null : 1 }) },
+  { id: "unpaid", label: "Unpaid", on: !!f.unpaid, count: rows.filter(isUnpaid).length, onToggle: () => setFilters({ unpaid: f.unpaid ? null : 1 }) },
+  {
+    id: "stale",
+    label: `Over ${f.staleDays ?? STALE_DAYS} days in stage`,
+    on: !!f.staleDays,
+    count: rows.filter((r) => isStale(r, f.staleDays ?? STALE_DAYS)).length,
+    onToggle: () => setFilters({ staleDays: f.staleDays ? null : STALE_DAYS }),
+  },
+];
 
 export default function Pipeline() {
   usePageTitle("Pipeline");
@@ -62,51 +65,37 @@ export default function Pipeline() {
   const rows = React.useMemo(() => q.data?.rows ?? [], [q.data]);
   const shown = React.useMemo(() => applyFilters(rows, filters), [rows, filters]);
   const cards = React.useMemo(() => shown.map(toCard), [shown]);
+  const tableRows = React.useMemo(() => shown.map(toTableRow), [shown]);
   const filterKey = JSON.stringify([filters.q, filters.stage, filters.missing, filters.unpaid, filters.staleDays, q.data?.taxYear]);
   React.useEffect(() => setSelected([]), [filterKey]);
 
-  if (!q.data) return <Loading />;
+  if (!q.data) return <PipelineLoading />;
 
   const open = (id: string) => navigate(`/returns/${id}`);
 
-  if (!rows.length) {
-    const year = q.data.taxYear;
-    return (
-      <EmptyState
-        icon={Workflow}
-        className="animate-page border-none"
-        title={year ? `No returns for TY ${year} yet` : "No returns yet"}
-        description="Invite your first client to start the season. They get a link to set up their portal, answer intake questions and upload documents. Their return shows up here in Invited."
-        action={
-          <Button onClick={() => invite("invite")} className="h-11 md:h-9">
-            <UserPlus /> Invite your first client
-          </Button>
-        }
-      />
-    );
-  }
+  if (!rows.length) return <PipelineEmpty taxYear={q.data.taxYear} onInvite={() => invite("invite")} />;
 
   const clear = () => setFilters({ q: null, stage: null, missing: null, unpaid: null, staleDays: null });
-  const noMatch = (
-    <EmptyState
-      icon={SearchX}
-      className="border-none"
-      title="No returns match these filters"
-      description="Try a different name or turn a filter off."
-      action={
-        <Button variant="outline" onClick={clear} className="h-11 md:h-9">
-          Clear filters
-        </Button>
-      }
-    />
-  );
+  const noMatch = <PipelineNoMatch onClear={clear} />;
 
   return (
     <div className="grid min-w-0 animate-page gap-4 md:gap-6">
-      <PipelineToolbar rows={rows} shown={shown.length} selected={filters.view === "table" ? selected.length : 0} filters={filters} setFilters={setFilters} />
+      <PipelineToolbar
+        view={filters.view}
+        onViewChange={(view) => setFilters({ view })}
+        query={filters.q}
+        onQueryChange={(q) => setFilters({ q: q || null })}
+        stage={filters.stage}
+        onStageChange={(stage) => setFilters({ stage })}
+        chips={chipsFor(rows, filters, setFilters)}
+        onClear={clear}
+        total={rows.length}
+        shown={shown.length}
+        selected={filters.view === "table" ? selected.length : 0}
+      />
 
       {filters.view === "table" ? (
-        <PipelineTable key={filterKey} rows={shown} onOpen={open} onSelectionChange={setSelected} empty={noMatch} />
+        <PipelineTable key={filterKey} rows={tableRows} onOpen={open} onSelectionChange={setSelected} empty={noMatch} />
       ) : shown.length ? (
         <PipelineBoard
           cards={cards}

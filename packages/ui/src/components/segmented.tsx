@@ -1,10 +1,14 @@
 import type * as React from "react";
 
-import { cn } from "@app/ui/utils";
+import { cn } from "../utils";
 
 // A row of joined toggle buttons (admin 29 invoice tabs, 30 actor filter). One is always pressed;
 // the pressed one is marked by weight and fill, and by aria-pressed for screen readers.
-export function Segmented<T extends string>({ label, value, options, onChange, className }: { label: string; value: T; options: { value: T; label: React.ReactNode }[]; onChange: (v: T) => void; className?: string }) {
+// Controlled: the options are data, the pressed one is `value`, a press calls `onChange`.
+
+export type SegmentedOption<T extends string> = { value: T; label: React.ReactNode };
+
+export function Segmented<T extends string>({ label, value, options, onChange, className }: { label: string; value: T; options: SegmentedOption<T>[]; onChange: (v: T) => void; className?: string }) {
   return (
     <div role="group" aria-label={label} className={cn("inline-flex max-w-full overflow-x-auto rounded-lg border bg-background", className)}>
       {options.map((o) => (

@@ -5,7 +5,7 @@ import type { ClientInvoice, ReceiptData } from "../components/invoice";
 // Invented data for the portal's Letter and Invoice stories: an invented household, an invented practice, .test emails.
 
 export const PREPARER = "Morgan Hale";
-export const REPLY_TO = "hello@practice.test";
+export const REPLY_TO = "hello@belltax.example";
 
 const LETTER_BODY = `Engagement letter for the Okafor-Lindqvist household, tax year 2025
 
@@ -111,7 +111,7 @@ export const receipt: ReceiptData = {
   receiptNumber: "R-2026-0031",
   taxYear: 2025,
   settlement: "partial",
-  practice: { practiceName: "Harbor Lane Tax", preparerName: PREPARER, preparerCredential: "CRTP", replyToEmail: REPLY_TO, city: "Fresno", state: "CA" },
+  practice: { practiceName: "Bell Tax", preparerName: PREPARER, preparerCredential: "CRTP", replyToEmail: REPLY_TO, city: "Fresno", state: "CA" },
   billedTo: "Ada Okafor-Lindqvist",
   lines: [
     { description: "Married filing jointly, federal + California", quantity: 1, amountCents: 35_000 },

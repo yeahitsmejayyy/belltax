@@ -28,7 +28,7 @@ const USAGE = `const [cards, setCards] = useState(initialCards);
 />`;
 
 const meta: Meta<typeof PipelineBoard> = {
-  title: "Admin/Pipeline board",
+  title: "Admin/Pipeline/PipelineBoard",
   component: PipelineBoard,
   parameters: {
     fill: true,
