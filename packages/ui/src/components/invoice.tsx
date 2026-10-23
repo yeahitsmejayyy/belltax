@@ -9,7 +9,7 @@ import { Button } from "./button";
 import { Card, CardContent } from "./card";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "./dialog";
 import { EmptyState } from "./empty-state";
-import { BellMark } from "./logo";
+import { BellMark, Wordmark } from "./logo";
 import { Money } from "./money";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./sheet";
 import { Skeleton } from "./skeleton";
@@ -282,7 +282,7 @@ export function ReceiptDocument({ r }: { r: ReceiptData }) {
         <div className="flex items-center gap-3">
           <BellMark className="size-10" />
           <div className="grid">
-            <span className="text-lg font-bold tracking-tight">{p.practiceName}</span>
+            <Wordmark title={p.practiceName} className="h-5" />
             <span className="text-sm text-muted-foreground">
               {p.preparerName} · {p.preparerCredential ?? "Tax preparer"}
             </span>
