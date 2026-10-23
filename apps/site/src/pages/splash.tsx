@@ -1,3 +1,4 @@
+import { SplashLayout } from "@app/ui/components/splash";
 import * as React from "react";
 
 import { SplashFooter, SplashHeader, SplashHero } from "@/sections/splash/splash";
@@ -8,10 +9,10 @@ export default function Splash() {
     document.title = "belltax. · Taxes Made Easy. Opening soon";
   }, []);
   return (
-    <div className="flex min-h-svh flex-col">
+    <SplashLayout>
       <SplashHeader />
       <SplashHero />
       <SplashFooter />
-    </div>
+    </SplashLayout>
   );
 }

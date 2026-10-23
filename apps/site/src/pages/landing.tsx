@@ -1,3 +1,6 @@
+import { SkipLink } from "@app/ui/components/site-chrome";
+
+import { SKIP } from "@/content/landing";
 import { Cta } from "@/sections/cta";
 import { Faq } from "@/sections/faq";
 import { Features } from "@/sections/features";
@@ -14,9 +17,7 @@ import { Solution } from "@/sections/solution";
 export default function Landing() {
   return (
     <>
-      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2">
-        Skip to content
-      </a>
+      <SkipLink>{SKIP}</SkipLink>
       <Header />
       <main id="main">
         <Hero />

@@ -7,7 +7,7 @@ import { UNAVAILABLE, withPublic } from "./fixtures";
 
 // The splash page (ticket 53, from PJ's design export, no call to action: the practice is invite-only), from the site's own components with invented practice details
 // (./fixtures). The live domain shows it with VITE_SITE_PAGE=splash; ?page=landing previews the landing page.
-const meta: Meta = { title: "Site/Splash", decorators: [withPublic], parameters: { site: true } };
+const meta: Meta = { title: "Site/Splash", decorators: [withPublic], parameters: { site: true, usage: 'import { SplashFooter, SplashHeader, SplashHero, SplashLayout } from "@app/ui/components/splash";' } };
 export default meta;
 type Story = StoryObj;
 

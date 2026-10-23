@@ -16,7 +16,7 @@ import { LOADING, UNAVAILABLE, withPublic } from "./fixtures";
 
 // The marketing site (marketing 01-16), section by section, from the site's own components: what you see here is
 // what apps/site renders, with invented practice details and prices (./fixtures). Toggle Light / Dark in the toolbar.
-const meta: Meta = { title: "Site/Sections", decorators: [withPublic], parameters: { site: true } };
+const meta: Meta = { title: "Site/Sections", decorators: [withPublic], parameters: { site: true, usage: 'import { CtaBand, Hero, IconCardsSection, Section, SolutionSection } from "@app/ui/components/marketing";\nimport { PricingSection } from "@app/ui/components/site-pricing";\nimport { FaqSection } from "@app/ui/components/site-faq";\nimport { SiteFooter, SiteHeader } from "@app/ui/components/site-chrome";\nimport { WalkthroughSection } from "@app/ui/components/walkthrough";' } };
 export default meta;
 type Story = StoryObj;
 

@@ -14,6 +14,12 @@ return itself (ProSeries owns that). Read `.docs/belltaxprep-portal.md` for the 
   behaviour out through callbacks and render props (`renderLink`), no hard-coded content or app wiring inside. Apps keep
   only fetching and routing and render design-system components; Storybook shows those same components, so its
   "Show code" is code worth copying.
+- **Refactor first, then promote to Storybook** (PJ, 2026-10-23). A component lands in packages/ui and Storybook
+  already data-driven: props and config in, callbacks and render props out, no hard-coded copy without an override, no
+  app wiring, its stories (invented data, `parameters.usage`, a hidden `<Name>Test` twin) in the same change. Never
+  "add it now, refactor later": nothing app-shaped or one-off is ever pushed to Storybook to be cleaned up afterwards.
+  `packages/ui/src/design-system.test.ts` enforces what a machine can (no trpc/router/nuqs/app imports, no toasts or
+  fetch, every component has stories, every story file has a "Use it" line); the copy is the reviewer's check.
 
 ## Finishing a command-center ticket
 
@@ -101,7 +107,10 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   the practice's details are read at load from the portal's `pricing.public` / `practice.public` (`src/lib/public.tsx`;
   the server lets any origin GET only those two, `SITE_READABLE` in `http.ts`), never copied; a deployed site sets
   `VITE_PORTAL_ORIGIN`. Unavailable → no prices shown, never stale ones. "How it works" is a scripted walkthrough of
-  design-system mini screens with invented data (`src/components/walkthrough/`), no server. "Get started" mails the
+  design-system mini screens with invented data (`WalkthroughSection` in packages/ui `walkthrough.tsx`, played from the
+  script in `src/content/walkthrough.ts`), no server. Every section is a DS component (ticket 60: `marketing.tsx`,
+  `site-pricing.tsx`, `site-faq.tsx`, `site-chrome.tsx`, `splash.tsx`); the site's copy lives in `src/content/` and the
+  portal mockups' sample in `src/lib/portal-sample.ts`. "Get started" mails the
   practice until self sign-up exists. The copy speaks as the brand and pairs clients with "your tax agent" (`useNames()`):
   it never names the preparer or presents the practice as one person; reviews stay out until there are real, consented quotes (`ReviewCards` story). Its sections are in Storybook under Site (`apps/site/src/stories`), rendered
   from the real components with invented data via `PublicFixture`; site-only CSS is `src/site.css`, scoped to `.site-root`.
