@@ -40,6 +40,8 @@ type AppSidebarProps = {
   onSettings?: () => void;
   onLogout?: () => void;
   subtitle?: string;
+  /** The nav group's heading. */
+  groupLabel?: string;
 };
 
 // Each tone keeps its own text colour on hover and on the active page too: the sidebar's badge otherwise switches to
@@ -60,7 +62,7 @@ const initials = (name: string) =>
     .slice(0, 2)
     .join("");
 
-export function AppSidebar({ items, active, renderLink, taxYears, taxYear, onTaxYearChange, user, mode, onSettings, onLogout, subtitle }: AppSidebarProps) {
+export function AppSidebar({ items, active, renderLink, taxYears, taxYear, onTaxYearChange, user, mode, onSettings, onLogout, subtitle, groupLabel = "Workspace" }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" data-slot="app-sidebar">
       <SidebarHeader className="gap-3 p-3">
@@ -86,7 +88,7 @@ export function AppSidebar({ items, active, renderLink, taxYears, taxYear, onTax
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupLabel>{groupLabel}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (

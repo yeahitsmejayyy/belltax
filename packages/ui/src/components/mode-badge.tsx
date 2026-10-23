@@ -4,7 +4,8 @@ import { cn } from "../utils";
 
 // Always visible in the admin (principles.md rule 12): which world is this?
 // Reference: the sidebar footer in any .assets/screens/admin/desktop/ screen.
-export function ModeBadge({ mode, className, ...props }: { mode: "demo" | "live" } & React.ComponentProps<"div">) {
+/** `label` replaces the words ("Demo · sample data" / "Live · client data"). */
+export function ModeBadge({ mode, label, className, ...props }: { mode: "demo" | "live"; label?: React.ReactNode } & React.ComponentProps<"div">) {
   const demo = mode === "demo";
   return (
     <div
@@ -19,7 +20,7 @@ export function ModeBadge({ mode, className, ...props }: { mode: "demo" | "live"
       {...props}
     >
       <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
-      {demo ? "Demo · sample data" : "Live · client data"}
+      {label ?? (demo ? "Demo · sample data" : "Live · client data")}
     </div>
   );
 }

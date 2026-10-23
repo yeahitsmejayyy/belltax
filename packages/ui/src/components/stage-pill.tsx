@@ -29,7 +29,8 @@ export const WAITING_LABEL: Record<Waiting, string> = {
   done: "Done",
 };
 
-export function StagePill({ stage, ...props }: { stage: Stage } & React.ComponentProps<"span">) {
+/** `label` replaces the stage's name; `title` (the hover text) replaces who it's waiting on. */
+export function StagePill({ stage, label, ...props }: { stage: Stage; label?: string } & React.ComponentProps<"span">) {
   const m = STAGE_META[stage];
-  return <StatusChip data-stage={stage} tone={WAITING_TONE[m.waiting]} icon={m.icon} label={m.label} title={WAITING_LABEL[m.waiting]} {...props} />;
+  return <StatusChip data-stage={stage} tone={WAITING_TONE[m.waiting]} icon={m.icon} label={label ?? m.label} title={WAITING_LABEL[m.waiting]} {...props} />;
 }

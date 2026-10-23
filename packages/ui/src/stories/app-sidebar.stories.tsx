@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Activity, CalendarPlus, Inbox, LayoutDashboard, Mail, Receipt, Settings, Users, Workflow } from "lucide-react";
+import { Activity, CalendarPlus, Inbox, LayoutDashboard, Mail, Receipt, Settings, UserPlus, Users, Workflow } from "lucide-react";
 import { useState } from "react";
 import { expect, screen, userEvent, waitFor, within } from "storybook/test";
 
@@ -27,7 +27,14 @@ const USAGE = `import { AdminShell } from "@app/ui/components/admin-shell";
   mode="demo"
   taxYears={[2026, 2025]} taxYear={2026} onTaxYearChange={setYear}
   search={{ groups }}
-  onInvite={(mode) => openInvite(mode)}
+  action={{
+    label: "Invite client",
+    icon: UserPlus,
+    onSelect: () => openInvite("invite"),
+    menuLabel: "More ways to add a client",
+    options: [{ label: "Add client without invite", description: "Set them up now. Send the portal invite later.", onSelect: () => openInvite("add") }],
+  }}
+  notTabs={["activity"]}
   more={[{ label: "Settings", icon: Settings, onSelect: () => navigate("/settings") }]}
   renderLink={(t, children, className) => (
     <NavLink to={\`/\${t.key}\`} className={className} aria-current={t.current ? "page" : undefined}>{children}</NavLink>
@@ -75,10 +82,26 @@ function Demo({ defaultOpen = true, loading = false, tour = false }: { defaultOp
         user={{ name: "Morgan Hale", email: "morgan@belltax.example" }}
         mode="demo"
         search={{ groups: searchGroups((to) => setActive(to.startsWith("client") ? "clients" : to.startsWith("invoice") ? "invoices" : to === "settings" ? "settings" : "pipeline")) }}
-        onInvite={(m) => {
-          setLast(m);
-          setInvite(m);
+        action={{
+          label: "Invite client",
+          icon: UserPlus,
+          onSelect: () => {
+            setLast("invite");
+            setInvite("invite");
+          },
+          menuLabel: "More ways to add a client",
+          options: [
+            {
+              label: "Add client without invite",
+              description: "Set them up now. Send the portal invite later.",
+              onSelect: () => {
+                setLast("add");
+                setInvite("add");
+              },
+            },
+          ],
         }}
+        notTabs={["activity"]}
         onSettings={() => setActive("settings")}
         onLogout={() => {}}
         more={[

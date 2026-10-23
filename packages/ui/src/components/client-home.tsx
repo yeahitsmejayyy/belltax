@@ -29,7 +29,11 @@ type Chip = Pick<React.ComponentProps<typeof StatusChip>, "tone" | "icon" | "lab
 /** One thing waiting on the client: what it is, its state, and where it's settled. */
 export type Need = { key: string; title: string; to: string; cta: string; chip: Chip };
 
-const NEXT: Record<Stage, (p: string) => string> = {
+/** Words for each stage, given the preparer's first name. Override any of them through `messages`. */
+export type StageMessages = Record<Stage, (preparer: string) => string>;
+
+/** What happens next, when nothing needs the client. */
+export const NEXT_STEP: StageMessages = {
   invited: (p) => `${p} will send your questions soon.`,
   intake: (p) => `${p} is looking over your answers and will ask for anything else needed.`,
   documents: (p) => `${p} is checking what you sent. You'll hear if anything else is needed.`,
@@ -41,7 +45,20 @@ const NEXT: Record<Stage, (p: string) => string> = {
 };
 
 /** "N things need you": each a link to the screen that settles it, and one button for the first. Empty: what's next. */
-export function NeedsCard({ needs, stage, preparer, renderLink = anchor }: { needs: Need[]; stage: Stage; preparer: string; renderLink?: RenderLink }) {
+export function NeedsCard({
+  needs,
+  stage,
+  preparer,
+  messages,
+  renderLink = anchor,
+}: {
+  needs: Need[];
+  stage: Stage;
+  preparer: string;
+  /** Replaces the "what's next" line for any stage. */
+  messages?: Partial<StageMessages>;
+  renderLink?: RenderLink;
+}) {
   if (!needs.length) {
     return (
       <Card>
@@ -51,7 +68,7 @@ export function NeedsCard({ needs, stage, preparer, renderLink = anchor }: { nee
           </span>
           <div className="grid gap-1">
             <h2 className="font-semibold">Nothing needs you right now</h2>
-            <p className="text-sm text-muted-foreground">{NEXT[stage](preparer)}</p>
+            <p className="text-sm text-muted-foreground">{(messages?.[stage] ?? NEXT_STEP[stage])(preparer)}</p>
           </div>
         </CardContent>
       </Card>
@@ -105,7 +122,8 @@ export const STAGE_LABEL: Record<Stage, string> = {
   complete: "Complete",
 };
 
-const NOW: Record<Stage, (p: string) => string> = {
+/** What's happening now, under the current stage. */
+export const STAGE_NOW: StageMessages = {
   invited: () => "Set up your account to get started.",
   intake: () => "Answer questions about your household and income.",
   documents: (p) => `Upload the documents ${p} asked for.`,
@@ -117,7 +135,22 @@ const NOW: Record<Stage, (p: string) => string> = {
 };
 
 /** The eight stages in the client's words: done ones checked with the day reached, the current one with what's now. */
-export function StageProgress({ stage, reached = [], preparer }: { stage: Stage; reached?: { stage: Stage; at: string }[]; preparer: string }) {
+export function StageProgress({
+  stage,
+  reached = [],
+  preparer,
+  messages,
+  labels,
+}: {
+  stage: Stage;
+  reached?: { stage: Stage; at: string }[];
+  preparer: string;
+  /** Replaces the "now" line for any stage. */
+  messages?: Partial<StageMessages>;
+  /** Replaces any stage's name. */
+  labels?: Partial<Record<Stage, string>>;
+}) {
+  const label = (s: Stage) => labels?.[s] ?? STAGE_LABEL[s];
   const at = Stage.options.indexOf(stage);
   const done = stage === "complete";
   // A return moved back can reach a stage twice; the latest visit is the one that counts.
@@ -131,7 +164,7 @@ export function StageProgress({ stage, reached = [], preparer }: { stage: Stage;
           <h2>Where your return stands</h2>
         </CardTitle>
         <CardDescription>
-          Step {at + 1} of {Stage.options.length} · {STAGE_LABEL[stage]}
+          Step {at + 1} of {Stage.options.length} · {label(stage)}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -155,13 +188,13 @@ export function StageProgress({ stage, reached = [], preparer }: { stage: Stage;
                 </span>
                 <div className="grid min-w-0 content-start gap-1 pt-2">
                   <span className={cn("flex flex-wrap items-center gap-2", state === "current" ? "font-semibold" : state === "upcoming" && "text-muted-foreground")}>
-                    {STAGE_LABEL[s]}
+                    {label(s)}
                     {i === at && !done ? <span className="rounded-full bg-brand-subtle px-2 text-xs leading-5 font-medium text-brand-subtle-foreground">Now</span> : null}
                   </span>
                   {state === "done" ? (
                     <span className="text-sm text-muted-foreground">Done{day ? ` · ${formatDate(day, { month: "short", day: "numeric" })}` : ""}</span>
                   ) : state === "current" ? (
-                    <span className="text-sm text-muted-foreground">{NOW[s](preparer)}</span>
+                    <span className="text-sm text-muted-foreground">{(messages?.[s] ?? STAGE_NOW[s])(preparer)}</span>
                   ) : null}
                 </div>
               </li>
@@ -224,11 +257,15 @@ export type ClientHomeProps = {
   picker?: React.ReactNode;
   /** Under the greeting: the demo tour's "Try this". */
   tips?: React.ReactNode;
+  /** Where "View invoice" goes. */
+  invoiceTo?: string;
+  /** Override the stage words: what's next when nothing needs the client, what's happening now, and stage names. */
+  messages?: { next?: Partial<StageMessages>; now?: Partial<StageMessages>; labels?: Partial<Record<Stage, string>> };
   renderLink?: RenderLink;
 };
 
 /** Home: the greeting, then what needs the client and the invoice beside where the return stands. One column on a phone. */
-export function ClientHome({ firstName, taxYear, amended, preparerName, stage, reached, needs, invoice, picker, tips, renderLink = anchor }: ClientHomeProps) {
+export function ClientHome({ firstName, taxYear, amended, preparerName, stage, reached, needs, invoice, picker, tips, invoiceTo, messages, renderLink = anchor }: ClientHomeProps) {
   const preparer = preparerName.trim().split(/\s+/)[0] ?? preparerName;
   return (
     <div data-slot="client-home" className="grid grid-cols-1 animate-page gap-6">
@@ -244,10 +281,10 @@ export function ClientHome({ firstName, taxYear, amended, preparerName, stage, r
       {tips}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <div className="grid grid-cols-1 gap-6">
-          <NeedsCard needs={needs} stage={stage} preparer={preparer} renderLink={renderLink} />
-          {invoice ? <InvoiceCard invoice={invoice} preparer={preparer} renderLink={renderLink} /> : null}
+          <NeedsCard needs={needs} stage={stage} preparer={preparer} messages={messages?.next} renderLink={renderLink} />
+          {invoice ? <InvoiceCard invoice={invoice} preparer={preparer} to={invoiceTo} renderLink={renderLink} /> : null}
         </div>
-        <StageProgress stage={stage} reached={reached} preparer={preparer} />
+        <StageProgress stage={stage} reached={reached} preparer={preparer} messages={messages?.now} labels={messages?.labels} />
       </div>
     </div>
   );

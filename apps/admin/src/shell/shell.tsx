@@ -1,4 +1,4 @@
-import { Activity, CalendarPlus, ChevronRight, FileText, Inbox, LayoutDashboard, Mail, Receipt, Settings, User, Users, Workflow } from "lucide-react";
+import { Activity, CalendarPlus, ChevronRight, FileText, Inbox, LayoutDashboard, Mail, Receipt, Settings, User, UserPlus, Users, Workflow } from "lucide-react";
 import * as React from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -113,7 +113,14 @@ export function Shell() {
         mode={mode}
         title={heading}
         search={{ groups, onQueryChange: setQ, filter: false }}
-        onInvite={setInvite}
+        action={{
+          label: "Invite client",
+          icon: UserPlus,
+          onSelect: () => setInvite("invite"),
+          menuLabel: "More ways to add a client",
+          options: [{ label: "Add client without invite", description: "Set them up now. Send the portal invite later.", onSelect: () => setInvite("add") }],
+        }}
+        notTabs={["activity"]}
         onSettings={() => navigate("/settings")}
         onLogout={async () => {
           await signOut();

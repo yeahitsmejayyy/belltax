@@ -40,7 +40,8 @@ export const CLIENT_STAGE_WORDS: Record<Stage, string> = {
   complete: "Done",
 };
 
-export function StageTimeline({ stage, className }: { stage: Stage; className?: string }) {
+/** `words` replaces any stage's wording (say, the state's tax agency for a practice outside California). */
+export function StageTimeline({ stage, words, className }: { stage: Stage; words?: Partial<Record<Stage, string>>; className?: string }) {
   const at = Stage.options.indexOf(stage);
   return (
     <ol data-slot="stage-timeline" className={cn("grid gap-0", className)}>
@@ -63,7 +64,7 @@ export function StageTimeline({ stage, className }: { stage: Stage; className?: 
               {state === "done" ? <Check aria-hidden="true" className="size-4" /> : <Icon aria-hidden="true" className="size-4" />}
             </span>
             <span className={cn("pt-1.5 text-sm", state === "current" ? "font-semibold" : state === "upcoming" ? "text-muted-foreground" : "")}>
-              {CLIENT_STAGE_WORDS[s]}
+              {words?.[s] ?? CLIENT_STAGE_WORDS[s]}
               {state === "done" ? <span className="sr-only"> (done)</span> : null}
             </span>
           </li>

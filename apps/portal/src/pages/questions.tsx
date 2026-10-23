@@ -1,20 +1,27 @@
 import { INTAKE_V1, QUESTIONS, missingRequired, type Question } from "@app/schema";
-import { CircleAlert, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { parseAsBoolean, parseAsInteger, useQueryState } from "nuqs";
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Banner } from "@app/ui/components/banner";
 import { Button } from "@app/ui/components/button";
 import { EmptyState } from "@app/ui/components/empty-state";
-import { Skeleton } from "@app/ui/components/skeleton";
+import {
+  AnswerSummary,
+  IntakeLoading,
+  IntakeSent,
+  MissingAnswers,
+  SectionStep,
+  StepHeader,
+  StepIntro,
+  StepNav,
+  type Answers,
+  type Drafts,
+} from "@app/ui/components/intake";
 
-import { AnswerSummary } from "@/components/intake/review";
-import { draftFrom, isTyped, parseDraft, problemWith, sectionOf, type Answers, type Drafts } from "@/components/intake/rules";
-import { SectionStep } from "@/components/intake/section-step";
-import { SentAnswers } from "@/components/intake/sent";
-import { StepHeader } from "@/components/intake/step-header";
+import { draftFrom, isTyped, parseDraft, problemWith, sectionOf } from "@/components/intake/rules";
 import { useAutosave } from "@/components/intake/use-autosave";
 import { useReturn, usePageTitle, type MyReturn } from "@/lib/return";
 import { trpc } from "@/lib/trpc";
@@ -31,7 +38,7 @@ export default function Questions() {
   return (
     <div className="mx-auto grid w-full max-w-2xl grid-cols-1">
       {loading ? (
-        <Loading />
+        <IntakeLoading />
       ) : current ? (
         <Intake key={current.engagementId} ret={current} />
       ) : (
@@ -41,23 +48,12 @@ export default function Questions() {
   );
 }
 
-function Loading() {
-  return (
-    <div aria-label="Loading" className="grid gap-6">
-      <Skeleton className="h-6 w-full" />
-      <Skeleton className="h-9 w-2/3" />
-      <Skeleton className="h-40 w-full rounded-xl" />
-      <Skeleton className="h-40 w-full rounded-xl" />
-    </div>
-  );
-}
-
 function Intake({ ret }: { ret: MyReturn }) {
   const intake = trpc.intake.get.useQuery({ engagementId: ret.engagementId });
   const practice = trpc.practice.public.useQuery(undefined, { staleTime: Infinity }).data;
   const preparer = practice?.preparerName.split(/\s+/)[0] ?? "your preparer";
 
-  if (intake.isLoading) return <Loading />;
+  if (intake.isLoading) return <IntakeLoading />;
   if (intake.isError)
     return (
       <Banner tone="danger" title="Your questions didn't load" action={<Button variant="outline" onClick={() => intake.refetch()}>Try again</Button>}>
@@ -66,7 +62,16 @@ function Intake({ ret }: { ret: MyReturn }) {
     );
   const view = intake.data;
   if (view?.submittedAt || !OPEN_STAGES.includes(ret.stage)) {
-    return <SentAnswers answers={view?.answers ?? {}} submittedAt={view?.submittedAt ?? null} preparer={preparer} replyTo={practice?.replyToEmail} />;
+    return (
+      <IntakeSent
+        sections={INTAKE_V1}
+        answers={view?.answers ?? {}}
+        submittedAt={view?.submittedAt ?? null}
+        preparer={preparer}
+        replyTo={practice?.replyToEmail}
+        renderDocumentsLink={(children) => <Link to="/documents">{children}</Link>}
+      />
+    );
   }
   return <Flow engagementId={ret.engagementId} initial={view?.answers ?? {}} preparer={preparer} />;
 }
@@ -205,42 +210,23 @@ function Flow({ engagementId, initial, preparer }: { engagementId: string; initi
     <div className="grid grid-cols-1 gap-8">
       <StepHeader step={step} total={TOTAL} title={title} save={state} onRetry={() => void flush()} />
 
-      <div className="grid gap-2">
-        <h1 ref={heading} tabIndex={-1} className="text-2xl font-semibold tracking-tight text-balance outline-none md:text-3xl">
-          {title}
-        </h1>
-        {intro ? <p className="text-pretty text-muted-foreground">{intro}</p> : null}
-      </div>
+      <StepIntro title={title} intro={intro} headingRef={heading} />
 
       {section ? (
-        <SectionStep section={section} answers={answers} drafts={drafts} errors={errors} onAnswer={onAnswer} onDraft={onDraft} onBlur={onBlur} />
+        <SectionStep sections={INTAKE_V1} section={section} answers={answers} drafts={drafts} errors={errors} onAnswer={onAnswer} onDraft={onDraft} onBlur={onBlur} />
       ) : (
         <>
-          {problems.length ? (
-            <div ref={missingRef} tabIndex={-1} className="rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-              <Banner tone="warning" title={problems.length === 1 ? "One question still needs an answer" : `${problems.length} questions still need an answer`}>
-                <ul className="mt-1 grid gap-1">
-                  {problems.map((q) => (
-                    <li key={q.id}>
-                      <button
-                        type="button"
-                        className="inline-flex min-h-11 items-start gap-1.5 py-2 text-left underline underline-offset-4 md:min-h-0 md:py-0.5"
-                        onClick={() => {
-                          focusNext.current = q.id;
-                          void setEditing(true);
-                          go(sectionOf(q.id) + 1);
-                        }}
-                      >
-                        <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-                        {q.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </Banner>
-            </div>
-          ) : null}
+          <MissingAnswers
+            questions={problems}
+            focusRef={missingRef}
+            onPick={(q) => {
+              focusNext.current = q.id;
+              void setEditing(true);
+              go(sectionOf(q.id) + 1);
+            }}
+          />
           <AnswerSummary
+            sections={INTAKE_V1}
             answers={answers}
             onEdit={(i) => {
               void setEditing(true);
@@ -250,27 +236,13 @@ function Flow({ engagementId, initial, preparer }: { engagementId: string; initi
         </>
       )}
 
-      <div className="grid gap-2">
-        <div className="flex gap-3">
-          {step > 1 ? (
-            <Button variant="outline" className="h-11 px-6 text-base md:h-10 md:text-sm" onClick={() => go(step - 1)}>
-              Back
-            </Button>
-          ) : null}
-          {section ? (
-            <Button className="h-11 flex-1 text-base md:h-10 md:text-sm" onClick={onContinue}>
-              {editing ? "Save and review" : "Continue"}
-            </Button>
-          ) : (
-            <Button className="h-11 flex-1 text-base md:h-10 md:text-sm" disabled={send.isPending} onClick={() => void onSend()}>
-              {send.isPending ? "Sending…" : `Send to ${preparer}`}
-            </Button>
-          )}
-        </div>
-        <Button variant="ghost" className="h-11 text-base md:text-sm" onClick={() => void later()}>
-          Save and finish later
-        </Button>
-      </div>
+      <StepNav
+        onBack={step > 1 ? () => go(step - 1) : undefined}
+        nextLabel={section ? (editing ? "Save and review" : "Continue") : send.isPending ? "Sending…" : `Send to ${preparer}`}
+        nextDisabled={section ? undefined : send.isPending}
+        onNext={section ? onContinue : () => void onSend()}
+        onLater={() => void later()}
+      />
     </div>
   );
 }

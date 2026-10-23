@@ -2,6 +2,7 @@ import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { LinkGone } from "@app/ui/components/auth-cards";
+import { LinkPage } from "@app/ui/components/auth-pages";
 import { MarkLoader } from "@app/ui/components/logo";
 import { LinkSetupSteps } from "@app/ui/components/sign-in-flows";
 
@@ -23,7 +24,7 @@ export default function Invite() {
   const loadOptions = React.useCallback(() => auth.linkOptions(token), [token]);
 
   return (
-    <main className="mx-auto grid min-h-svh w-full max-w-sm content-center px-4 py-10">
+    <LinkPage>
       {info === undefined ? (
         <MarkLoader label="Checking your link" />
       ) : info === null ? (
@@ -42,6 +43,6 @@ export default function Invite() {
           onSignIn={() => navigate("/sign-in")}
         />
       )}
-    </main>
+    </LinkPage>
   );
 }

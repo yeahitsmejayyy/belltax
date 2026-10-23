@@ -1,4 +1,4 @@
-import { LayoutGrid, UserPlus, type LucideIcon } from "lucide-react";
+import { LayoutGrid, type LucideIcon } from "lucide-react";
 import * as React from "react";
 
 import { AppHeader } from "./app-header";
@@ -11,12 +11,23 @@ import { SplitButton } from "./split-button";
 
 // The admin's frame (every .assets/screens/admin/desktop/ screen, phones 34-37), the one the admin app renders and
 // Storybook shows (ticket 56): the sidebar with counts and the tax-year switcher; the header with the page title,
-// search (field and ⌘K), the theme toggle and Invite client (icon-only on a phone); and on a phone, bottom tabs plus a
-// round More button. Presentational: the app passes data, links and handlers; routing and fetching stay in the app.
+// search (field and ⌘K), the theme toggle and the page's main action (Invite client in the admin; icon-only on a phone);
+// and on a phone, bottom tabs plus a round More button. Presentational: the app passes data, links and handlers;
+// routing and fetching stay in the app.
 
 /** How the shell asks the app for a link: the app returns its router's link (NavLink, <a>…) around `children`. */
 export type ShellLink = (target: { key: string; current: boolean }, children: React.ReactNode, className?: string) => React.ReactNode;
 export type ShellMoreItem = { label: string; icon: LucideIcon; onSelect: () => void };
+/** The header's main action: a button, with a menu of other ways to do it when `options` are given. On a phone it
+ *  also heads the More menu. */
+export type ShellAction = {
+  label: string;
+  icon: LucideIcon;
+  onSelect: () => void;
+  /** The menu button's accessible name. */
+  menuLabel?: string;
+  options?: { label: string; description?: string; onSelect: () => void }[];
+};
 
 export type AdminShellProps = {
   items: NavItem[];
@@ -29,11 +40,11 @@ export type AdminShellProps = {
   taxYear?: number;
   onTaxYearChange?: (year: number) => void;
   search?: React.ComponentProps<typeof AppHeader>["search"];
-  /** Invite client (the main button) or Add client without invite (its menu). */
-  onInvite: (mode: "invite" | "add") => void;
+  /** The main action in the header (and first in the phone's More menu). */
+  action?: ShellAction;
   onSettings?: () => void;
   onLogout?: () => void;
-  /** Phone More menu, after Invite client: Activity, Settings… */
+  /** Phone More menu, after the main action: Activity, Settings… */
   more?: ShellMoreItem[];
   /** Keys that live in the More menu instead of a bottom tab on a phone. */
   notTabs?: string[];
@@ -56,11 +67,11 @@ export function AdminShell({
   taxYear,
   onTaxYearChange,
   search,
-  onInvite,
+  action,
   onSettings,
   onLogout,
   more = [],
-  notTabs = ["activity"],
+  notTabs = [],
   banner,
   overlay,
   defaultOpen,
@@ -87,16 +98,24 @@ export function AdminShell({
           title={title}
           search={search}
           action={
-            <SplitButton
-              label={
-                <>
-                  <UserPlus /> <span className="max-sm:sr-only">Invite client</span>
-                </>
-              }
-              onClick={() => onInvite("invite")}
-              menuLabel="More ways to add a client"
-              items={[{ label: "Add client without invite", description: "Set them up now. Send the portal invite later.", onSelect: () => onInvite("add") }]}
-            />
+            action ? (
+              action.options?.length ? (
+                <SplitButton
+                  label={
+                    <>
+                      <action.icon /> <span className="max-sm:sr-only">{action.label}</span>
+                    </>
+                  }
+                  onClick={action.onSelect}
+                  menuLabel={action.menuLabel}
+                  items={action.options}
+                />
+              ) : (
+                <Button onClick={action.onSelect}>
+                  <action.icon /> <span className="max-sm:sr-only">{action.label}</span>
+                </Button>
+              )
+            ) : undefined
           }
         />
         <main className="min-w-0 flex-1 p-4 pb-40 md:p-6 lg:p-8">{children}</main>
@@ -112,10 +131,12 @@ export function AdminShell({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="end" className="w-56">
-            <DropdownMenuItem onSelect={() => onInvite("invite")}>
-              <UserPlus /> Invite client
-            </DropdownMenuItem>
-            {more.length ? <DropdownMenuSeparator /> : null}
+            {action ? (
+              <DropdownMenuItem onSelect={action.onSelect}>
+                <action.icon /> {action.label}
+              </DropdownMenuItem>
+            ) : null}
+            {action && more.length ? <DropdownMenuSeparator /> : null}
             {more.map((m) => (
               <DropdownMenuItem key={m.label} onSelect={m.onSelect}>
                 <m.icon /> {m.label}

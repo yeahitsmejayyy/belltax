@@ -88,11 +88,27 @@ type InviteClientDialogProps = {
   taxYear: number;
   preparerName: string;
   onSubmit: (draft: InviteDraft) => Promise<void | { inviteUrl?: string | null; inviteEmailed?: boolean }>; // an invite returns its one-time link, and whether the practice emailed it
-  sample?: Omit<InviteDraft, "mode">; // demo only: "Fill sample data"
+  sample?: Omit<InviteDraft, "mode">; // offers "Fill sample data" (the demo passes one)
   onOpenReturn?: () => void; // shown on the done step
+  /** The account they're invited to, as the email preview names it. */
+  productName?: string;
+  /** How long an invite link lasts, as the copy says it. */
+  linkExpiresInDays?: number;
 };
 
-export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparerName, onSubmit, sample, onOpenReturn }: InviteClientDialogProps) {
+export function InviteClientDialog({
+  open,
+  onOpenChange,
+  mode,
+  taxYear,
+  preparerName,
+  onSubmit,
+  sample,
+  onOpenReturn,
+  productName = "belltax.",
+  linkExpiresInDays = 7,
+}: InviteClientDialogProps) {
+  const expires = `expires in ${linkExpiresInDays} day${linkExpiresInDays === 1 ? "" : "s"}`;
   const [draft, setDraft] = React.useState<InviteDraft>(() => empty(mode));
   const [step, setStep] = React.useState(0);
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
@@ -311,7 +327,7 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
               <div className="grid gap-1.5">
                 <span className="text-sm font-medium">The email they'll get</span>
                 <p className="rounded-lg bg-muted p-4 text-sm leading-relaxed">
-                  Hi {draft.members[0]?.first.trim() || "there"}, {preparerName} invited you to set up your belltax. account. You'll answer a few questions, upload your tax documents, and see where your return stands, all in one place.
+                  Hi {draft.members[0]?.first.trim() || "there"}, {preparerName} invited you to set up your {productName} account. You'll answer a few questions, upload your tax documents, and see where your return stands, all in one place.
                 </p>
               </div>
             ) : null}
@@ -332,13 +348,13 @@ export function InviteClientDialog({ open, onOpenChange, mode, taxYear, preparer
                 label="Their invite link"
                 note={
                   emailed
-                    ? `Emailed to ${draft.email.trim()}. It's here too, in case they need it another way. It works once and expires in 7 days.`
-                    : "Send it to them yourself. It works once and expires in 7 days; you can make a new one from the household page."
+                    ? `Emailed to ${draft.email.trim()}. It's here too, in case they need it another way. It works once and ${expires}.`
+                    : `Send it to them yourself. It works once and ${expires}; you can make a new one from the household page.`
                 }
               />
             ) : (
               <p className="text-muted-foreground">
-                {isAdd ? "Send the portal invite from the household page when you're ready." : "The link works once and expires in 7 days. You can make a new one from the household page."}
+                {isAdd ? "Send the portal invite from the household page when you're ready." : `The link works once and ${expires}. You can make a new one from the household page.`}
               </p>
             )}
           </div>

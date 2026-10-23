@@ -64,11 +64,14 @@ export function PasskeySetup({
   onCreate,
   onFallback,
   step,
+  unavailableMessage,
   className,
 }: {
   purpose?: "invite" | "reset";
   /** False where this browser or address can't make passkeys. */
   available: boolean;
+  /** What to do instead when `available` is false. */
+  unavailableMessage?: React.ReactNode;
   onCreate: () => Promise<void>;
   /** The authenticator-app route, for a device that can't do passkeys. Clients only. */
   onFallback?: () => void;
@@ -99,7 +102,8 @@ export function PasskeySetup({
         </div>
       ) : (
         <Banner tone="warning" title="This browser can't make a passkey here.">
-          {onFallback ? "Use a password and an authenticator app instead, or open this link on your phone." : "Open this page at localhost (not 127.0.0.1) in Safari, Chrome or Edge."}
+          {unavailableMessage ??
+            (onFallback ? "Use a password and an authenticator app instead, or open this link on your phone." : "Open this page at localhost (not 127.0.0.1) in Safari, Chrome or Edge.")}
         </Banner>
       )}
       {onFallback ? (
@@ -308,13 +312,28 @@ export function CodeStep({
 // ---------- Recovery codes (the preparer) ----------
 
 /** Shown once, right after setup or after making a new set. Continue waits until they say they've saved them. */
-export function RecoveryCodes({ codes, onDone, doneLabel = "Continue", className }: { codes: string[]; onDone: () => void; doneLabel?: string; className?: string }) {
+export function RecoveryCodes({
+  codes,
+  onDone,
+  doneLabel = "Continue",
+  fileHeading = "Bell Tax recovery codes",
+  fileName = "belltax-recovery-codes.txt",
+  className,
+}: {
+  codes: string[];
+  onDone: () => void;
+  doneLabel?: string;
+  /** The first line of the downloaded file, and its name. */
+  fileHeading?: string;
+  fileName?: string;
+  className?: string;
+}) {
   const id = React.useId();
   const [saved, setSaved] = React.useState(false);
-  const text = `Bell Tax recovery codes\nEach works once, in place of the authenticator app's code.\n\n${codes.join("\n")}\n`;
+  const text = `${fileHeading}\nEach works once, in place of the authenticator app's code.\n\n${codes.join("\n")}\n`;
   const download = () => {
     const url = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
-    const link = Object.assign(document.createElement("a"), { href: url, download: "belltax-recovery-codes.txt" });
+    const link = Object.assign(document.createElement("a"), { href: url, download: fileName });
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -419,6 +438,7 @@ export function PasskeyList({
   onAdd,
   onRemove,
   canAdd = true,
+  unavailableMessage = "To add a passkey, open this page at localhost (not 127.0.0.1) or on your phone.",
   className,
 }: {
   passkeys: PasskeyItem[];
@@ -426,6 +446,8 @@ export function PasskeyList({
   onRemove: (id: string) => Promise<void>;
   /** False where this browser or address can't make passkeys. */
   canAdd?: boolean;
+  /** What to do instead when `canAdd` is false. */
+  unavailableMessage?: React.ReactNode;
   className?: string;
 }) {
   const add = useAction();
@@ -469,7 +491,7 @@ export function PasskeyList({
           {add.pending ? "Waiting for your device…" : passkeys.length ? "Add another passkey" : "Add a passkey"}
         </Button>
       ) : (
-        <p className="text-sm text-muted-foreground">To add a passkey, open this page at localhost (not 127.0.0.1) or on your phone.</p>
+        <p className="text-sm text-muted-foreground">{unavailableMessage}</p>
       )}
       <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
         <AlertDialogContent>

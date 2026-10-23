@@ -1,11 +1,9 @@
-import { INTAKE_V1, IntakeAnswersV1, isVisible, type Question, type Section } from "@app/schema";
-import { formatCents, formatDate } from "@app/ui/format";
+import { INTAKE_V1, IntakeAnswersV1, isVisible, type Question } from "@app/schema";
+import type { Answers, Drafts } from "@app/ui/components/intake";
 
 // The questionnaire's rules on the client side: typed text becomes an answer only when the server
 // would accept it, and every problem is a sentence saying what to do. The schema stays the judge.
-
-export type Answers = Record<string, unknown>;
-export type Drafts = Record<string, string>; // what's typed in text, money and date fields
+// (What the screens need to draw, follow-ups and answers in words, lives with them in @app/ui/components/intake.)
 
 export const isTyped = (q: Question) => q.type === "text" || q.type === "money" || q.type === "date";
 
@@ -53,25 +51,3 @@ export function problemWith(q: Question, answers: Answers, drafts: Drafts): stri
 }
 
 export const sectionOf = (id: string) => INTAKE_V1.findIndex((s) => s.questions.some((q) => q.id === id));
-
-// Follow-ups nest under the question they depend on, when it's in the same section.
-export const rootsOf = (s: Section) => s.questions.filter((q) => !q.showIf || !s.questions.some((p) => p.id === q.showIf!.question));
-export const followUpsOf = (s: Section, id: string) => s.questions.filter((q) => q.showIf?.question === id);
-
-// An answer in words, the way the review and the read-only view show it.
-export function inWords(q: Question, v: unknown): string {
-  switch (q.type) {
-    case "yes_no":
-      return v ? "Yes" : "No";
-    case "choice":
-      return q.options.find((o) => o.value === v)?.label ?? String(v);
-    case "multi":
-      return (v as string[]).map((x) => q.options.find((o) => o.value === x)?.label ?? x).join(", ");
-    case "date":
-      return formatDate(`${v}T12:00:00Z`, { month: "long", day: "numeric", year: "numeric" });
-    case "money":
-      return formatCents(Math.round((v as number) * 100));
-    case "text":
-      return String(v);
-  }
-}

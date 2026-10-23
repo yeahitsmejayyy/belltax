@@ -1,14 +1,12 @@
 import * as React from "react";
 
-import { trpc } from "@/lib/trpc";
+import type { Answers, SaveState } from "@app/ui/components/intake";
 
-import type { Answers } from "./rules";
+import { trpc } from "@/lib/trpc";
 
 // Answers save themselves as a draft: changes collect for a moment, then go to intake.save without
 // submit (the server merges them over what's there, and drops the ones emptied). Saves run one at a time, in order, and whatever
 // is waiting goes when the page is hidden or left.
-
-export type SaveState = { status: "idle" | "saving" | "saved" | "error"; at?: Date };
 
 export function useAutosave(engagementId: string | undefined, delay = 800) {
   const utils = trpc.useUtils();

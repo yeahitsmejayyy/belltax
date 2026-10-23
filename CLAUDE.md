@@ -51,7 +51,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
 - `apps/portal` — the client portal: React 19 + Vite + Tailwind v4 on `packages/ui`, phone first (402px), top nav
   from `md` (ticket 12). Its frame is `PortalShell` and its Home is `ClientHome` (NeedsCard, InvoiceCard, StageProgress)
   from packages/ui (ticket 56); `src/shell/shell.tsx` and `pages/home.tsx` only wire data and routes (`lib/needs.ts` decides
-  what's waiting on the client). Dev on :5175, proxied to the portal listener (:3000, override with `PORTAL_API_PORT`, never
+  what's waiting on the client). Every portal screen's markup is in packages/ui (ticket 57): `letter.tsx`, `invoice.tsx`,
+  `client-documents.tsx`, `intake.tsx` (the questionnaire comes in as `sections`), `client-settings.tsx`, `auth-pages.tsx`;
+  `src/pages/*` keep only queries, mutations, toasts and routing. Dev on :5175, proxied to the portal listener (:3000, override with `PORTAL_API_PORT`, never
   `PORT`, which launchers set for Vite itself). Screens are `src/pages/*` (lazy per route) inside `src/shell/shell.tsx`
   (header, account menu, bottom tabs / top nav with counts, offline banner). `useReturn()` (`lib/return.tsx`) is the
   return being shown (newest by default, remembered per device). A 401 anywhere clears the demo identity and goes to
