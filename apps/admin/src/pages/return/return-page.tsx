@@ -1,11 +1,8 @@
-import { FileQuestion } from "lucide-react";
 import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { Button } from "@app/ui/components/button";
-import { EmptyState } from "@app/ui/components/empty-state";
-import { Skeleton } from "@app/ui/components/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@app/ui/components/tabs";
+import type { AdminLink } from "@app/ui/components/admin-clients";
+import { ReturnLoading, ReturnNotFound, ReturnPage as Page, type ReturnTab } from "@app/ui/components/return-page";
 
 import { trpc } from "@/lib/trpc";
 import { usePageTitle } from "@/shell/header-slots";
@@ -22,10 +19,17 @@ import { ReturnHeader } from "./return-header";
 import { filersName } from "./shared";
 
 // One return (admin 12–18-return-detail, 37-phone-m-return): the header with its one primary action, then a
-// tab per job. Tabs are URL segments, so /returns/:id/billing opens straight onto Billing.
+// tab per job. Tabs are URL segments, so /returns/:id/billing opens straight onto Billing. The frame and tab bar are
+// ReturnPage from the design system; this fetches the return, keeps the open tab in the URL and wires each tab.
 
 const TABS = ["overview", "intake", "documents", "letter", "billing", "activity"] as const;
 type Tab = (typeof TABS)[number];
+
+const renderLink: AdminLink = (to, children, className, onClick) => (
+  <Link to={to} className={className} onClick={onClick}>
+    {children}
+  </Link>
+);
 
 export default function ReturnPage() {
   const { id = "", tab: rawTab } = useParams();
@@ -39,86 +43,31 @@ export default function ReturnPage() {
   const [requesting, setRequesting] = React.useState(false);
   const [invoicing, setInvoicing] = React.useState(false);
 
-  if (q.error) {
-    return (
-      <EmptyState
-        icon={FileQuestion}
-        title="This return isn't here"
-        description="It may have been removed, or the link is wrong."
-        action={
-          <Button variant="outline" asChild>
-            <Link to="/pipeline">Back to the pipeline</Link>
-          </Button>
-        }
-      />
-    );
-  }
-  if (!d) {
-    return (
-      <div className="grid gap-6" aria-busy="true" aria-label="Loading the return">
-        <Skeleton className="h-8 w-72 max-w-full" />
-        <Skeleton className="h-5 w-96 max-w-full" />
-        <Skeleton className="h-10 w-[28rem] max-w-full" />
-        <div className="grid gap-4 lg:grid-cols-2">{[0, 1].map((i) => <Skeleton key={i} className="h-80 rounded-xl" />)}</div>
-      </div>
-    );
-  }
+  if (q.error) return <ReturnNotFound renderLink={renderLink} />;
+  if (!d) return <ReturnLoading />;
 
   const toReview = d.documents.filter((x) => x.status === "uploaded").length;
   const paymentFailed = d.invoices.some((i) => i.settlement === "failed_last_attempt");
   const go = (t: string) => navigate(t === "overview" ? `/returns/${id}` : `/returns/${id}/${t}`);
 
+  const tabs: ReturnTab<Tab>[] = [
+    { value: "overview", label: "Overview", content: <OverviewTab d={d} onRequest={() => setRequesting(true)} onBilling={() => go("billing")} /> },
+    { value: "intake", label: "Intake", content: <IntakeTab d={d} /> },
+    { value: "documents", label: "Documents", count: toReview, countLabel: "to review", content: <DocumentsTab d={d} onRequest={() => setRequesting(true)} /> },
+    { value: "letter", label: "Letter", content: <LetterTab d={d} /> },
+    { value: "billing", label: "Billing", alert: paymentFailed ? "A payment failed" : null, content: <BillingTab d={d} onCreate={() => setInvoicing(true)} /> },
+    { value: "activity", label: "Activity", content: <ActivityTab engagementId={d.engagementId} /> },
+  ];
+
   return (
-    <div className="grid grid-cols-1 animate-page gap-6">
-      <ReturnHeader d={d} name={name} onRequest={() => setRequesting(true)} onInvoice={() => setInvoicing(true)} />
-
-      <Tabs value={tab} onValueChange={go} className="min-w-0">
-        <TabsList className="max-md:h-12 max-md:[&>button]:min-h-11">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="intake">Intake</TabsTrigger>
-          <TabsTrigger value="documents">
-            Documents
-            {toReview ? (
-              <span className="rounded-full bg-brand-subtle px-1.5 text-xs font-semibold text-brand-subtle-foreground tabular-nums">
-                {toReview}
-                <span className="sr-only"> to review</span>
-              </span>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="letter">Letter</TabsTrigger>
-          <TabsTrigger value="billing">
-            Billing
-            {paymentFailed ? (
-              <span className="flex size-4 items-center justify-center rounded-full bg-danger text-[10px] font-bold text-white" title="A payment failed">
-                !<span className="sr-only">A payment failed</span>
-              </span>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <OverviewTab d={d} onRequest={() => setRequesting(true)} onBilling={() => go("billing")} />
-        </TabsContent>
-        <TabsContent value="intake">
-          <IntakeTab d={d} />
-        </TabsContent>
-        <TabsContent value="documents">
-          <DocumentsTab d={d} onRequest={() => setRequesting(true)} />
-        </TabsContent>
-        <TabsContent value="letter">
-          <LetterTab d={d} />
-        </TabsContent>
-        <TabsContent value="billing">
-          <BillingTab d={d} onCreate={() => setInvoicing(true)} />
-        </TabsContent>
-        <TabsContent value="activity">
-          <ActivityTab engagementId={d.engagementId} />
-        </TabsContent>
-      </Tabs>
-
+    <Page
+      header={<ReturnHeader d={d} name={name} onRequest={() => setRequesting(true)} onInvoice={() => setInvoicing(true)} />}
+      tabs={tabs}
+      value={tab}
+      onValueChange={go}
+    >
       <RequestSheet d={d} name={name} open={requesting} onOpenChange={setRequesting} />
       <InvoiceDialog d={d} name={name} open={invoicing} onOpenChange={setInvoicing} />
-    </div>
+    </Page>
   );
 }

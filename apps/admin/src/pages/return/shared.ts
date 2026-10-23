@@ -1,3 +1,5 @@
+import { ROLE_LABEL as DS_ROLE_LABEL } from "@app/ui/components/return-overview";
+
 import type { RouterOutputs } from "@/lib/trpc";
 
 // What the return page's tabs share: the detail shape and a few small helpers.
@@ -22,7 +24,8 @@ export function filersName(d: Detail) {
 // Who a request or document is for, in a word: a first name, or the household.
 export const whoFor = (d: Detail, personId: string | null) => (personId ? (d.people.find((p) => p.personId === personId)?.firstName ?? "Household") : "Household");
 
-export const ROLE_LABEL: Record<Person["role"], string> = { primary: "Primary", spouse: "Spouse", dependent: "Dependent" };
+// The words live in the design system (ReturnPeopleCard); re-exported for the tabs that still import them from here.
+export const ROLE_LABEL: Record<Person["role"], string> = DS_ROLE_LABEL;
 
 export function ageFrom(dob: string | null) {
   if (!dob) return null;

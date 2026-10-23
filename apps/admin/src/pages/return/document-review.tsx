@@ -1,31 +1,31 @@
 import * as React from "react";
 import { toast } from "sonner";
 
-import { Banner } from "@app/ui/components/banner";
-import { Button } from "@app/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@app/ui/components/dialog";
-import { DocumentViewer } from "@app/ui/components/document-viewer";
-import { Label } from "@app/ui/components/label";
-import { Textarea } from "@app/ui/components/textarea";
-import { formatDateTime } from "@app/ui/format";
+import { RejectDocumentDialog, ReturnDocumentReview, type ReturnDocument } from "@app/ui/components/return-documents";
 
 import { at } from "@/lib/base";
 import { trpc } from "@/lib/trpc";
 
 import { errorText, whoFor, type Detail, type Doc } from "./shared";
 
-// Reviewing one upload: the viewer (admin 15-return-detail-return-viewer) and the reject dialog
-// (21-dialogs-and-sheets-dlg-reject). A rejection's reason is shown to the client, so it's required.
+// Reviewing one upload: the viewer and the reject dialog come from packages/ui (return-documents); this keeps the
+// review mutation, its toasts and the mapping from the return's detail.
+
+/** A document as the design system shows it: who it's from, and the request it answers. */
+export const toReturnDocument = (d: Detail, doc: Doc): ReturnDocument => ({
+  ...doc,
+  who: whoFor(d, doc.personId),
+  request: doc.requestId ? (d.requests.find((r) => r.id === doc.requestId)?.title ?? null) : null,
+});
 
 export function useDocumentReview() {
   const utils = trpc.useUtils();
   const review = trpc.document.review.useMutation();
-  const [rejecting, setRejecting] = React.useState<Doc | null>(null);
+  const [rejecting, setRejecting] = React.useState<Pick<Doc, "id" | "kindLabel" | "filename"> | null>(null);
   const [reason, setReason] = React.useState("");
-  const [reasonError, setReasonError] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  const accept = async (doc: Doc) => {
+  const accept = async (doc: Pick<Doc, "id" | "kindLabel">) => {
     try {
       const done = await review.mutateAsync({ documentId: doc.id, decision: "accept" });
       await utils.invalidate();
@@ -35,22 +35,16 @@ export function useDocumentReview() {
       toast.error(errorText(e));
     }
   };
-  const startReject = (doc: Doc) => {
+  const startReject = (doc: Pick<Doc, "id" | "kindLabel" | "filename">) => {
     setRejecting(doc);
     setReason("");
-    setReasonError(null);
     setError(null);
   };
-  const check = (v: string) => {
-    const m = v.trim().length >= 3 ? null : "Tell the client what's wrong, so they know what to send instead.";
-    setReasonError(m);
-    return !m;
-  };
-  const reject = async () => {
-    if (!rejecting || !check(reason)) return;
+  const reject = async (trimmed: string) => {
+    if (!rejecting) return;
     setError(null);
     try {
-      await review.mutateAsync({ documentId: rejecting.id, decision: "reject", reason: reason.trim() });
+      await review.mutateAsync({ documentId: rejecting.id, decision: "reject", reason: trimmed });
       await utils.invalidate();
       toast.success(`${rejecting.kindLabel} rejected. The client has been asked for a new copy.`);
       setRejecting(null);
@@ -60,97 +54,17 @@ export function useDocumentReview() {
   };
 
   const dialog = (
-    <Dialog open={!!rejecting} onOpenChange={(o) => !o && !review.isPending && setRejecting(null)}>
-      {rejecting ? (
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject {rejecting.kindLabel}?</DialogTitle>
-            <DialogDescription>{rejecting.filename}. The client sees your reason and is asked to upload it again.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-1.5">
-            <Label htmlFor="reject-reason">Reason shown to the client</Label>
-            <Textarea
-              id="reject-reason"
-              autoFocus
-              value={reason}
-              aria-invalid={reasonError ? true : undefined}
-              onChange={(e) => {
-                setReason(e.target.value);
-                if (reasonError) check(e.target.value);
-              }}
-              onBlur={() => check(reason)}
-              placeholder="Page 2 is cut off at the bottom. Please retake the photo with the whole page showing."
-            />
-            {reasonError ? (
-              <p role="alert" className="text-sm text-danger-foreground">
-                {reasonError}
-              </p>
-            ) : null}
-          </div>
-          {error ? <Banner tone="danger" title="It wasn't rejected">{error}</Banner> : null}
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setRejecting(null)} disabled={review.isPending}>
-              Cancel
-            </Button>
-            <Button onClick={reject} disabled={review.isPending}>
-              Reject and tell the client
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      ) : null}
-    </Dialog>
+    <RejectDocumentDialog doc={rejecting} reason={reason} onReasonChange={setReason} error={error} pending={review.isPending} onCancel={() => setRejecting(null)} onConfirm={reject} />
   );
 
   return { accept, startReject, dialog, pending: review.isPending };
 }
 
-const size = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
-
-function FileView({ doc }: { doc: Doc }) {
-  if (doc.deletedAt) return <p className="text-sm text-muted-foreground">Verified on {formatDateTime(doc.deletedAt)}. The image was deleted then; this note is all the portal keeps.</p>;
-  const src = at(`/api/documents/${doc.id}/file`);
-  if (doc.mimeType === "application/pdf") return <iframe title={doc.filename} src={src} className="h-[70vh] w-full rounded-md border bg-card" />;
-  if (doc.mimeType.startsWith("image/") && doc.mimeType !== "image/heic") return <img src={src} alt={`${doc.kindLabel}: ${doc.filename}`} className="max-h-[70vh] max-w-full rounded-md border object-contain" />;
-  return (
-    <p className="text-sm text-muted-foreground">
-      This file type can't be shown here.{" "}
-      <a href={src} target="_blank" rel="noreferrer" className="font-medium text-primary underline-offset-4 hover:underline">
-        Open it in a new tab
-      </a>
-    </p>
-  );
-}
-
 export function DocumentReview({ d, doc, onBack }: { d: Detail; doc: Doc; onBack: () => void }) {
   const { accept, startReject, dialog } = useDocumentReview();
-  const request = doc.requestId ? d.requests.find((r) => r.id === doc.requestId) : undefined;
   return (
-    <>
-      <DocumentViewer
-        filename={doc.filename}
-        status={doc.status}
-        onBack={onBack}
-        onAccept={() => accept(doc)}
-        onReject={() => startReject(doc)}
-        meta={[
-          { label: "Document", value: doc.kindLabel },
-          { label: "From", value: whoFor(d, doc.personId) },
-          { label: "Uploaded", value: formatDateTime(doc.uploadedAt) },
-          { label: "File", value: `${doc.mimeType === "application/pdf" ? "PDF" : doc.mimeType.replace("image/", "").toUpperCase()} · ${size(doc.sizeBytes)}` },
-          ...(request ? [{ label: "Answers the request", value: request.title }] : []),
-          ...(doc.status === "rejected" && doc.rejectReason ? [{ label: "Reason shown to the client", value: `“${doc.rejectReason}”` }] : []),
-        ]}
-      >
-        <div className="grid w-full gap-3">
-          {doc.identity && doc.status === "uploaded" ? (
-            <Banner tone="info" title="Accepting verifies this ID and deletes the image">
-              Right away, with no copy kept. The portal keeps a note: verified, when, and what kind.
-            </Banner>
-          ) : null}
-          <FileView doc={doc} />
-        </div>
-      </DocumentViewer>
+    <ReturnDocumentReview doc={toReturnDocument(d, doc)} src={at(`/api/documents/${doc.id}/file`)} onBack={onBack} onAccept={() => accept(doc)} onReject={() => startReject(doc)}>
       {dialog}
-    </>
+    </ReturnDocumentReview>
   );
 }

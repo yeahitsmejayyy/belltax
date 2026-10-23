@@ -64,7 +64,9 @@ Work comes off the command-center board, one ticket at a time. When a ticket is 
   packages/ui (ticket 56); `src/shell/shell.tsx` only wires data, routes and the invite dialog. Every list screen's markup is in packages/ui (ticket 58):
   `dashboard.tsx`, `pipeline.tsx`, `stage-move-dialog.tsx`, `segmented.tsx`, `inbox-list.tsx`, `activity-feed.tsx`, `outbox.tsx`,
   `invoice-list.tsx`, `admin-clients.tsx`, `household-detail.tsx`, `new-season.tsx`, `admin-settings.tsx`, `pricing-settings.tsx`,
-  `letter-template.tsx`, `admin-auth-pages.tsx`. Dev on :5174, proxied to :3001.
+  `letter-template.tsx`, `admin-auth-pages.tsx`; and the return screen (ticket 59): `return-page.tsx` (tabs as config),
+  `return-header.tsx`, `return-overview.tsx`, `efile-card.tsx`, `return-intake.tsx`, `return-activity.tsx`, `return-documents.tsx`,
+  `request-document-sheet.tsx`, `return-letter.tsx`, `return-billing.tsx`, `create-invoice-dialog.tsx`. Dev on :5174, proxied to :3001.
   Screens are `src/pages/*` (lazy-loaded per route; the return is `pages/return/`, one file per tab) inside
   `src/shell/shell.tsx` (sidebar, header, phone bottom tabs + More button). Shared hooks: `usePageTitle`
   (`shell/header-slots`), `useTaxYear` (`lib/tax-year`), `useInvite` (`shell/invite`), `useStageMove`
